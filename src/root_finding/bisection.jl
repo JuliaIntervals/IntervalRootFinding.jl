@@ -1,10 +1,15 @@
 
-function bisection{T}(f, X::Interval{T}; tolerance=1e-3)
+doc"""
+    bisection(f, X; tolerance=1e-3)
+
+Find possible roots of the function `f` inside the `Interval` or `IntervalBox` `X`.
+"""
+function bisection(f, X::Union{Interval, IntervalBox}; tolerance=1e-3)
 
     image = f(X)
 
-    if 0 ∉ image
-        return Root{T}[]  # guaranteed that no zero in the interval
+    if !(zero(X) ⊆ image)
+        return Root{T}[]
     end
 
     if diam(X) < tolerance
