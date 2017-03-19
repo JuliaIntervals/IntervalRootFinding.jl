@@ -22,10 +22,9 @@ import Base: ⊆, show
 const derivative = ForwardDiff.derivative
 const D = derivative
 
-
 # Root object:
-immutable Root{T<:Real}
-    interval::Interval{T}
+immutable Root{T}
+    interval::T
     status::Symbol
 end
 
