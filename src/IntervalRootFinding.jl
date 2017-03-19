@@ -12,6 +12,7 @@ export
     Root, is_unique,
     find_roots,
     find_roots_midpoint,
+    bisection,
     bisect
 
 import Base: ⊆, show
@@ -19,6 +20,8 @@ import Base: ⊆, show
 const derivative = ForwardDiff.derivative
 const D = derivative
 
+
+# Root object:
 immutable Root{T<:Real}
     interval::Interval{T}
     status::Symbol
@@ -32,7 +35,26 @@ is_unique{T}(root::Root{T}) = root.status == :unique
 ⊆(a::Root, b::Root) = a.interval ⊆ b.interval
 
 
+# Common functionality:
+
+doc"""Returns the midpoint of the interval x, slightly shifted in case
+the midpoint is an exact root"""
+function guarded_mid{T}(f::Function, x::Interval{T})
+    m = mid(x)
+
+    if f(m) == zero(T)                      # midpoint exactly a root
+        α = convert(T, 0.46875)      # close to 0.5, but exactly representable as a floating point
+        m = α*x.lo + (one(T)-α)*x.hi   # displace to another point in the interval
+    end
+
+    @assert m ∈ x
+
+    return m
+end
+
+
 include("bisect.jl")
+include("bisection.jl")
 include("newton.jl")
 include("krawczyk.jl")
 
