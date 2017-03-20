@@ -26,6 +26,15 @@ function N{T}(f::Function, x::Interval{T}, deriv::Interval{T})
     m - (f(m) / deriv)
 end
 
+function N(f::Function, X::IntervalBox)
+    m = IntervalBox((x->Interval(mid(x))).(X))
+    @show m
+    J = ForwardDiff.jacobian(f, [m...])
+    @show J
+
+    return IntervalBox( (m - (inv(J) * f(m)) )... )
+end
+
 
 doc"""If a root is known to be inside an interval,
 `newton_refine` iterates the interval Newton method until that root is found."""
