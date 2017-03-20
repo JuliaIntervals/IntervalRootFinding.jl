@@ -18,7 +18,9 @@ function guarded_mid{T}(f, x::Interval{T})
     m
 end
 
-
+doc"""
+Single-variable Newton operator
+"""
 function N{T}(f::Function, x::Interval{T}, deriv::Interval{T})
     m = guarded_mid(f, x)
     m = Interval(m)
@@ -26,11 +28,16 @@ function N{T}(f::Function, x::Interval{T}, deriv::Interval{T})
     m - (f(m) / deriv)
 end
 
-function N(f::Function, X::IntervalBox)
+doc"""
+Multi-variable Newton operator.
+Requires the function to be defined using the `@intervalbox` macro.
+"""
+function N(f::Function, X::IntervalBox)  # multidimensional Newton operator
     m = IntervalBox((x->Interval(mid(x))).(X))
-    @show m
     J = ForwardDiff.jacobian(f, [m...])
-    @show J
+
+    # @show m
+    # @show J
 
     return IntervalBox( (m - (J \ f(m))... ) )
 end

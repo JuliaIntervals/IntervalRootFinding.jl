@@ -1,18 +1,32 @@
 using ValidatedNumerics
 
 
-"""Macro to make a version of a multidimensional function that acts on
+doc"""
+Macro to make a version of a multidimensional function that acts on
 an `IntervalBox` and returns an `IntervalBox`.
-Both the original n-argument function and the `IntervalBox` version are defined.
+
+The original n-argument function, the `IntervalBox` version, and a version
+taking and returning an array, for use with automatic differentiation via `ForwardDiff`, are created.
 
 Example:
 
-    @intervalbox f(x, y) = (x + y, x - y)
+```
+julia v0.5> @intervalbox f(x, y) = (x + y, x - y)
+f (generic function with 3 methods)
 
-    X = IntervalBox(1..1, 2..2)
-    f(X)
+julia v0.5> X = IntervalBox(1..1, 2..2)
+[1, 1] × [2, 2]
 
-(No significant error checking is performed!)
+julia v0.5> f(X)
+[3, 3] × [-1, -1]
+
+julia v0.5> ForwardDiff.jacobian(f, [1, 2])
+2×2 Array{Int64,2}:
+ 1   1
+ 1  -1
+```
+
+(No significant error checking is performed.)
 """
 
 macro intervalbox(ex)
