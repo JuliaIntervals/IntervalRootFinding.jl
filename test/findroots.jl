@@ -86,7 +86,7 @@ function_list = [
                                             for i in 1:length(roots)
                                                 root = roots[i]
 
-                                                @test isa(root, Root{prec[1]})
+                                                @test isa(root, Root)
                                                 @test is_unique(root)
                                                 @test true_roots[i] ⊆ root.interval
                                             end
