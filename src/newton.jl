@@ -33,7 +33,7 @@ Multi-variable Newton operator.
 Requires the function to be defined using the `@intervalbox` macro.
 """
 function N(f::Function, X::IntervalBox)  # multidimensional Newton operator
-    m = IntervalBox((x->Interval(mid(x))).(X))
+    m = IntervalBox(Interval.(mid.(X)))
     J = ForwardDiff.jacobian(f, [X...])
 
     # @show m
