@@ -32,7 +32,7 @@ function N(f::Function, X::IntervalBox)
     J = ForwardDiff.jacobian(f, [m...])
     @show J
 
-    return IntervalBox( (m - (inv(J) * f(m)) )... )
+    return IntervalBox( (m - (J \ f(m))... ) )
 end
 
 
