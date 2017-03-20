@@ -4,7 +4,7 @@ doc"""
 
 Find possible roots of the function `f` inside the `Interval` or `IntervalBox` `X`.
 """
-function bisection{T}(f, X::T; tolerance=1e-3, debug=false)
+function bisection{T<:Union{Interval,IntervalBox}}(f, X::T; tolerance=1e-3, debug=false)
 
     image = f(X)
 
