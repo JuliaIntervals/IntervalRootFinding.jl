@@ -22,10 +22,15 @@ doc"""
 Single-variable Newton operator
 """
 function N{T}(f::Function, x::Interval{T}, deriv::Interval{T})
-    m = guarded_mid(f, x)
-    m = Interval(m)
+    m = Interval( guarded_mid(f, x) )
 
     m - (f(m) / deriv)
+end
+
+function N{T}(f::Function, x::Interval{T})
+    m = Interval( guarded_mid(f, x) )
+
+    m - (f(m) / ForwardDiff.derivative(f, x))
 end
 
 doc"""
