@@ -66,10 +66,10 @@ function krawczyk{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=
     # Maximum level of bisection
     level >= maxlevel && return [Root(x, :unknown)]
 
-    isempty(x) && return Root{T}[]  # [(x, :none)]
+    isempty(x) && return Root{typeof(x)}[]  # [(x, :none)]
     Kx = K(f, f_prime, x) ∩ x
 
-    isempty(Kx ∩ x) && return Root{T}[]  # [(x, :none)]
+    isempty(Kx ∩ x) && return Root{typeof(x)}[]  # [(x, :none)]
 
     if Kx ⪽ x  # isinterior
         debug && (print("Refining "); @show(x))
