@@ -11,7 +11,7 @@ function bisection{T<:Union{Interval,IntervalBox}}(f, X::T; tolerance=1e-3, debu
     debug && @show X, image
 
     if !(zero(X) ⊆ image)
-        return Root{T}[]
+        return Root{typeof(X)}[]
     end
 
     if diam(X) < tolerance
