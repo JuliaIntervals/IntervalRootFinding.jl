@@ -65,7 +65,7 @@ for example at a multiple root); see Tucker's book for more details.
 Root-finding routines are in a separate `RootFinding` submodule of `IntervalArithmetic.jl`, 
 which must be loaded with
 ```julia
-julia> using ValidatedNumerics, ValidatedNumerics.RootFinding
+julia> using IntervalArithmetic, IntervalRootFinding
 ```
 
 The interval Newton method is implemented for real functions of a single

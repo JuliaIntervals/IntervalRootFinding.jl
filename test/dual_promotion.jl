@@ -1,4 +1,4 @@
-using ValidatedNumerics, ValidatedNumerics.RootFinding
+using IntervalArithmetic, IntervalRootFinding
 using ForwardDiff
 using Base.Test
 
