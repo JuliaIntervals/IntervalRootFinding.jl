@@ -1,5 +1,6 @@
-using IntervalRootFinding.jl
+using IntervalRootFinding
 using Base.Test
 
-# write your own tests here
-@test 1 == 2
+include("bisect.jl")
+include("findroots.jl")
+include("dual_promotion.jl")
