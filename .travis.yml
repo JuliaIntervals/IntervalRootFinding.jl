@@ -13,16 +13,18 @@ julia:
 notifications:
   email: false
 
-after_success:
-  - julia -e 'Pkg.add("Documenter")'
-  - julia -e 'cd(Pkg.dir("PACKAGE_NAME")); include(joinpath("docs", "make.jl"))'
 
 # uncomment the following lines to override the default test script
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("IntervalRootFinding.jl"); Pkg.test("IntervalRootFinding.jl"; coverage=true)'
+
 after_success:
   # push coverage results to Coveralls
-  - julia -e 'cd(Pkg.dir("IntervalRootFinding.jl")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  - julia -e 'cd(Pkg.dir("IntervalRootFinding")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov
-  - julia -e 'cd(Pkg.dir("IntervalRootFinding.jl")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia -e 'cd(Pkg.dir("IntervalRootFinding")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+
+  # build docs
+  - julia -e 'Pkg.add("Documenter")'
+  - julia -e 'cd(Pkg.dir("IntervalRootFinding")); include(joinpath("docs", "make.jl"))'
