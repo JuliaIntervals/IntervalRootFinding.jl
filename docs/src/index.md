@@ -1,19 +1,6 @@
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({
-    TeX: { equationNumbers: { autoNumber: "AMS" } }
-  });
-  MathJax.Hub.Config({
-    TeX: { extensions: ["AMSmath.js", "AMSsymbols.js", "autobold.js", "autoload-all.js"] }
-  });
-  MathJax.Hub.Config({
-    tex2jax: {
-      inlineMath: [['$','$'], ['\\(','\\)']],
-      processEscapes: true
-    }
-  });
-</script>
-<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML">
-</script>
+# `IntervalRootFinding.jl`
+
+This Julia package implements guaranteed root-finding methods using interval arithmetic.
 
 # Root finding
 
@@ -62,7 +49,7 @@ for example at a multiple root); see Tucker's book for more details.
 
 ## Usage of the interval Newton method
 
-Root-finding routines are in a separate `RootFinding` submodule of `IntervalArithmetic.jl`, 
+Root-finding routines are in a separate `RootFinding` submodule of `IntervalArithmetic.jl`,
 which must be loaded with
 ```julia
 julia> using IntervalArithmetic, IntervalRootFinding
