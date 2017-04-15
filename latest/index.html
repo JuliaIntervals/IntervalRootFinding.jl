@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · IntervalRootFinding.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/default.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Ubuntu+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="assets/documenter.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="../versions.js"></script></head><body><nav class="toc"><h1>IntervalRootFinding.jl</h1><form class="search" action="search.html"><select id="version-selector" onChange="window.location.href=this.value"><option value="#" selected="selected" disabled="disabled">Version</option></select><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li class="current"><a class="toctext" href="index.html">Home</a><ul class="internal"><li class="toplevel"><a class="toctext" href="#Root-finding-1">Root finding</a></li><li><a class="toctext" href="#Interval-Newton-method-1">Interval Newton method</a></li><li><a class="toctext" href="#Usage-of-the-interval-Newton-method-1">Usage of the interval Newton method</a></li><li><a class="toctext" href="#Krawczyk-method-1">Krawczyk method</a></li><li><a class="toctext" href="#find_roots-interface-1"><code>find_roots</code> interface</a></li></ul></li><li><a class="toctext" href="api.html">API</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href="index.html">Home</a></li></ul><a class="edit-page" href="https://github.com/JuliaIntervals/IntervalRootFinding.jl/tree/4100d44f5131e8707a49c555e8bac8fb0891c5cc/docs/src/index.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/></header><h1><a class="nav-anchor" id="IntervalRootFinding.jl-1" href="#IntervalRootFinding.jl-1"><code>IntervalRootFinding.jl</code></a></h1><p>This Julia package implements guaranteed root-finding methods using interval arithmetic.</p><h1><a class="nav-anchor" id="Root-finding-1" href="#Root-finding-1">Root finding</a></h1><p>Interval arithmetic not only provides guaranteed numerical calculations; it also makes possible fundamentally new algorithms.</p><h2><a class="nav-anchor" id="Interval-Newton-method-1" href="#Interval-Newton-method-1">Interval Newton method</a></h2><p>One such algorithm is the <strong>interval Newton method</strong>. This is a version of the standard Newton (or Newton-Raphson) algorithm, an iterative method for finding roots (zeros) of functions. The interval version, however, is fundamentally different from its standard counterpart, in that it can (under the best circumstances) provide rigorous <em>guarantees</em> about the presence or absence and uniqueness of roots of a given function in a given interval, and tells us explicitly when it is unable to provide such a guarantee.</p><p>The idea of the Newton method is to calculate a root <span>$x^\ast$</span> of a function <span>$f$</span> [i.e., a value such that <span>$f(x^*) = 0$</span>] from an initial guess <span>$x$</span> using</p><div>\[x^* = x - \frac{f(x)}{f&#39;(\xi)},\]</div><p>for some <span>$\xi$</span> between <span>$x$</span> and <span>$x^*$</span>. Since <span>$\xi$</span> is unknown, we can bound it as</p><div>\[f&#39;(\xi) \in F&#39;(X),\]</div><p>where <span>$X$</span> is a containing interval and <span>$F&#39;(X)$</span> denotes the <strong>interval extension</strong> of the function <span>$f$</span>, consisting of applying the same operations as the function <span>$f$</span> to the interval <span>$X$</span>.</p><p>We define an <em>interval Newton operator</em> <span>$\mathcal{N}$</span> as follows:</p><div>\[\mathcal{N}(X) := m(X) - \frac{F(m(X))}{F&#39;(X)},\]</div><p>where <span>$m(X)$</span>  is the midpoint of <span>$X$</span> converted into an interval.</p><p>It turns out that <span>$\mathcal{N}$</span> tells us precisely whether there is a root of <span>$f$</span> in the interval <span>$X$</span>: there is no root if <span>$\mathcal{N}(X) \cap X = \emptyset$</span>, and there is a unique root if <span>$\mathcal{N}(X) \subseteq X$</span>. There is also an extension to intervals in which the derivative <span>$F&#39;(X)$</span> contains <span>$0$</span>, in which case the Newton operator returns a union of two intervals.</p><p>Iterating the Newton operator on the resulting sets gives a rigorous algorithm that is <em>guaranteed to find all roots</em> of a real function in a given interval (or to inform us if it is unable to do so, for example at a multiple root); see Tucker&#39;s book for more details.</p><h2><a class="nav-anchor" id="Usage-of-the-interval-Newton-method-1" href="#Usage-of-the-interval-Newton-method-1">Usage of the interval Newton method</a></h2><p>Root-finding routines are in a separate <code>RootFinding</code> submodule of <code>IntervalArithmetic.jl</code>, which must be loaded with</p><pre><code class="language-julia">julia&gt; using IntervalArithmetic, IntervalRootFinding</code></pre><p>The interval Newton method is implemented for real functions of a single variable as the function <code>newton</code>. For example, we can calculate rigorously the square roots of 2:</p><pre><code class="language-julia">julia&gt; using ValidatedNumerics
+
+julia&gt; f(x) = x^2 - 2
+f (generic function with 1 method)
+
+julia&gt; newton(f, @interval(-5, 5))
+2-element Array{ValidatedNumerics.Root{Float64},1}:
+ Root([-1.4142135623730951, -1.414213562373095], :unique)
+ Root([1.414213562373095, 1.4142135623730951], :unique)</code></pre><p>The function <code>newton</code>  is passed the function and the interval in which to search for roots; it returns an array of <code>Root</code> objects, that contain the interval where a root is found, together with a symbol <code>:unique</code> if there is guaranteed to be a unique root in that interval, or <code>:unknown</code> if the Newton method is unable to make a guarantee, for example, when there is a double root:</p><pre><code class="language-julia">julia&gt; newton(f, @interval(-5,5))
+6-element Array{ValidatedNumerics.Root{Float64},1}:
+ Root([0.9999999968789343, 0.999999997726216], :unknown)
+ Root([0.9999999977262161, 0.9999999985734976], :unknown)
+ Root([0.9999999987089422, 0.9999999993384274], :unknown)
+ Root([0.9999999993384275, 0.9999999999679127], :unknown)
+ Root([0.9999999999687099, 1.0000000004524654], :unknown)
+ Root([2.0, 2.0], :unique)</code></pre><p>The Newton method may be applied directly to a vector of known roots, for example to refine them with higher precision:</p><pre><code class="language-julia">julia&gt; f(x) = x^2 - 2
+f (generic function with 1 method)
+
+julia&gt; roots = newton(f, @interval(-5, 5))
+2-element Array{ValidatedNumerics.Root{Float64},1}:
+ Root([-1.4142135623730951, -1.414213562373095], :unique)
+ Root([1.414213562373095, 1.4142135623730951], :unique)
+
+julia&gt; setprecision(Interval, 256)
+256
+
+julia&gt; newton(f, roots)
+2-element Array{ValidatedNumerics.Root{Base.MPFR.BigFloat},1}:
+ Root([-1.414213562373095048801688724209698078569671875376948073176679737990732478462119, -1.414213562373095048801688724209698078569671875376948073176679737990732478462102]₂₅₆, :unique)
+ Root([1.414213562373095048801688724209698078569671875376948073176679737990732478462102, 1.414213562373095048801688724209698078569671875376948073176679737990732478462119]₂₅₆, :unique)
+
+julia&gt; abs(roots2[2].interval.lo - sqrt(big(2)))
+0.000000000000000000000000000000000000000000000000000000000000000000000000000000
+</code></pre><h2><a class="nav-anchor" id="Krawczyk-method-1" href="#Krawczyk-method-1">Krawczyk method</a></h2><p>An alternative method is the <em>Krawczyk method</em>, implemented in the function <code>krawczyk</code>, with the same interface as the Newton method:</p><pre><code class="language-julia">julia&gt; f(x) = x^2 - 2
+f (generic function with 1 method)
+
+julia&gt; krawczyk(f, @interval(-5, 5))
+2-element Array{Root{Float64},1}:
+ Root([-1.4142135623730954, -1.4142135623730947], :unique)
+ Root([1.4142135623730947, 1.4142135623730954], :unique)
+
+julia&gt; newton(f, @interval(-5, 5))
+2-element Array{Root{Float64},1}:
+ Root([-1.4142135623730951, -1.414213562373095], :unique)
+ Root([1.414213562373095, 1.4142135623730951], :unique)</code></pre><p>The Krawczyk method really comes into its own for higher-dimensional functions; this is planned to be implemented in the future.</p><h2><a class="nav-anchor" id="find_roots-interface-1" href="#find_roots-interface-1"><code>find_roots</code> interface</a></h2><p>Automatic differentiation is used to calculate the derivative used in the Newton method if the derivative function is not given explicitly as the second argument to <code>newton</code>.</p><p>An interface <code>find_roots</code> is provided, which does not require an interval to be passed:</p><pre><code class="language-none">julia&gt; find_roots(f, -5, 5)
+6-element Array{ValidatedNumerics.Root{Float64},1}:
+ Root([0.9999999968789343, 0.999999997726216], :unknown)
+ Root([0.9999999977262161, 0.9999999985734976], :unknown)
+ Root([0.9999999987089422, 0.9999999993384274], :unknown)
+ Root([0.9999999993384275, 0.9999999999679127], :unknown)
+ Root([0.9999999999687099, 1.0000000004524654], :unknown)
+ Root([1.9999999999999998, 2.0000000000000004], :unique)</code></pre><p>There is also a version <code>find_roots_midpoint</code> that returns three vectors: the midpoint of each interval; the radius of the interval; and the symbol. This may be useful for someone who just wishes to find roots of a function, without wanting to understand how to manipulate interval objects:</p><pre><code class="language-julia">julia&gt; find_roots_midpoint(f, -5, 5)
+([-1.4142135623730951,1.414213562373095],[2.220446049250313e-16,4.440892098500626e-16],[:unique,:unique])</code></pre><p>This uses the function <code>midpoint_radius</code>, that returns the midpoint and radius of a given interval:</p><pre><code class="language-julia">julia&gt; a = @interval(0.1, 0.2)
+[0.09999999999999999, 0.2]
+
+julia&gt; midpoint_radius(a)
+(0.15,0.05000000000000002)</code></pre><footer><hr/><a class="next" href="api.html"><span class="direction">Next</span><span class="title">API</span></a></footer></article></body></html>
