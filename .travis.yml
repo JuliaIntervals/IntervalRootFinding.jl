@@ -1,13 +1,22 @@
 # Documentation: http://docs.travis-ci.com/user/languages/julia/
+
 language: julia
+
 os:
   - linux
   - osx
+
 julia:
   - release
   - nightly
+
 notifications:
   email: false
+
+after_success:
+  - julia -e 'Pkg.add("Documenter")'
+  - julia -e 'cd(Pkg.dir("PACKAGE_NAME")); include(joinpath("docs", "make.jl"))'
+
 # uncomment the following lines to override the default test script
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
