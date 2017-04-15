@@ -1,12 +1,12 @@
 # IntervalRootFinding.jl
 
-[![Build Status](https://travis-ci.org/dpsanders/IntervalRootFinding.jl.svg?branch=master)](https://travis-ci.org/dpsanders/IntervalRootFinding.jl.jl)
+[![Build Status](https://travis-ci.org/JuliaIntervals/IntervalRootFinding.jl.svg?branch=master)](https://travis-ci.org/JuliaIntervals/IntervalRootFinding.jl)
 
-[![Coverage Status](https://coveralls.io/repos/dpsanders/IntervalRootFinding.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/dpsanders/IntervalRootFinding.jl.jl?branch=master)
+[![codecov.io](http://codecov.io/github/JuliaIntervals/IntervalRootFinding/coverage.svg?branch=master)](http://codecov.io/github/JuliaIntervals/IntervalRootFinding.jl?branch=master)
 
-[![codecov.io](http://codecov.io/github/dpsanders/IntervalRootFinding.jl/coverage.svg?branch=master)](http://codecov.io/github/dpsanders/IntervalRootFinding.jl.jl?branch=master)
+Guaranteed root-finding methods using interval arithmetic from the [`IntervalArithmetic.jl`](https://github.com/JuliaIntervals/IntervalArithmetic.jl) package.
 
-Guaranteed root finding methods using interval arithmetic from the [`IntervalArithmetic.jl`](https://github.com/JuliaIntervals/IntervalArithmetic.jl) package.
+Basic documentation is available [here](https://juliaintervals.github.io/IntervalRootFinding.jl/latest/).
 
 ## Authors
 - [Luis Benet](http://www.cicc.unam.mx/~benet/), Instituto de Ciencias Físicas,
