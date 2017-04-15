@@ -1,9 +1,9 @@
 
-using ValidatedNumerics, ValidatedNumerics.RootFinding
+using IntervalArithmetic, IntervalRootFinding
 using ForwardDiff
 using Base.Test
 
-const D = RootFinding.derivative
+const D = IntervalRootFinding.derivative
 
 include("wilkinson.jl")
 

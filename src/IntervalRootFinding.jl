@@ -1,8 +1,8 @@
 # This file is part of the ValidatedNumerics.jl package; MIT licensed
 
-module RootFinding
+module IntervalRootFinding
 
-using ValidatedNumerics
+using IntervalArithmetic
 using ForwardDiff
 
 ## Root finding
