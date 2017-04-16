@@ -14,7 +14,7 @@ export
     find_roots_midpoint,
     bisect
 
-import Base: ⊆
+import Base: ⊆, show
 
 const derivative = ForwardDiff.derivative
 const D = derivative
