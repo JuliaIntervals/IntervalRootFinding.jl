@@ -3,15 +3,14 @@
 
 using IntervalRootFinding, IntervalArithmetic
 
-"""
+doc"""
     complex_bisection(f, X)
 
 Find complex roots of $f: \mathbb{C} \to \mathbb{C}$.
 
 Inputs:
 
-- `f`: function that takes $z \in \mathbb{C}$ and returns another
-complex number.
+- `f`: function $f: \mathbb{C} \to \mathbb{C}$, i.e. a function that accepts a complex number and returns another complex number.
 
 - `X`: An `IntervalBox` specifying the bounds on the real and imaginary parts
 of `z`.
@@ -24,16 +23,15 @@ function complex_bisection(f, X::IntervalBox)
     i.e. that accepts an `IntervalBox` and returns an `IntervalBox`
     """
     function g(X::IntervalBox)
-        x, y = X
-        z = x + im*y;
+        z = Complex(X...)
         zz = f(z)
-        x, y = reim(zz)
-        return IntervalBox(x, y)
+
+        return IntervalBox(reim(zz))
     end
 
     roots = bisection(g, X)
 
-    return g, [root.interval[1] + im*root.interval[2] for root in roots]
+    return g, [Complex(root.interval...) for root in roots]
 end
 
 """
@@ -48,3 +46,4 @@ f(z) = z^4 + z - 2
 L = 10
 g, roots = complex_bisection(f, -L..L, -L..L)
 
+println(roots)
