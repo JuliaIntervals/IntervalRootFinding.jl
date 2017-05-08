@@ -28,3 +28,10 @@ function bisection{T<:Union{Interval,IntervalBox}}(f, X::T; tolerance=1e-3, debu
             bisection(f, X2, tolerance=tolerance)]
 
 end
+
+
+function bisection{T<:Union{Interval,IntervalBox}}(f, V::Vector{T}; tolerance=1e-3, debug=false)
+
+    return vcat([bisection(f, X, tolerance=tolerance, debug=debug) for X in V])
+
+end
