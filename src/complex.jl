@@ -19,16 +19,15 @@ function complex_bisection(f, X::IntervalBox)
     i.e. that accepts an `IntervalBox` and returns an `IntervalBox`
     """
     function g(X::IntervalBox)
-        x, y = X
-        z = x + im*y;
+        z = Complex(X...)
         zz = f(z)
-        x, y = reim(zz)
-        return IntervalBox(x, y)
+
+        return IntervalBox(reim(zz))
     end
 
     roots = bisection(g, X)
 
-    return g, [root.interval[1] + im*root.interval[2] for root in roots]
+    return g, [Complex(root.interval...) for root in roots]
 end
 
 """
