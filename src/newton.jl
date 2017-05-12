@@ -64,7 +64,7 @@ function newton{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
 
     debug && (print("Entering newton:"); @show(level); @show(x))
 
-    isempty(x) && return Root{T}[]  #[(x, :none)]
+    isempty(x) && return Root{typeof(x)}[]  #[(x, :none)]
 
     z = zero(x.lo)
     tolerance = abs(tolerance)
@@ -79,7 +79,7 @@ function newton{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
         Nx = N(f, x, deriv)
         debug && @show(Nx, Nx ⊆ x, Nx ∩ x)
 
-        isempty(Nx ∩ x) && return Root{T}[]
+        isempty(Nx ∩ x) && return Root{typeof(x)}[]
 
         if Nx ⊆ x
             debug && (print("Refining "); @show(x))
