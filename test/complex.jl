@@ -7,5 +7,5 @@ using Base.Test
     L = 10
     g, roots = complex_bisection(f, -L..L, -L..L)
 
-    @test length(roots) == 8
+    @test length(roots) == 10
 end
