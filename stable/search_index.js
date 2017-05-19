@@ -69,14 +69,6 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "IntervalRootFinding.bisect",
     "category": "Function",
-    "text": "bisect(X::IntervalBox, i::Integer, α=0.5)\n\nBisect the IntervalBox in side number i.\n\n\n\n"
-},
-
-{
-    "location": "api.html#IntervalRootFinding.bisect",
-    "page": "API",
-    "title": "IntervalRootFinding.bisect",
-    "category": "Function",
     "text": "bisect(X::IntervalBox, α=0.5)\n\nBisect the IntervalBox X at position α ∈ [0,1] along its longest side.\n\n\n\n"
 },
 
@@ -86,6 +78,22 @@ var documenterSearchIndex = {"docs": [
     "title": "IntervalRootFinding.bisect",
     "category": "Function",
     "text": "bisect(X::Interval, α=0.5)\n\nSplit the interval X at position α; α=0.5 corresponds to the midpoint. Returns a tuple of the new intervals.\n\n\n\n"
+},
+
+{
+    "location": "api.html#IntervalRootFinding.bisect",
+    "page": "API",
+    "title": "IntervalRootFinding.bisect",
+    "category": "Function",
+    "text": "bisect(X::IntervalBox, i::Integer, α=0.5)\n\nBisect the IntervalBox in side number i.\n\n\n\n"
+},
+
+{
+    "location": "api.html#IntervalRootFinding.bisection-Tuple{Any,T<:Union{IntervalArithmetic.IntervalBox,IntervalArithmetic.Interval}}",
+    "page": "API",
+    "title": "IntervalRootFinding.bisection",
+    "category": "Method",
+    "text": "bisection(f, X; tolerance=1e-3)\n\nFind possible roots of the function f inside the Interval or IntervalBox X.\n\n\n\n"
 },
 
 {
@@ -106,6 +114,14 @@ var documenterSearchIndex = {"docs": [
 
 {
     "location": "api.html#IntervalRootFinding.guarded_mid-Tuple{Any,IntervalArithmetic.Interval{T}}",
+    "page": "API",
+    "title": "IntervalRootFinding.guarded_mid",
+    "category": "Method",
+    "text": "Returns the midpoint of the interval x, slightly shifted in case the midpoint is an exact root\n\n\n\n"
+},
+
+{
+    "location": "api.html#IntervalRootFinding.guarded_mid-Tuple{Function,IntervalArithmetic.Interval{T}}",
     "page": "API",
     "title": "IntervalRootFinding.guarded_mid",
     "category": "Method",
