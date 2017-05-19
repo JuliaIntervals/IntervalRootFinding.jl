@@ -69,14 +69,6 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "IntervalRootFinding.bisect",
     "category": "Function",
-    "text": "bisect(X::IntervalBox, α=0.5)\n\nBisect the IntervalBox X at position α ∈ [0,1] along its longest side.\n\n\n\n"
-},
-
-{
-    "location": "api.html#IntervalRootFinding.bisect",
-    "page": "API",
-    "title": "IntervalRootFinding.bisect",
-    "category": "Function",
     "text": "bisect(X::Interval, α=0.5)\n\nSplit the interval X at position α; α=0.5 corresponds to the midpoint. Returns a tuple of the new intervals.\n\n\n\n"
 },
 
@@ -86,6 +78,14 @@ var documenterSearchIndex = {"docs": [
     "title": "IntervalRootFinding.bisect",
     "category": "Function",
     "text": "bisect(X::IntervalBox, i::Integer, α=0.5)\n\nBisect the IntervalBox in side number i.\n\n\n\n"
+},
+
+{
+    "location": "api.html#IntervalRootFinding.bisect",
+    "page": "API",
+    "title": "IntervalRootFinding.bisect",
+    "category": "Function",
+    "text": "bisect(X::IntervalBox, α=0.5)\n\nBisect the IntervalBox X at position α ∈ [0,1] along its longest side.\n\n\n\n"
 },
 
 {
