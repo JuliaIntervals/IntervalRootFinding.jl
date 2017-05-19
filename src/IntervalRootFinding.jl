@@ -18,6 +18,8 @@ export
     bisection,
     complex_bisection
 
+export @intervalbox
+
 
 import Base: ⊆, show
 
