@@ -17,10 +17,18 @@ export
     bisection,
     bisect
 
-import Base: ⊆, show
+import Base: ⊆, show, promote_rule
 
 const derivative = ForwardDiff.derivative
 const D = derivative
+
+
+# Promotion rules
+promote_rule{T<:Real, N, R<:Real}(::Type{Interval{T}},
+    ::Type{ForwardDiff.Dual{N,R}}) = ForwardDiff.Dual{N, Interval{promote_type(T,R)}}
+
+promote_rule{T<:Real, N, R<:Real}(::Type{DecoratedInterval{T}},
+    ::Type{ForwardDiff.Dual{N,R}}) = ForwardDiff.Dual{N, DecoratedInterval{promote_type(T,R)}}
 
 # Root object:
 immutable Root{T<:Union{Interval,IntervalBox}}
