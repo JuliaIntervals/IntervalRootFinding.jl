@@ -7,7 +7,7 @@ os:
   - osx
 
 julia:
-  - release
+  - 0.5
   - nightly
 
 notifications:
