@@ -1,11 +1,11 @@
 """
     complex_bisection(f, X)
 
-Find complex roots of $f: \mathbb{C} \to \mathbb{C}$.
+Find complex roots of ``f: \mathbb{C} \to \mathbb{C}``.
 
 Inputs:
 
-- `f`: function that takes $z \in \mathbb{C}$ and returns another
+- `f`: function that takes ``z \in \mathbb{C}`` and returns another
 complex number.
 
 - `X`: An `IntervalBox` specifying the bounds on the real and imaginary parts
