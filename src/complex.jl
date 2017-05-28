@@ -1,11 +1,29 @@
-doc"""
+
+"""
+Make a function ``g: \mathbb{R}^2 \to \mathbb{R}^2`` from
+a function ``f: \mathbb{C} \to \mathbb{C}``.
+
+Returns a function taking an `IntervalBox` to an `IntervalBox`.
+"""
+function realify(f)
+    function g(X::IntervalBox)
+        z = Complex(X...)
+        zz = f(z)
+
+        return IntervalBox(reim(zz))
+    end
+
+    return g
+end
+
+"""
     complex_bisection(f, X)
 
-Find complex roots of $f: \mathbb{C} \to \mathbb{C}$.
+Find complex roots of ``f: \mathbb{C} \to \mathbb{C}``.
 
 Inputs:
 
-- `f`: function that takes $z \in \mathbb{C}$ and returns another
+- `f`: function that takes ``z \in \mathbb{C}`` and returns another
 complex number.
 
 - `X`: An `IntervalBox` specifying the bounds on the real and imaginary parts
@@ -18,11 +36,8 @@ function complex_bisection(f, X::IntervalBox)
     Make a 2D real version of the complex function `f` suitable for `bisection`,
     i.e. that accepts an `IntervalBox` and returns an `IntervalBox`
     """
-    function g(X::IntervalBox)
-        z = Complex(X...)
-        zz = f(z)
-        return IntervalBox(reim(zz))
-    end
+
+    g = realify(f)
 
     roots = bisection(g, X)
 
