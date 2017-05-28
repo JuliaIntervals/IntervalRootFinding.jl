@@ -58,7 +58,7 @@ include("bisect.jl")
 include("bisection.jl")
 include("newton.jl")
 include("krawczyk.jl")
-
+include("branch_and_prune.jl")
 
 function find_roots{T}(f::Function, a::Interval{T}, method::Function = newton;
                     tolerance = eps(T), debug = false, maxlevel = 30)
