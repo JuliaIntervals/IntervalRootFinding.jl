@@ -80,9 +80,12 @@ function newton_refine{N,T}(f::Function, f_prime::Function, X::Union{Interval{T}
     return [Root(X, :unique)]
 end
 
-function newton_refine{N,T}(f::Function, X::Interval{T};
-                tolerance=eps(T), debug=false)
 
+
+doc"""If a root is known to be inside an interval,
+`newton_refine` iterates the interval Newton method until that root is found."""
+function newton_refine{T}(f::Function, f_prime::Function, X::Interval{T};
+                          tolerance=eps(T), debug=false)
 
     debug && (print("Entering newton_refine:"); @show x)
 
