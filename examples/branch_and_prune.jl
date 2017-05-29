@@ -8,3 +8,8 @@ branch_and_prune(   (-5..5) × (-5..5),
                     X -> ( (x,y) = X; IntervalBox(x^2 + y^2 - 1, y - x) ),
                     bisection_helper
                 )
+
+branch_and_prune(   (-5..5) × (-5..5),
+                    X -> ( (x,y) = X; [x^2 + y^2 - 1, y - x] ),
+                    newton_helper(IntervalRootFinding.N)
+                )
