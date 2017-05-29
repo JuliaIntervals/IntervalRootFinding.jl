@@ -45,9 +45,9 @@ doc"""
 Multi-variable Newton operator.
 Requires the function to be defined using the `@intervalbox` macro.
 """
-function N(f::Function, f_prime::Function, X::IntervalBox)  # multidimensional Newton operator
+function N(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
     m = IntervalBox(Interval.(mid(X)))
-    J = f_prime([X...])
+    J = jacobian([X...])
 
     # @show m
     # @show J

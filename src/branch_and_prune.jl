@@ -1,13 +1,16 @@
 using IntervalRootFinding
 Root = IntervalRootFinding.Root
 
-import IntervalArithmetic.diam
+import IntervalArithmetic: diam, isinterior
 
 diam(x::Root) = diam(x.interval)
 
 export branch_and_prune, bisection_helper, newton_helper
 
 Base.size(x::Interval) = (1,)
+
+isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
+
 
 """
     branch_and_prune(X, f, prune_helper, tol=1e-3)
@@ -81,7 +84,7 @@ Generic refine operation for Krawczyk and Newton.
 This assumes that it is already known that `X` contains a unique root.
 Call using e.g. `op = X -> N(f, f_prime, X)`
 """
-function refine(op, X::Interval)
+function refine(op, X)
 
     tolerance = 1e-16
 
@@ -108,14 +111,21 @@ function newton_helper(op)
 
         X -> begin
 
+            if !(zero(X) ⊆ IntervalBox(f(X)...))
+                return :empty, X
+            end
+
+
             NX = op(f, f_prime, X) ∩ X
 
-            isempty(NX) && return (:empty, X)
+            isempty(NX) && return :empty, X
+
 
             if NX ⪽ X  # isinterior; know there's a unique root inside
                 NX =  refine(X -> op(f, f_prime, X), NX)
                 return :unique, NX
             end
+
 
             return :unknown, NX
 
