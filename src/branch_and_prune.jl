@@ -7,6 +7,8 @@ diam(x::Root) = diam(x.interval)
 
 export branch_and_prune, bisection_helper, newton_helper
 
+Base.size(x::Interval) = (1,)
+
 """
 Generic branch and prune.
 
@@ -15,7 +17,16 @@ Inputs:
 - function `prune` that takes as argument an interval and returns
 a pair (Symbol, Interval); the Symbol describes the status of that interval
 """
-function branch_and_prune(X, prune, tol=1e-3)
+function branch_and_prune(X, f, prune_helper, tol=1e-3)
+
+    prune = prune_helper(f)
+
+    input_dim = size(X)[1]
+    output_dim = size(f(X))[1]
+
+    @show input_dim
+    @show output_dim
+
     working = [X]
     outputs = Root{typeof(X)}[]
 
@@ -79,24 +90,24 @@ end
 """
 Helper function for Newton (`op=N`) and Krawczyk (`op=K`)
 """
-function newton_helper(op, f)
+function newton_helper(op)
+    f -> begin
 
-    f_prime = x -> ForwardDiff.derivative(f, x)
+        f_prime = x -> ForwardDiff.derivative(f, x)
 
-    X -> begin
+        X -> begin
 
-        NX = op(f, f_prime, X) ∩ X
+            NX = op(f, f_prime, X) ∩ X
 
-        isempty(NX) && return (:empty, X)
+            isempty(NX) && return (:empty, X)
 
-        if NX ⪽ X  # isinterior
+            if NX ⪽ X  # isinterior; know there's a unique root inside
+                NX =  refine(X -> op(f, f_prime, X), NX)
+                return :unique, NX
+            end
 
-            NX =  refine(X -> op(f, f_prime, X), NX)
+            return :unknown, NX
 
-            return :unique, NX
         end
-
-        return :unknown, NX
-
     end
 end
