@@ -10,22 +10,29 @@ export branch_and_prune, bisection_helper, newton_helper
 Base.size(x::Interval) = (1,)
 
 """
-Generic branch and prune.
+    branch_and_prune(X, f, prune_helper, tol=1e-3)
+
+Generic branch and prune routine for finding roots of a function in a box.
 
 Inputs:
-- Interval or IntervalBox X
-- function `prune` that takes as argument an interval and returns
-a pair (Symbol, Interval); the Symbol describes the status of that interval
+- `Interval` or `IntervalBox` `X`
+- function `f` whose roots will be found
+- function `prune_helper` that, when applied to the function `f`, determines the status of a given box `X`
 """
 function branch_and_prune(X, f, prune_helper, tol=1e-3)
-
-    prune = prune_helper(f)
 
     input_dim = size(X)[1]
     output_dim = size(f(X))[1]
 
     @show input_dim
     @show output_dim
+
+    if !(input_dim == output_dim)
+        throw(ArgumentError("Function must have the same input and output dimension"))
+    end
+
+    prune = prune_helper(input_dim, f)
+
 
     working = [X]
     outputs = Root{typeof(X)}[]
@@ -57,7 +64,7 @@ function branch_and_prune(X, f, prune_helper, tol=1e-3)
 end
 
 
-function bisection_helper(f)
+function bisection_helper(dim, f)
     X -> begin
         image = f(X)
 
@@ -91,9 +98,13 @@ end
 Helper function for Newton (`op=N`) and Krawczyk (`op=K`)
 """
 function newton_helper(op)
-    f -> begin
+    (dim, f) -> begin
 
-        f_prime = x -> ForwardDiff.derivative(f, x)
+        if dim == 1
+            f_prime = x -> ForwardDiff.derivative(f, x)
+        else
+            f_prime = x -> ForwardDiff.jacobian(f, x)
+        end
 
         X -> begin
 
