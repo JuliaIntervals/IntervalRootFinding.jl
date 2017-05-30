@@ -58,6 +58,7 @@ include("bisect.jl")
 include("bisection.jl")
 include("newton.jl")
 include("krawczyk.jl")
+include("moore_skelboe.jl")
 
 
 function find_roots{T}(f::Function, a::Interval{T}, method::Function = newton;
