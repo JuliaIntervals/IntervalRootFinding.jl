@@ -1,6 +1,6 @@
 # This file is part of the ValidatedNumerics.jl package; MIT licensed
 
-__precompile__(true)
+# __precompile__(true)
 
 module IntervalRootFinding
 
@@ -58,7 +58,9 @@ include("bisect.jl")
 include("bisection.jl")
 include("newton.jl")
 include("krawczyk.jl")
+
 include("moore_skelboe.jl")
+include("SortedVector.jl")
 
 
 function find_roots{T}(f::Function, a::Interval{T}, method::Function = newton;
