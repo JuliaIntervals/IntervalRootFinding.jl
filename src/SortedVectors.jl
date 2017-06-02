@@ -71,7 +71,7 @@ function binary_search(v, x)
         return 1
 
     elseif x > v[b]
-        return b
+        return b + 1
     end
 
     m = (a + b) ÷ 2  # mid-point
