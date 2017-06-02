@@ -44,7 +44,7 @@ function insert!{T}(v::SortedVector{T}, i::Int, x::T)
 end
 
 function insert!{T}(v::SortedVector{T}, x::T)
-    i = binary_search(v, x)
+    i = searchsortedfirst(v, x)
     insert!(v.data, i, x)
     return v
 end
@@ -59,7 +59,7 @@ function resize!(v::SortedVector, n::Int)
     return v
 end
 
-
+## Use searchsortedfirst from Base instead of the following!
 """
 Do binary search for item `x` in *sorted* vector `v`.
 Returns the lower bound for the position of `x` in `v`.

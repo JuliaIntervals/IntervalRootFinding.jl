@@ -51,36 +51,63 @@ function moore_skelboe{T}(f, X::T, tol=1e-3)
 end
 
 
+using DataStructures
+export optimize
+
 """
-Do binary search for item `x` in *sorted* vector `v`.
-Returns the lower bound for the position of `x` in `v`.
+    optimize(f, X, tol=1e-3)
+
+"Optimize" algorithm for global optimization, not including constraint propagation.
+Removes boxes that are known not to contain the global minimum
+
 """
-function binary_search(v, x)
-    a, b = 1, length(v)
-    m = (a + b) ÷ 2  # mid-point
+function optimize{T}(f, X::T, tol=1e-3)
 
-    while abs(a - b) > 1
+    # list of boxes with corresponding lower bound, ordered by increasing lower bound:
+    working = SortedVector([(X, ∞)], x->x[2])
 
-        m = (a + b) ÷ 2  # mid-point
+    global_min = ∞
+    minimizers = Tuple{T, Float64}[]
 
-        if v[m] == x
-            return m
+    while !isempty(working)
+
+        # @show working
+
+        (X, Xmin) = pop!(working)
+        # Y = f(X)
+
+        if inf(f(X)) > global_min  # inf(f(X)) is Xmin?
+            continue
         end
 
-        if x < v[m]
-            b = m
+        # find candidate for global minimum upper bound:
+        m = sup(f(Interval.(mid.(X))))   # evaluate at midpoint of current interval
+
+        # @show m, global_min
+        # @show length(working.data)
+
+        if m < global_min
+            global_min = m
+        end
+
+        # Remove all boxes whose lower bound is greater than the current one:
+        # Since they are ordered, just find the first one that is too big
+
+        cutoff = searchsortedfirst(working.data, (X, global_min), by=x->x[2])
+        resize!(working, cutoff-1)
+
+
+
+
+        if diam(X) < tol
+            push!( minimizers, (X, inf(f(X))) )
+
         else
-            a = m
+            X1, X2 = bisect(X)
+            push!( working, (X1, inf(f(X1))), (X2, inf(f(X2))) )
         end
+
     end
 
-    if v[b] == x
-        return b
-    end
-
-    return a
+    return global_min, minimizers
 end
-
-v = [1, 3, 6, 7, 9, 10]
-binary_search(v, 3)
-binary_search(v, 4)
