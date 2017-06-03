@@ -60,7 +60,7 @@ include("newton.jl")
 include("krawczyk.jl")
 
 include("moore_skelboe.jl")
-include("SortedVectors.jl")
+#include("SortedVectors.jl")
 
 
 function find_roots{T}(f::Function, a::Interval{T}, method::Function = newton;

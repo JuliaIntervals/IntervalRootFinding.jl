@@ -17,35 +17,34 @@ function moore_skelboe{T}(f, X::T, tol=1e-3)
     global_minimum = ∞
     minimizers = T[]
 
+    num_bisections = 0
+
     while !isempty(working)
 
         X = pop!(working)
         Y = f(X)
 
-        if inf(Y) <= global_minimum
+        if inf(Y) > global_minimum
+            continue
+        end
 
-            m = sup(f(Interval.(mid.(X))))
+        m = sup(f(Interval.(mid.(X))))
 
-            if m < global_minimum
-                global_minimum = m
+        if m < global_minimum
+            global_minimum = m
+        end
 
-                # # remove mimimizers that are now excluded:
-                #
-                # new_minimizers =
+        if diam(Y) > tol
+            push!(working, bisect(X)...)
+            num_bisections += 1
 
-
-            end
-
-            if diam(Y) > tol
-                push!(working, bisect(X)...)
-
-            else
-                push!(minimizers, X)
-            end
-
+        else
+            push!(minimizers, X)
         end
 
     end
+
+    @show num_bisections
 
     return global_minimum, minimizers
 end
@@ -68,6 +67,8 @@ function optimize{T}(f, X::T, tol=1e-3)
 
     global_min = ∞
     minimizers = Tuple{T, Float64}[]
+
+    num_bisections = 0
 
     while !isempty(working)
 
@@ -105,6 +106,7 @@ function optimize{T}(f, X::T, tol=1e-3)
         else
             X1, X2 = bisect(X)
             push!( working, (X1, inf(f(X1))), (X2, inf(f(X2))) )
+            num_bisections += 1
         end
 
     end
