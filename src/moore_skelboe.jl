@@ -21,7 +21,7 @@ function moore_skelboe{T}(f, X::T, tol=1e-3)
 
     while !isempty(working)
 
-        X = pop!(working)
+        X = shift!(working)
         Y = f(X)
 
         if inf(Y) > global_minimum
@@ -74,7 +74,7 @@ function optimize{T}(f, X::T, tol=1e-3)
 
         # @show working
 
-        (X, Xmin) = pop!(working)
+        (X, Xmin) = shift!(working)
         # Y = f(X)
 
         if inf(f(X)) > global_min  # inf(f(X)) is Xmin?
@@ -110,6 +110,8 @@ function optimize{T}(f, X::T, tol=1e-3)
         end
 
     end
+
+    @show num_bisections
 
     return global_min, minimizers
 end
