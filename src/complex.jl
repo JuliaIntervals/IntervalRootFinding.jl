@@ -12,7 +12,7 @@ complex number.
 of `z`.
 
 """
-function complex_bisection(f, X::IntervalBox)
+function complex_bisection(f, X::IntervalBox, tol=1e-3)
 
     """
     Make a 2D real version of the complex function `f` suitable for `bisection`,
@@ -25,7 +25,7 @@ function complex_bisection(f, X::IntervalBox)
         return IntervalBox(reim(zz))
     end
 
-    roots = bisection(g, X)
+    roots = bisection(g, X, tol)
 
     return g, [Complex(root.interval...) for root in roots]
 end
@@ -35,4 +35,4 @@ end
 
 Version in which the bounds are specified as two separate `Interval`s.
 """
-complex_bisection(f, x::Interval, y::Interval) = complex_bisection(f, x × y)
+complex_bisection(f, x::Interval, y::Interval, tol=1e-3) = complex_bisection(f, x × y, tol)
