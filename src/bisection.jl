@@ -32,6 +32,8 @@ end
 
 function bisection{T<:Union{Interval,IntervalBox}}(f, V::Vector{T}; tolerance=1e-3, debug=false)
 
-    return vcat([bisection(f, X, tolerance=tolerance, debug=debug) for X in V])
+    v = (bisection(f, X, tolerance=tolerance, debug=debug) for X in V)
+
+    return vcat(v...)
 
 end
