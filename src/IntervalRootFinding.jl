@@ -7,6 +7,8 @@ module IntervalRootFinding
 using IntervalArithmetic
 using ForwardDiff
 
+const Interval = IntervalArithmetic.Interval
+
 ## Root finding
 export
     newton, krawczyk,
