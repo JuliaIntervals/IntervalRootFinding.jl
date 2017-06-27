@@ -70,6 +70,33 @@ function branch_and_prune(X, f, contractor, tol=1e-3)
     return outputs
 end
 
+function branch_and_prune{T<:Union{Interval,IntervalBox}}(V::Vector{Root{T}}, f, contractor, tol=1e-3)
+    reduce(append!, Root{T}[], [branch_and_prune(X.interval, f, contractor, tol) for X in V])
+end
+
+export recursively_branch_and_prune
+
+function recursively_branch_and_prune(X, h, contractor=BisectionContractor, final_tol=1e-14)
+    tol = 2
+    roots = branch_and_prune(X, h, IntervalRootFinding.BisectionContractor, tol)
+
+    while tol > 1e-14
+       tol /= 2
+       roots = branch_and_prune(roots, h, IntervalRootFinding.BisectionContractor, tol)
+    end
+
+    return roots
+end
+
+
+
+
+
+contains_zero{T}(X::Interval{T}) = zero(T) ∈ X
+contains_zero(X::IntervalBox) = all(contains_zero(X[i]) for i in 1:length(X))
+
+
+# contractors:
 
 abstract type Contractor end
 
@@ -77,9 +104,6 @@ struct BisectionContractor{F} <: Contractor
     dimension::Int
     f::F
 end
-
-contains_zero{T}(X::Interval{T}) = zero(T) ∈ X
-contains_zero(X::IntervalBox) = all(contains_zero(X[i]) for i in 1:length(X))
 
 function (contractor::BisectionContractor)(X)
     image = contractor.f(X)
@@ -110,6 +134,51 @@ function refine(op, X)
 
     return X
 end
+
+
+
+struct NewtonContractor{F,FP,O} <: Contractor
+    dimension::Int
+    f::F
+    fp::FP
+    op::O
+end
+
+NewtonContractor(dim, f) = NewtonContractor(Val{dim}, f)
+
+function NewtonContractor(::Type{Val{1}}, f::Function)
+    f_prime = x -> ForwardDiff.derivative(f, x)
+    NewtonContractor(1, f, f_prime, N)
+end
+
+function NewtonContractor{n}(::Type{Val{n}}, f::Function)
+    f_prime = x -> ForwardDiff.jacobian(f, x)
+    NewtonContractor(n, f, f_prime, N)
+end
+
+
+function (C::NewtonContractor)(X)
+
+    if !(contains_zero(IntervalBox(C.f(X))))
+        return :empty, X
+    end
+
+
+    NX = C.op(C.f, C.fp, X) ∩ X
+
+    isempty(NX) && return :empty, X
+
+
+    if NX ⪽ X  # isinterior; know there's a unique root inside
+        NX =  refine(X -> C.op(C.f, C.fp, X), NX)
+        return :unique, NX
+    end
+
+
+    return :unknown, NX
+end
+
+
 
 """
 Helper function for Newton (`op=N`) and Krawczyk (`op=K`)
