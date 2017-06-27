@@ -6,6 +6,7 @@ module IntervalRootFinding
 
 using IntervalArithmetic
 using ForwardDiff
+using StaticArrays
 
 ## Root finding
 export

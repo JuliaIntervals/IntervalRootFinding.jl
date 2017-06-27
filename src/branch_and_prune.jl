@@ -24,8 +24,8 @@ Inputs:
 """
 function branch_and_prune(X, f, contractor, tol=1e-3)
 
-    input_dim = size(X)[1]
-    output_dim = size(f(X))[1]
+    input_dim = length(X)
+    output_dim = length(X)
 
     # @show input_dim
     # @show output_dim
@@ -34,7 +34,7 @@ function branch_and_prune(X, f, contractor, tol=1e-3)
     #     throw(ArgumentError("Input dimension ($input_dim) and output dimension ($output_dim) must be the same."))
     # end
 
-    contract = contractor(input_dim, f)
+    contract = contractor(Val{input_dim}, f)
 
     # main algorithm:
 
@@ -93,6 +93,7 @@ end
 
 
 contains_zero{T}(X::Interval{T}) = zero(T) ∈ X
+contains_zero(X::SVector) = all(contains_zero(X[i]) for i in 1:length(X))
 contains_zero(X::IntervalBox) = all(contains_zero(X[i]) for i in 1:length(X))
 
 
@@ -104,6 +105,9 @@ struct BisectionContractor{F} <: Contractor
     dimension::Int
     f::F
 end
+
+BisectionContractor{n}(::Type{Val{n}}, f) = BisectionContractor(n, f)
+
 
 function (contractor::BisectionContractor)(X)
     image = contractor.f(X)
@@ -143,8 +147,6 @@ struct NewtonContractor{F,FP,O} <: Contractor
     fp::FP
     op::O
 end
-
-NewtonContractor(dim, f) = NewtonContractor(Val{dim}, f)
 
 function NewtonContractor(::Type{Val{1}}, f::Function)
     f_prime = x -> ForwardDiff.derivative(f, x)
