@@ -10,7 +10,8 @@ function bisection{T<:Union{Interval,IntervalBox}}(f, X::T; tolerance=1e-3, debu
 
     debug && @show X, image
 
-    if !(zero(X) ⊆ image)
+    #if !(zero(X) ⊆ image)
+    if !(contains_zero(image))
         return Root{typeof(X)}[]
     end
 
