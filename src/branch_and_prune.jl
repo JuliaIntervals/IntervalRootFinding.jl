@@ -15,12 +15,12 @@ isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
 """
     branch_and_prune(X, f, prune_helper, tol=1e-3)
 
-Generic branch and prune routine for finding roots of a function in a box.
+Generic branch and prune routine for finding isolated roots of a function ``f:R^n → R^n`` in a box.
 
 Inputs:
-- `Interval` or `IntervalBox` `X`
-- function `f` whose roots will be found
-- function `prune_helper` that, when applied to the function `f`, determines the status of a given box `X`
+- `X`: `Interval` or `IntervalBox`
+- `f`: function whose roots will be found
+- `prune_helper`: function that, when applied to the function `f`, determines the status of a given box `X`
 """
 function branch_and_prune(X, f, prune_helper, tol=1e-3)
 
@@ -31,12 +31,13 @@ function branch_and_prune(X, f, prune_helper, tol=1e-3)
     @show output_dim
 
     if !(input_dim == output_dim)
-        throw(ArgumentError("Function must have the same input and output dimension"))
+        throw(ArgumentError("Input dimension ($input_dim) and output dimension ($output_dim) must be the same."))
     end
 
     prune = prune_helper(input_dim, f)
 
-
+    # main algorithm:
+    
     working = [X]
     outputs = Root{typeof(X)}[]
 
