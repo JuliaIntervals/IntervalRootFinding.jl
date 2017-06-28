@@ -2,9 +2,8 @@ using IntervalRootFinding
 using IntervalRootFinding: Root
 
 import IntervalArithmetic: diam, isinterior
-export branch_and_prune, Bisection, Newton
 
-export
+export branch_and_prune, Bisection, Newton
 
 diam(x::Root) = diam(x.interval)
 
@@ -93,14 +92,16 @@ end
 """
 If the input interval is complex, treat `f` as a complex function, currently of one complex variable `z`.
 """
-function branch_and_prune{T}(X::Complex{Interval{T}}, f, contractor, tol=1e-3)
+function branch_and_prune{T}(Xc::Complex{Interval{T}}, f, contractor, tol=1e-3)
 
     g = realify(f)
-    Y = IntervalBox(reim(X))
+    Y = IntervalBox(reim(Xc))
 
     roots = branch_and_prune(Y, g, contractor, tol)
 
-    return g, [Complex(root.interval...) for root in roots]
+    # @show roots
+
+    return g, [Root(Complex(root.interval...), root.status) for root in roots]
 end
 
 
@@ -168,7 +169,7 @@ function Newton(::Type{Val{1}}, f::Function)
     Newton(1, f, f_prime, N)
 end
 
-function NewtonContractor{n}(::Type{Val{n}}, f::Function)
+function Newton{n}(::Type{Val{n}}, f::Function)
     f_prime = x -> ForwardDiff.jacobian(f, x)
     Newton(n, f, f_prime, N)
 end
