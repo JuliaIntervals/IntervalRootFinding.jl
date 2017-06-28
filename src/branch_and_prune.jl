@@ -2,8 +2,9 @@ using IntervalRootFinding
 using IntervalRootFinding: Root
 
 import IntervalArithmetic: diam, isinterior
-export branch_and_prune, bisection_helper, newton_helper
+export branch_and_prune, Bisection, Newton
 
+export
 
 diam(x::Root) = diam(x.interval)
 
@@ -192,42 +193,4 @@ function (C::Newton)(X)
 
 
     return :unknown, NX
-end
-
-
-
-"""
-Helper function for Newton (`op=N`) and Krawczyk (`op=K`)
-"""
-function newton_helper(op)
-    (dim, f) -> begin
-
-        if dim == 1
-            f_prime = x -> ForwardDiff.derivative(f, x)
-        else
-            f_prime = x -> ForwardDiff.jacobian(f, x)
-        end
-
-        X -> begin
-
-            if !(zero(X) ⊆ IntervalBox(f(X)...))
-                return :empty, X
-            end
-
-
-            NX = op(f, f_prime, X) ∩ X
-
-            isempty(NX) && return :empty, X
-
-
-            if NX ⪽ X  # isinterior; know there's a unique root inside
-                NX =  refine(X -> op(f, f_prime, X), NX)
-                return :unique, NX
-            end
-
-
-            return :unknown, NX
-
-        end
-    end
 end
