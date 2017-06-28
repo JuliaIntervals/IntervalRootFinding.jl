@@ -88,7 +88,16 @@ function recursively_branch_and_prune(X, h, contractor=BisectionContractor, fina
     return roots
 end
 
+"""
+If the input interval is complex, treat `f` as a complex function, currently of one complex variable `z`.
+"""
+function branch_and_prune{T}(X::Complex{Interval{T}}, f, contractor, tol=1e-3)
+    g = realify(f)
 
+    roots = branch_and_prune(IntervalBox(reim(X)), g, contractor, tol)
+
+    return g, [Complex(root.interval...) for root in roots]
+end
 
 
 
