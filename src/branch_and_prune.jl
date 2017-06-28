@@ -71,7 +71,7 @@ function branch_and_prune(X, f, contractor, tol=1e-3)
     return outputs
 end
 
-function branch_and_prune{T<:Union{Interval,IntervalBox}}(V::Vector{Root{T}}, f, contractor, tol=1e-3)
+function branch_and_prune{T}(V::Vector{Root{T}}, f, contractor, tol=1e-3)
     reduce(append!, Root{T}[], [branch_and_prune(X.interval, f, contractor, tol) for X in V])
 end
 
@@ -101,7 +101,7 @@ function branch_and_prune{T}(Xc::Complex{Interval{T}}, f, contractor, tol=1e-3)
 
     # @show roots
 
-    return g, [Root(Complex(root.interval...), root.status) for root in roots]
+    return [Root(Complex(root.interval...), root.status) for root in roots]
 end
 
 
