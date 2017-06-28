@@ -24,7 +24,7 @@ const derivative = ForwardDiff.derivative
 const D = derivative
 
 # Root object:
-immutable Root{T<:Union{Interval,IntervalBox}}
+immutable Root{T}
     interval::T
     status::Symbol
 end
