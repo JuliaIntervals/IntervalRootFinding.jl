@@ -1,52 +1,35 @@
+"""
+Complex numbers as 2-vectors, enough for polynomials.
+"""
+struct Compl{T}
+    re::T
+    im::T
+end
+
+Base.show(io::IO, c::Compl) = println(io, c.re, " + ", c.im, "im")
+
+Base.:+{T}(a::Compl{T}, b::Compl{T}) = Compl{T}(a.re+b.re, a.im+b.im)
+Base.:-{T}(a::Compl{T}, b::Compl{T}) = Compl{T}(a.re-b.re, a.im-b.im)
+
+Base.:*{T}(a::Compl{T}, b::Compl{T}) = Compl{T}(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re)
+Base.:*{T}(α::Number, z::Compl{T}) = Compl{T}(α*z.re, α*z.im)
+
+Base.one{T}(z::Compl{T}) = Compl{T}(one(T), zero(T))
+
+Base.copy{T}(z::Compl{T}) = Compl{T}(z.re, z.im)
 
 """
-Make a function ``g: \mathbb{R}^2 \to \mathbb{R}^2`` from
-a function ``f: \mathbb{C} \to \mathbb{C}``.
-
-Returns a function taking an `IntervalBox` to an `IntervalBox`.
+Takes a complex (polynomial) function f and returns a function g:R^2 -> R^2
+that implements it.
 """
 function realify(f)
-    function g(X)
-        z = Complex(X[1], X[2])
-        zz = f(z)
 
-        return SVector(reim(zz))
+    function g(x)
+        z = Compl(x[1], x[2])
+        z2 = f(z)
+        SVector(z2.re, z2.im)
     end
 
     return g
+
 end
-
-"""
-    complex_bisection(f, X)
-
-Find complex roots of ``f: \mathbb{C} \to \mathbb{C}``.
-
-Inputs:
-
-- `f`: function that takes ``z \in \mathbb{C}`` and returns another
-complex number.
-
-- `X`: An `IntervalBox` specifying the bounds on the real and imaginary parts
-of `z`.
-
-"""
-function complex_bisection(f, X::IntervalBox, tol=1e-3)
-
-    """
-    Make a 2D real version of the complex function `f` suitable for `bisection`,
-    i.e. that accepts an `IntervalBox` and returns an `IntervalBox`
-    """
-
-    g = realify(f)
-
-    roots = bisection(g, X, tolerance=tol)
-
-    return g, [Complex(root.interval...) for root in roots]
-end
-
-"""
-    complex_bisection(f, x, y)
-
-Version in which the bounds are specified as two separate `Interval`s.
-"""
-complex_bisection(f, x::Interval, y::Interval, tol=1e-3) = complex_bisection(f, x × y, tol)

@@ -1,11 +1,12 @@
 using IntervalRootFinding
-Root = IntervalRootFinding.Root
+using IntervalRootFinding: Root
 
 import IntervalArithmetic: diam, isinterior
+export branch_and_prune, bisection_helper, newton_helper
+
 
 diam(x::Root) = diam(x.interval)
 
-export branch_and_prune, bisection_helper, newton_helper
 
 Base.size(x::Interval) = (1,)
 
@@ -92,9 +93,11 @@ end
 If the input interval is complex, treat `f` as a complex function, currently of one complex variable `z`.
 """
 function branch_and_prune{T}(X::Complex{Interval{T}}, f, contractor, tol=1e-3)
-    g = realify(f)
 
-    roots = branch_and_prune(IntervalBox(reim(X)), g, contractor, tol)
+    g = realify(f)
+    Y = IntervalBox(reim(X))
+
+    roots = branch_and_prune(Y, g, contractor, tol)
 
     return g, [Complex(root.interval...) for root in roots]
 end
@@ -110,15 +113,17 @@ contains_zero(X::IntervalBox) = all(contains_zero(X[i]) for i in 1:length(X))
 
 abstract type Contractor end
 
-struct BisectionContractor{F} <: Contractor
+export Bisection, Newton
+
+struct Bisection{F} <: Contractor
     dimension::Int
     f::F
 end
 
-BisectionContractor{n}(::Type{Val{n}}, f) = BisectionContractor(n, f)
+Bisection{n}(::Type{Val{n}}, f) = Bisection(n, f)
 
 
-function (contractor::BisectionContractor)(X)
+function (contractor::Bisection)(X)
     image = contractor.f(X)
 
     if !(contains_zero(image))
@@ -150,25 +155,25 @@ end
 
 
 
-struct NewtonContractor{F,FP,O} <: Contractor
+struct Newton{F,FP,O} <: Contractor
     dimension::Int
     f::F
     fp::FP
     op::O
 end
 
-function NewtonContractor(::Type{Val{1}}, f::Function)
+function Newton(::Type{Val{1}}, f::Function)
     f_prime = x -> ForwardDiff.derivative(f, x)
-    NewtonContractor(1, f, f_prime, N)
+    Newton(1, f, f_prime, N)
 end
 
 function NewtonContractor{n}(::Type{Val{n}}, f::Function)
     f_prime = x -> ForwardDiff.jacobian(f, x)
-    NewtonContractor(n, f, f_prime, N)
+    Newton(n, f, f_prime, N)
 end
 
 
-function (C::NewtonContractor)(X)
+function (C::Newton)(X)
 
     if !(contains_zero(IntervalBox(C.f(X))))
         return :empty, X
