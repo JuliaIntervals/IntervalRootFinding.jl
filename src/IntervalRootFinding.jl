@@ -10,12 +10,9 @@ using StaticArrays
 
 ## Root finding
 export
-    newton, krawczyk,
     derivative, jacobian,  # reexport derivative from ForwardDiff
     Root, is_unique,
-    find_roots,
-    find_roots_midpoint,
-    bisection,
+    roots,
     bisect
 
 import Base: ⊆, show

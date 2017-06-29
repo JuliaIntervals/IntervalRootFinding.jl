@@ -19,11 +19,11 @@ isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
 Generic branch and prune routine for finding isolated roots of a function ``f:R^n → R^n`` in a box.
 
 Inputs:
-- `X`: `Interval` or `IntervalBox`
 - `f`: function whose roots will be found
+- `X`: `Interval` or `IntervalBox`
 - `contractor`: function that, when applied to the function `f`, determines the status of a given box `X`. It returns the new box and a symbol indicating the status.
 """
-function branch_and_prune(X, f, contractor, tol=1e-3)
+function branch_and_prune(f, X, contractor, tol=1e-3)
 
     input_dim = length(X)
     output_dim = length(X)
@@ -71,15 +71,15 @@ function branch_and_prune(X, f, contractor, tol=1e-3)
     return outputs
 end
 
-function branch_and_prune{T}(V::Vector{Root{T}}, f, contractor, tol=1e-3)
-    reduce(append!, Root{T}[], [branch_and_prune(X.interval, f, contractor, tol) for X in V])
+function branch_and_prune{T}(f, V::Vector{Root{T}}, contractor, tol=1e-3)
+    reduce(append!, Root{T}[], [branch_and_prune(f, X.interval, contractor, tol) for X in V])
 end
 
 export recursively_branch_and_prune
 
-function recursively_branch_and_prune(X, h, contractor=BisectionContractor, final_tol=1e-14)
+function recursively_branch_and_prune(h, X, contractor=BisectionContractor, final_tol=1e-14)
     tol = 2
-    roots = branch_and_prune(X, h, IntervalRootFinding.BisectionContractor, tol)
+    roots = branch_and_prune(h, X, IntervalRootFinding.BisectionContractor, tol)
 
     while tol > 1e-14
        tol /= 2
@@ -92,7 +92,7 @@ end
 """
 If the input interval is complex, treat `f` as a complex function, currently of one complex variable `z`.
 """
-function branch_and_prune{T}(Xc::Complex{Interval{T}}, f, contractor, tol=1e-3)
+function branch_and_prune{T}(f, Xc::Complex{Interval{T}}, contractor, tol=1e-3)
 
     g = realify(f)
     Y = IntervalBox(reim(Xc))
@@ -195,3 +195,8 @@ function (C::Newton)(X)
 
     return :unknown, NX
 end
+
+
+roots(f, X, contractor::Contractor, tol=1e-3) = branch_and_prune(X, f, contractor, tol)
+
+roots(f, X, tol=1e-3) = branch_and_prune(X, f, Newton, tol)
