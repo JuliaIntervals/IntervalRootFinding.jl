@@ -47,7 +47,7 @@ Requires the function to be defined using the `@intervalbox` macro.
 """
 function N(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
     m = IntervalBox(Interval.(mid(X)))
-    J = jacobian([X...])
+    J = jacobian(SVector(X))
 
     # @show m
     # @show J

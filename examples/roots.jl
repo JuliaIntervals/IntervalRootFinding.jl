@@ -41,7 +41,7 @@ X = (-5..5)
 
 
 
-h(x) = SVector(2*x[1] - x[2] - exp(-x[1]), -x[1] + 2*x[2] - exp(-x[2]))
+h(x) = SVector(2*x - y - exp(-x), -x + 2*y - exp(-y))
 
 rts = roots(h, X × X, Bisection)
 rts = roots(rts, g, Newton)
@@ -49,7 +49,7 @@ rts = roots(rts, g, Newton)
 
 
 # Dennis-Schnabel:
-h(x) = SVector(x[1]^2 + x[2]^2 - 2, exp(x[1] - 1) + x[2]^3 - 2)
+h(x) = SVector(x^2 + y^2 - 2, exp(x - 1) + y^3 - 2)
 
 rts = roots(X × X, h, Bisection)
 rts = roots(rts, h, Newton)
@@ -64,7 +64,17 @@ rts = roots(rts, h, Newton)
 
 # http://www-sop.inria.fr/saga/POL/
 
-# The MINPACK benchmarks () https://github.com/JuliaNLSolvers/NLsolve.jl/blob/master/test/minpack.jl
+##  MINPACK benchmarks: https://github.com/JuliaNLSolvers/NLsolve.jl/blob/master/test/minpack.jl
+
+function rosenbrock(X)
+    x, y = X
+    SVector( 1 - x, 10 * (y - x^2) )
+end
+
+roots(rosenbrock)
+
 # and other files in NLsolve test suite
+
+
 
 # Testing unconstrained optimization software, Moré, Garbow, Hillstrom ACM Trans. Math. Soft. 7 (1), 17-41 (1981)
