@@ -17,6 +17,8 @@ export
 
 import Base: ⊆, show
 
+const Interval = IntervalArithmetic.Interval
+
 const derivative = ForwardDiff.derivative
 const D = derivative
 

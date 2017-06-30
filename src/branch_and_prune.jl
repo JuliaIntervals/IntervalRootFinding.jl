@@ -14,7 +14,7 @@ isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
 
 
 """
-    branch_and_prune(X, f, contractor, tol=1e-3)
+    branch_and_prune(f, X, contractor, tol=1e-3)
 
 Generic branch and prune routine for finding isolated roots of a function ``f:R^n → R^n`` in a box.
 
@@ -83,7 +83,7 @@ function recursively_branch_and_prune(h, X, contractor=BisectionContractor, fina
 
     while tol > 1e-14
        tol /= 2
-       roots = branch_and_prune(roots, h, IntervalRootFinding.BisectionContractor, tol)
+       roots = branch_and_prune(h, roots, IntervalRootFinding.BisectionContractor, tol)
     end
 
     return roots
@@ -97,7 +97,7 @@ function branch_and_prune{T}(f, Xc::Complex{Interval{T}}, contractor, tol=1e-3)
     g = realify(f)
     Y = IntervalBox(reim(Xc))
 
-    roots = branch_and_prune(Y, g, contractor, tol)
+    roots = branch_and_prune(g, Y, contractor, tol)
 
     # @show roots
 
@@ -113,11 +113,11 @@ contains_zero(X::IntervalBox) = all(contains_zero(X[i]) for i in 1:length(X))
 
 # contractors:
 
-abstract type Contractor end
+abstract type Contractor{F} end
 
 export Bisection, Newton
 
-struct Bisection{F} <: Contractor
+struct Bisection{F} <: Contractor{F}
     dimension::Int
     f::F
 end
@@ -157,7 +157,7 @@ end
 
 
 
-struct Newton{F,FP,O} <: Contractor
+struct Newton{F,FP,O} <: Contractor{F}
     dimension::Int
     f::F
     fp::FP
@@ -177,9 +177,12 @@ end
 
 function (C::Newton)(X)
 
+    # use Bisection contractor for this:
     if !(contains_zero(IntervalBox(C.f(X))))
         return :empty, X
     end
+
+    # given that have the Jacobian, can also do mean value form
 
 
     NX = C.op(C.f, C.fp, X) ∩ X
@@ -197,6 +200,6 @@ function (C::Newton)(X)
 end
 
 
-roots(f, X, contractor::Contractor, tol=1e-3) = branch_and_prune(X, f, contractor, tol)
+roots{C<:Contractor}(f, X, contractor::Type{C}, tol::Float64=1e-3) = branch_and_prune(f, X, contractor, tol)
 
-roots(f, X, tol=1e-3) = branch_and_prune(X, f, Newton, tol)
+roots(f, X, tol::Float64=1e-3) = branch_and_prune(f, X, Newton, tol)
