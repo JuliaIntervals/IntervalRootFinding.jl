@@ -9,13 +9,17 @@ using ForwardDiff
 
 ## Root finding
 export
+    bisect,
     newton, krawczyk,
     derivative, jacobian,  # reexport derivative from ForwardDiff
     Root, is_unique,
     find_roots,
     find_roots_midpoint,
     bisection,
-    bisect
+    complex_bisection
+
+export @intervalbox
+
 
 import Base: ⊆, show
 
@@ -58,7 +62,8 @@ include("bisect.jl")
 include("bisection.jl")
 include("newton.jl")
 include("krawczyk.jl")
-
+include("complex.jl")
+include("intervalbox_macro.jl")
 
 function find_roots{T}(f::Function, a::Interval{T}, method::Function = newton;
                     tolerance = eps(T), debug = false, maxlevel = 30)
