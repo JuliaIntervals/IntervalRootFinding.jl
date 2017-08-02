@@ -15,11 +15,11 @@ rts = roots(f, rts, Bisection)
 
 # complex:
 x = -5..6
-Xc = x + im * x
+Xc = Complex(x, x)
 f(z) = z^3 - 1
 
-rts = roots(Xc, f, Bisection)
-rts = roots(rts, f, Newton)
+rts = roots(f, Xc, Bisection)
+rts = roots(f, rts, Newton)
 
 
 # From R docs:
@@ -66,12 +66,20 @@ rts = roots(rts, h, Newton)
 
 ##  MINPACK benchmarks: https://github.com/JuliaNLSolvers/NLsolve.jl/blob/master/test/minpack.jl
 
-function rosenbrock(X)
-    x, y = X
-    SVector( 1 - x, 10 * (y - x^2) )
-end
+using IntervalArithmetic, IntervalRootFinding, StaticArrays
 
-roots(rosenbrock)
+rosenbrock(x, y) = SVector( 1 - x, 10 * (y - x^2) )
+rosenbrock(X) = rosenbrock(X...)
+
+X = (-10..10) × (-10..10)
+roots(rosenbrock, X)
+
+@code_llvm rosenbrock(X)
+
+x = 1.0
+y = nextfloat(x)
+
+m = 0.5*(x + y)
 
 # and other files in NLsolve test suite
 
