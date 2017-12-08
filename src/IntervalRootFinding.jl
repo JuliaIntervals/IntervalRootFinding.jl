@@ -21,6 +21,7 @@ import Base: ⊆, show
 
 const derivative = ForwardDiff.derivative
 const D = derivative
+const Interval = IntervalArithmetic.Interval
 
 # Root object:
 immutable Root{T<:Union{Interval,IntervalBox}}
