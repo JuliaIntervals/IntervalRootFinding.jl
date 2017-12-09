@@ -1,11 +1,12 @@
 using IntervalArithmetic, IntervalRootFinding
 using Base.Test
 
+const Interval = IntervalArithmetic.Interval
 
 @testset "`bisect` function" begin
     X = 0..1
-    @test bisect(X) == (0..0.5, 0.5..1)
-    @test bisect(X, 0.25) == (0..0.25, 0.25..1)
+    @test bisect(X) == (Interval(0,0.5), Interval(0.5,1))
+    @test bisect(X, 0.25) == (Interval(0,0.25), Interval(0.25,1))
 
     X = -∞..∞
     @test bisect(X) == (-∞..0, 0..∞)
@@ -16,9 +17,9 @@ using Base.Test
 
     X = (0..1) × (0..2)
     @test bisect(X) == ( (0..1) × (0..1), (0..1) × (1..2) )
-    @test bisect(X, 0.25) == ( (0..1) × (0..0.5), (0..1) × (0.5..2) )
-    @test bisect(X, 1, 0.5) == ( (0..0.5) × (0..2), (0.5..1) × (0..2) )
-    @test bisect(X, 1, 0.25) == ( (0..0.25) × (0..2), (0.25..1) × (0..2) )
+    @test bisect(X, 0.25) == ( (0..1) × Interval(0,0.5), (0..1) × Interval(0.5,2) )
+    @test bisect(X, 1, 0.5) == ( Interval(0,0.5) × (0..2), Interval(0.5,1) × (0..2) )
+    @test bisect(X, 1, 0.25) == ( Interval(0,0.25) × (0..2), Interval(0.25,1) × (0..2) )
 
     X = (-∞..∞) × (-∞..∞)
     @test bisect(X) == ( (-∞..0) × (-∞..∞), (0..∞) × (-∞..∞))
