@@ -27,7 +27,7 @@ rts = roots(f, Xc)
 # https://www.rdocumentation.org/packages/pracma/versions/1.9.9/topics/broyden
 
 function g(x)
-    x1, x2, x3 = x
+    (x1, x2, x3) = x
     SVector(    x1^2 + x2^2 + x3^2 - 1,
                 x1^2 + x3^2 - 0.25,
                 x1^2 + x2^2 - 4x3
@@ -41,16 +41,15 @@ X = (-5..5)
 
 
 
-h(xx) = ( (x, y) = xx; SVector(2*x - y - exp(-x), -x + 2*y - exp(-y)) )
+h(xv) = ((x,y) = xv; SVector(2*x - y - exp(-x), -x + 2*y - exp(-y)))
 
 rts = roots(h, X × X, Bisection)
 rts = roots(h, rts, Newton)
-rts = roots(h, X × X)
 
 
 
 # Dennis-Schnabel:
-h(xx) = ( (x, y) = xx; SVector(x^2 + y^2 - 2, exp(x - 1) + y^3 - 2) )
+h(xv) = ((x, y) = xv; SVector(x^2 + y^2 - 2, exp(x - 1) + y^3 - 2))
 
 rts = roots(h, X × X, Bisection)
 rts = roots(h, rts, Newton)
@@ -67,6 +66,8 @@ rts = roots(h, rts, Newton)
 
 ##  MINPACK benchmarks: https://github.com/JuliaNLSolvers/NLsolve.jl/blob/master/test/minpack.jl
 
+rosenbrock(x, y) = SVector( 1 - x, 10 * (y - x^2) )
+rosenbrock(X) = rosenbrock(X...)
 
 rosenbrock(xx) = ( (x, y) = xx; SVector( 1 - x, 1000 * (y - x^2) ) )
 X = IntervalBox(-1e5..1e5, 2)

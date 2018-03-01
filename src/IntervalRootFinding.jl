@@ -12,7 +12,7 @@ using StaticArrays
 export
     derivative, jacobian,  # reexport derivative from ForwardDiff
     Root, is_unique,
-    roots,
+    roots, find_roots,
     bisect
 
 import Base: ⊆, show

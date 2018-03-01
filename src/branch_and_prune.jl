@@ -16,12 +16,16 @@ isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
 """
     branch_and_prune(f, X, contractor, tol=1e-3)
 
-Generic branch and prune routine for finding isolated roots of a function ``f:R^n → R^n`` in a box.
+Generic branch and prune routine for finding isolated roots of a function
+`f:R^n → R^n` in a box.
 
 Inputs:
 - `f`: function whose roots will be found
 - `X`: `Interval` or `IntervalBox`
-- `contractor`: function that, when applied to the function `f`, determines the status of a given box `X`. It returns the new box and a symbol indicating the status.
+- `contractor`: function that, when applied to the function `f`, determines
+    the status of a given box `X`. It returns the new box and a symbol indicating
+    the status. Current possible values are `Bisection` and `Newton`.
+
 """
 function branch_and_prune(f, X, contractor, tol=1e-3)
 
@@ -107,7 +111,7 @@ end
 
 
 contains_zero{T}(X::Interval{T}) = zero(T) ∈ X
-contains_zero(X::SVector) = all(contains_zero(X[i]) for i in 1:length(X))
+contains_zero(X::SVector) = all(contains_zero.(X))
 contains_zero(X::IntervalBox) = all(contains_zero(X[i]) for i in 1:length(X))
 
 
