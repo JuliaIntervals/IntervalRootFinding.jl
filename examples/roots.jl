@@ -20,7 +20,7 @@ f(z) = z^3 - 1
 
 rts = roots(f, Xc, Bisection)
 rts = roots(f, rts, Newton)
-
+rts = roots(f, Xc)
 
 # From R docs:
 
@@ -41,18 +41,19 @@ X = (-5..5)
 
 
 
-h(x) = SVector(2*x - y - exp(-x), -x + 2*y - exp(-y))
+h(xx) = ( (x, y) = xx; SVector(2*x - y - exp(-x), -x + 2*y - exp(-y)) )
 
 rts = roots(h, X × X, Bisection)
-rts = roots(rts, g, Newton)
+rts = roots(h, rts, Newton)
+rts = roots(h, X × X)
 
 
 
 # Dennis-Schnabel:
-h(x) = SVector(x^2 + y^2 - 2, exp(x - 1) + y^3 - 2)
+h(xx) = ( (x, y) = xx; SVector(x^2 + y^2 - 2, exp(x - 1) + y^3 - 2) )
 
-rts = roots(X × X, h, Bisection)
-rts = roots(rts, h, Newton)
+rts = roots(h, X × X, Bisection)
+rts = roots(h, rts, Newton)
 
 # Test suites:
 
@@ -66,20 +67,13 @@ rts = roots(rts, h, Newton)
 
 ##  MINPACK benchmarks: https://github.com/JuliaNLSolvers/NLsolve.jl/blob/master/test/minpack.jl
 
-using IntervalArithmetic, IntervalRootFinding, StaticArrays
 
-rosenbrock(x, y) = SVector( 1 - x, 10 * (y - x^2) )
-rosenbrock(X) = rosenbrock(X...)
+rosenbrock(xx) = ( (x, y) = xx; SVector( 1 - x, 1000 * (y - x^2) ) )
+X = IntervalBox(-1e5..1e5, 2)
 
-X = (-10..10) × (-10..10)
-roots(rosenbrock, X)
+rts = roots(rosenbrock, X)
 
-@code_llvm rosenbrock(X)
 
-x = 1.0
-y = nextfloat(x)
-
-m = 0.5*(x + y)
 
 # and other files in NLsolve test suite
 
