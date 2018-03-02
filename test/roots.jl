@@ -4,7 +4,7 @@ using Base.Test
 
 @testset "1D roots" begin
     rts = roots(sin, -5..5)
-    @test length(roots) == 4
+    @test length(rts) == 4
     @test length(find(x->x==:unique, [root.status for root in rts])) == 2
 
     rts = roots(sin, -5..6, Bisection)
