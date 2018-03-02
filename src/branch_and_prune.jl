@@ -1,5 +1,3 @@
-using IntervalRootFinding
-using IntervalRootFinding: Root
 
 import IntervalArithmetic: diam, isinterior
 
@@ -75,8 +73,16 @@ function branch_and_prune(f, X, contractor, tol=1e-3)
     return outputs
 end
 
-function branch_and_prune{T}(f, V::Vector{Root{T}}, contractor, tol=1e-3)
+branch_and_prune(f, X::Root, contractor, tol=1e-3) =
+    branch_and_prune(f, X.interval, contractor, tol)
+
+
+function branch_and_prune(f, V::Vector{Root{T}}, contractor, tol=1e-3) where {T}
     reduce(append!, Root{T}[], [branch_and_prune(f, X.interval, contractor, tol) for X in V])
+end
+
+function branch_and_prune(f, V::Vector{T}, contractor, tol=1e-3) where {T}
+    reduce(append!, Root{T}[], [branch_and_prune(f, X, contractor, tol) for X in V])
 end
 
 export recursively_branch_and_prune
@@ -204,6 +210,20 @@ function (C::Newton)(X)
 end
 
 
+"""
+    roots(f, X, contractor, tol=1e-3)
+
+Generic branch and prune routine for finding isolated roots of a function
+`f:R^n → R^n` in a box `X`, or a vector of boxes.
+
+Inputs:
+- `f`: function whose roots will be found
+- `X`: `Interval` or `IntervalBox`
+- `contractor`: function that, when applied to the function `f`, determines
+    the status of a given box `X`. It returns the new box and a symbol indicating
+    the status. Current possible values are `Bisection` and `Newton`.
+
+"""
 roots{C<:Contractor}(f, X, contractor::Type{C}, tol::Float64=1e-3) = branch_and_prune(f, X, contractor, tol)
 
 roots(f, X, tol::Float64=1e-3) = branch_and_prune(f, X, Newton, tol)
