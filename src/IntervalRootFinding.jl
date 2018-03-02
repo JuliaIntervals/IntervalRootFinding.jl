@@ -8,6 +8,8 @@ using IntervalArithmetic
 using ForwardDiff
 using StaticArrays
 
+import Polynomials: roots
+
 ## Root finding
 export
     derivative, jacobian,  # reexport derivative from ForwardDiff
