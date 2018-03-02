@@ -18,8 +18,8 @@ end
     f(x, y) = SVector(x^2 + y^2 - 1, y - 2x)
     f(X) = f(X...)
 
-    rts = roots(f, (-5..6) × (-5..6), Bisection, 1e-3)
-    @test length(rts) == 6
+    rts = roots(f, (-6..6) × (-6..6), Bisection, 1e-3)
+    @test length(rts) == 4
 
     rts = roots(f, rts, Newton)
     @test length(rts) == 2
