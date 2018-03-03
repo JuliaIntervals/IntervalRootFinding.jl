@@ -15,7 +15,7 @@ The basic function is `roots`. A standard Julia function and a box (interval in 
 
 ### 1D
 
-```
+```jl
 julia> using IntervalArithmetic, IntervalRootFinding
 
 julia> rts = roots(x->x^2 - 2, -10..10, Bisection)
@@ -25,7 +25,7 @@ julia> rts = roots(x->x^2 - 2, -10..10, Bisection)
 ```
 An array is returned that consists of `Root` objects, containing an interval and the status of that interval. Here, `:unknown` indicates that there *may* be a root in the interval. Any region not contained in one of the intervals is guaranteed *not* to contain a root.
 
-```
+```jl
 julia> rts = roots(x->x^2 - 2, -10..10)   # default is Newton
 2-element Array{IntervalRootFinding.Root{IntervalArithmetic.Interval{Float64}},1}:
  Root([1.41421, 1.41422], :unique)
@@ -33,13 +33,29 @@ julia> rts = roots(x->x^2 - 2, -10..10)   # default is Newton
 ```
 The interval Newton method used here can *guarantee* that there exists a unique root in each of these intervals. Again, other regions have been excluded.
 
+Interval methods are not able to control multiple roots:
+```jl
+julia> g(x) = (x^2-2)^2 * (x^2 - 3)
+g (generic function with 1 method)
+
+julia> roots(g, -10..10)
+4-element Array{IntervalRootFinding.Root{IntervalArithmetic.Interval{Float64}},1}:
+ Root([1.73205, 1.73206], :unique)
+ Root([1.41418, 1.4148], :unknown)
+ Root([-1.4148, -1.41418], :unknown)
+ Root([-1.73206, -1.73205], :unique)
+ ```
+ The two double roots are reported as being possible roots, but no guarantees are given. The single roots are guaranteed to exist and be unique within the corresponding intervals.
+ ```
+
+
 ### nD
 
 For dimensions $n>1$, functions must return a Julia vector or an `SVector` from the `StaticArrays.jl` package.
 
 The Rosenbrock function is well known to be difficult to optimize, but is not a problem for this package:
 
-```
+```jl
 julia> using StaticArrays;
 
 julia> rosenbrock(xx) = ( (x, y) = xx; SVector( 1 - x, 100 * (y - x^2) ) );
@@ -54,7 +70,7 @@ julia> rts = roots(rosenbrock, X)
 
 
 A 3D example:
-```
+```jl
 julia> function g(x)
            (x1, x2, x3) = x
            SVector(    x1^2 + x2^2 + x3^2 - 1,
@@ -82,7 +98,7 @@ julia> @time rts = roots(g, X × X × X)
 Stationary points of a function $f:\mathbb{R}^n \to \mathbb{R}$ may be found as zeros of the gradient.
 The package exports the `∇` operator to calculate gradients using `ForwardDiff.jl`:
 
-```
+```jl
 julia> f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
 f (generic function with 1 method)
 
