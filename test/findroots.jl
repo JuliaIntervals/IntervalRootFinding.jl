@@ -61,7 +61,7 @@ function_list = [
                 @testset "Precision: $prec" begin
                     setprecision(Interval, prec)
 
-                    for method in (newton, krawczyk)
+                    for method in (IntervalRootFinding.newton, IntervalRootFinding.krawczyk)
                         @testset "Method $method" begin
 
                             for func in function_list
@@ -76,15 +76,15 @@ function_list = [
                                         @testset "With autodiff=$autodiff" begin
 
                                             if autodiff
-                                                roots = method(f, a)
+                                                rts = find_roots(f, a, method)
                                             else
-                                                roots = method(f, f_prime, a)
+                                                rts = find_roots(f, f_prime, a, method)
                                             end
 
-                                            @test length(roots) == length(true_roots)
+                                            @test length(rts) == length(true_roots)
 
-                                            for i in 1:length(roots)
-                                                root = roots[i]
+                                            for i in 1:length(rts)
+                                                root = rts[i]
 
                                                 @test isa(root, Root)
                                                 @test is_unique(root)
@@ -109,24 +109,24 @@ setprecision(Interval, Float64)
 @testset "find_roots tests" begin
     f(x) = x^2 - 2
 
-    roots = newton(f, @interval(10, 11))
-    @test length(roots) == 0
+    rts = IntervalRootFinding.newton(f, @interval(10, 11))
+    @test length(rts) == 0
 
 
-    roots = find_roots_midpoint(f, -5, 5)
-    @test length(roots) == 3
-    @test length(roots[1]) == 2
+    rts = IntervalRootFinding.find_roots_midpoint(f, -5, 5)
+    @test length(rts) == 3
+    @test length(rts[1]) == 2
 
-    roots = find_roots(f, -5, 5)
-    @test length(roots) == 2
+    rts = find_roots(f, -5, 5)
+    @test length(rts) == 2
 
     setprecision(Interval, 256)
 
-    for method in (newton, krawczyk)
-        new_roots = method(f, roots)
-        @test length(new_roots) == length(roots)
+    for method in (IntervalRootFinding.newton, IntervalRootFinding.krawczyk)
+        new_roots = method(f, rts)
+        @test length(new_roots) == length(rts)
 
-        for (root1, root2) in zip(new_roots, roots)
+        for (root1, root2) in zip(new_roots, rts)
             @test root1 ⊆ root2
         end
     end
@@ -137,12 +137,12 @@ end
     let
         f(x) = (x-1) * (x^2 - 2)^3 * (x^3 - 2)^4
 
-        roots = newton(f, -5..5.1, maxlevel=1000)
+        rts = IntervalRootFinding.newton(f, -5..5.1, maxlevel=1000)
 
-        @test length(roots) == 4
-        @test roots[1].status == :unknown
-        @test roots[1].interval == Interval(-1.4142135623730954, -1.414213562373095)
-        @test roots[3].interval == Interval(1.259921049894873, 1.2599210498948734)
+        @test length(rts) == 4
+        @test rts[1].status == :unknown
+        @test rts[1].interval == Interval(-1.4142135623730954, -1.414213562373095)
+        @test rts[3].interval == Interval(1.259921049894873, 1.2599210498948734)
 
     end
 end
@@ -156,11 +156,11 @@ end
     for n in 1:10
         g = x -> iterate(f, n)(x) - x  # look for fixed points of f^n
 
-        roots = newton(g, 0..1)
-        @test length(roots) == 2^n
+        rts = IntervalRootFinding.newton(g, 0..1)
+        @test length(rts) == 2^n
 
-        roots = krawczyk(g, 0..1)
-        @test length(roots) == 2^n
+        rts = IntervalRootFinding.krawczyk(g, 0..1)
+        @test length(rts) == 2^n
 
     end
 end

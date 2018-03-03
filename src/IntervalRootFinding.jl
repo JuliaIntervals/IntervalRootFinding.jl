@@ -6,24 +6,26 @@ module IntervalRootFinding
 
 using IntervalArithmetic
 using ForwardDiff
+using StaticArrays
+
+import Polynomials: roots
 
 ## Root finding
 export
-    newton, krawczyk,
     derivative, jacobian,  # reexport derivative from ForwardDiff
     Root, is_unique,
-    find_roots,
-    find_roots_midpoint,
-    bisection,
+    roots, find_roots,
     bisect
 
 import Base: ⊆, show
+
+const Interval = IntervalArithmetic.Interval
 
 const derivative = ForwardDiff.derivative
 const D = derivative
 
 # Root object:
-immutable Root{T<:Union{Interval,IntervalBox}}
+immutable Root{T}
     interval::T
     status::Symbol
 end
@@ -58,7 +60,8 @@ include("bisect.jl")
 include("bisection.jl")
 include("newton.jl")
 include("krawczyk.jl")
-
+include("complex.jl")
+include("branch_and_prune.jl")
 
 function find_roots{T}(f::Function, a::Interval{T}, method::Function = newton;
                     tolerance = eps(T), debug = false, maxlevel = 30)

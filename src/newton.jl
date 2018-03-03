@@ -18,38 +18,96 @@ function guarded_mid{T}(f, x::Interval{T})
     m
 end
 
-
+doc"""
+Single-variable Newton operator
+"""
 function N{T}(f::Function, x::Interval{T}, deriv::Interval{T})
-    m = guarded_mid(f, x)
-    m = Interval(m)
+    m = Interval( guarded_mid(f, x) )
 
     m - (f(m) / deriv)
+end
+
+function N{T}(f::Function, x::Interval{T})
+    m = Interval( guarded_mid(f, x) )
+
+    m - (f(m) / ForwardDiff.derivative(f, x))
+end
+
+function N{T}(f::Function, f_prime::Function, X::Interval{T})
+    m = Interval( guarded_mid(f, X) )
+
+    m - (f(m) / f_prime(X))
+end
+
+
+
+doc"""
+Multi-variable Newton operator.
+Requires the function to be defined using the `@intervalbox` macro.
+"""
+function N(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
+    m = IntervalBox(Interval.(mid(X)))
+    J = jacobian(SVector(X))
+
+    # @show m
+    # @show J
+
+    return IntervalBox( (m - (J \ f(m))... ) )
 end
 
 
 doc"""If a root is known to be inside an interval,
 `newton_refine` iterates the interval Newton method until that root is found."""
-function newton_refine{T}(f::Function, f_prime::Function, x::Interval{T};
+function newton_refine{N,T}(f::Function, f_prime::Function, X::Union{Interval{T}, IntervalBox{N,T}};
                           tolerance=eps(T), debug=false)
 
     debug && (print("Entering newton_refine:"); @show x)
 
-    while diam(x) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
-        deriv = f_prime(x)
-        Nx = N(f, x, deriv)
+    while diam(X) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
+        deriv = f_prime(X)
+        NX = N(f, X, deriv)
 
-        debug && @show(x, Nx)
+        debug && @show(X, NX)
 
-        Nx = Nx ∩ x
-        Nx == x && break
+        NX = NX ∩ X
+        NX == X && break
 
-        x = Nx
+        X = NX
     end
 
-    debug && @show "Refined root", x
+    debug && @show "Refined root", X
 
-    return [Root(x, :unique)]
+    return [Root(X, :unique)]
 end
+
+
+
+doc"""If a root is known to be inside an interval,
+`newton_refine` iterates the interval Newton method until that root is found."""
+function newton_refine{T}(f::Function, f_prime::Function, X::Interval{T};
+                          tolerance=eps(T), debug=false)
+
+    debug && (print("Entering newton_refine:"); @show x)
+
+    while diam(X) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
+        deriv = f_prime(X)
+        NX = N(f, X, deriv)
+
+        debug && @show(X, NX)
+
+        NX = NX ∩ X
+        NX == X && break
+
+        X = NX
+    end
+
+    debug && @show "Refined root", X
+
+    return [Root(X, :unique)]
+end
+
+
+
 
 
 
