@@ -54,3 +54,9 @@ end
     rts = roots(g, IntervalBox(X, 3))
     @test length(rts) == 4
 end
+
+@testset "Stationary points" begin
+    f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
+    rts = roots(∇(f), IntervalBox(-5..6, 2), Newton, 1e-5)
+    @test length(rts) == 25
+end
