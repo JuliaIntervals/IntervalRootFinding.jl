@@ -31,9 +31,11 @@ julia> rts = roots(x->x^2 - 2, -10..10)   # default is Newton
  Root([1.41421, 1.41422], :unique)
  Root([-1.41422, -1.41421], :unique)
 ```
+
 The interval Newton method used here can *guarantee* that there exists a unique root in each of these intervals. Again, other regions have been excluded.
 
 Interval methods are not able to control multiple roots:
+
 ```jl
 julia> g(x) = (x^2-2)^2 * (x^2 - 3)
 g (generic function with 1 method)
@@ -45,8 +47,8 @@ julia> roots(g, -10..10)
  Root([-1.4148, -1.41418], :unknown)
  Root([-1.73206, -1.73205], :unique)
  ```
+
  The two double roots are reported as being possible roots, but no guarantees are given. The single roots are guaranteed to exist and be unique within the corresponding intervals.
- ```
 
 
 ### nD
@@ -66,6 +68,7 @@ julia> rts = roots(rosenbrock, X)
 1-element Array{IntervalRootFinding.Root{IntervalArithmetic.IntervalBox{2,Float64}},1}:
  Root([1, 1] × [1, 1], :unique)
  ```
+
  Again, a unique root has been found.
 
 
@@ -91,6 +94,7 @@ julia> @time rts = roots(g, X × X × X)
  Root([-0.440763, -0.440762] × [0.866025, 0.866026] × [0.236067, 0.236068], :unique)
  Root([-0.440763, -0.440762] × [-0.866026, -0.866025] × [0.236067, 0.236068], :unique)
  ```
+ 
  There are guaranteed to be four unique roots.
 
 ### Stationary points
