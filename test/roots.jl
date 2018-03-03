@@ -25,7 +25,7 @@ end
     @test length(rts) == 2
 end
 
-@testset "Complex roots"
+@testset "Complex roots" begin
     x = -5..6
     Xc = Complex(x, x)
     f(z) = z^3 - 1
