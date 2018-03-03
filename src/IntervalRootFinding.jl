@@ -63,6 +63,15 @@ include("krawczyk.jl")
 include("complex.jl")
 include("branch_and_prune.jl")
 
+
+gradient(f) = X -> ForwardDiff.gradient(f, SVector(X))
+const ∇ = gradient
+
+export ∇
+
+
+
+
 function find_roots{T}(f::Function, a::Interval{T}, method::Function = newton;
                     tolerance = eps(T), debug = false, maxlevel = 30)
 
