@@ -94,7 +94,7 @@ julia> @time rts = roots(g, X × X × X)
  Root([-0.440763, -0.440762] × [0.866025, 0.866026] × [0.236067, 0.236068], :unique)
  Root([-0.440763, -0.440762] × [-0.866026, -0.866025] × [0.236067, 0.236068], :unique)
  ```
- 
+
  There are guaranteed to be four unique roots.
 
 ### Stationary points
@@ -116,6 +116,22 @@ julia> rts = roots(∇f, IntervalBox(-5..6, 2), Newton, 1e-5)
  ⋮
  [output snipped for brevity]
 ```
+
+Now let's find the midpoints and plot them:
+
+```jl
+midpoints = mid.([root.interval for root in rts])
+
+xs = first.(midpoints)
+ys = last.(midpoints)
+
+using Plots; plotlyjs()
+
+surface(-5:0.1:6, -6:0.1:6, (x,y)->f([x,y]))
+scatter!(xs, ys, f.(midpoints))
+```
+The result is the following:
+![stationary points](stationary_points.png)
 
 
 
