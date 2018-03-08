@@ -61,7 +61,7 @@ doc"""If a root is known to be inside an interval,
 function newton_refine{N,T}(f::Function, f_prime::Function, X::Union{Interval{T}, IntervalBox{N,T}};
                           tolerance=eps(T), debug=false)
 
-    debug && (print("Entering newton_refine:"); @show x)
+    debug && (print("Entering newton_refine:"); @show X)
 
     while diam(X) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
         deriv = f_prime(X)
@@ -87,7 +87,7 @@ doc"""If a root is known to be inside an interval,
 function newton_refine{T}(f::Function, f_prime::Function, X::Interval{T};
                           tolerance=eps(T), debug=false)
 
-    debug && (print("Entering newton_refine:"); @show x)
+    debug && (print("Entering newton_refine:"); @show X)
 
     while diam(X) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
         deriv = f_prime(X)
