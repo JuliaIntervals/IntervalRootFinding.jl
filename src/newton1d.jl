@@ -1,4 +1,4 @@
-doc"""`newton1d` performs the interval Newton method on the given function `f`
+"""`newton1d` performs the interval Newton method on the given function `f`
 with its derivative `f′` and initial interval `x`.
 Optional keyword arguments give the tolerances `epsX` and `epsf`.
 `epsX` is the tolerance on the relative error whereas `epsf` is the tolerance on |f(X)|,
@@ -7,18 +7,20 @@ and a `debug` boolean argument that prints out diagnostic information."""
 function newton1d{T}(f::Function, f′::Function, x::Interval{T};
                     epsX=eps(T), epsf=eps(T), debug=false)
 
-    L = Array{Interval, 1}()
+    L = Interval{T}[]
 
-    R = Array{Root, 1}()
+    R = Root{Interval{T}}[]
 
     push!(L, x)
 
     while !isempty(L)
         X = pop!(L)
         m = mid(X)
+        if (isempty(X))
+            continue
+        end
 
         if 0 ∉ f′(X)
-            # O ∉ f'(X)
             while true
                 m = mid(X)
                 N = m - (f(Interval(m)) / f′(X))
@@ -54,11 +56,11 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
                     if 0 ∉ f(Interval(x1)) || 0 ∉ f(Interval(x2))
                         push!(L, Interval(X.lo, m))
                         push!(L, Interval(m, X.hi))
-                        break
+                        continue
 
                     else
                         push!(R, Root(X, :unique))
-                        break
+                        continue
                     end
                 end
 
@@ -67,7 +69,7 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
 
                 if (diam(X)/mag(X)) < epsX && diam(f(X)) < epsf
                     push!(R, Root(X, :unknown))
-                    break
+                    continue
                 end
             end
             # Step 8
@@ -78,14 +80,32 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
 
             initial_width = diam(X)
 
-            N = expansion_pt - (f(Interval(expansion_pt))/f′(X))
-            X = X ∩ N
-            m = mid(X)
+            a = f(Interval(expansion_pt))
+            b = f′(X)
 
-            if isempty(X)
-                break
+            if 0 < b.hi && 0 > b.lo && 0 ∉ a
+                if a.hi < 0
+                    push!(L, X ∩ (expansion_pt - Interval(-Inf, a.hi / b.hi)))
+                    push!(L, X ∩ (expansion_pt - Interval(a.hi / b.lo, Inf)))
+
+                elseif a.lo > 0
+                    push!(L, X ∩ (expansion_pt - Interval(-Inf, a.lo / b.lo)))
+                    push!(L, X ∩ (expansion_pt - Interval(a.lo / b.hi, Inf)))
+
+                end
+
+                continue
+
+            else
+                N = expansion_pt - (f(Interval(expansion_pt))/f′(X))
+                X = X ∩ N
+                m = mid(X)
+
+                if isempty(X)
+                    continue
+                end
             end
-            # How can a Newton step in (9.2.2) return two intervals?
+
             if diam(X) > initial_width/2
                 push!(L, Interval(m, X.hi))
                 X = Interval(X.lo, m)
@@ -97,3 +117,12 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
 
     return R
 end
+
+
+"""`newton1d` performs the interval Newton method on the given function `f` and initial interval `x`.
+Optional keyword arguments give the tolerances `epsX` and `epsf`.
+`epsX` is the tolerance on the relative error whereas `epsf` is the tolerance on |f(X)|,
+and a `debug` boolean argument that prints out diagnostic information."""
+
+newton1d{T}(f::Function, x::Interval{T};  args...) =
+    newton1d(f, x->D(f,x), x; args...)
