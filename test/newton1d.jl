@@ -18,24 +18,36 @@ three_halves_pi = 3*big_pi/2
 
 @testset "Testing newton1d" begin
 
-    rts =  newton1d(sin, cos, -5..5)
-    @test length(rts) == 3
-    @test (-π.. -π) == rts[1].interval && :unique == rts[1].status
-    @test (0.. 0) == rts[2].interval && :unique == rts[2].status
-    @test (π.. π) == rts[3].interval && :unique == rts[3].status
-
     f(x) = e^(x^2) - cos(x)
     f′(x) = 2*x*e^(x^2) + sin(x)
-    rts = newton1d(f, f′, -∞..∞)
-    @test length(rts) == 1
-    @test (0.. 0) == rts[1].interval && :unique == rts[1].status
+    f1(x) = x^4 - 10x^3 + 35x^2 - 50x + 24
+    f1′(x) = 4x^3 - 30x^2 + 70x - 50
 
-    f(x) = x^4 - 10x^3 + 35x^2 - 50x + 24
-    f′(x) = 4x^3 - 30x^2 + 70x - 50
-    rts = newton1d(f, f′, -10..10)
-    @test length(rts) == 4
-    @test 1 in rts[1].interval && :unique == rts[1].status
-    @test 2 in rts[2].interval && :unique == rts[2].status
-    @test 3 in rts[3].interval && :unique == rts[3].status
-    @test 4 in rts[4].interval && :unique == rts[4].status
+    for autodiff in (false, true)
+        if autodiff
+            rts1 = newton1d(sin, -5..5)
+            rts2 = newton1d(f, f′, -∞..∞)   # AD gives error with f 
+            rts3 = newton1d(f1, -10..10)
+
+        else
+            rts1 = newton1d(sin, cos, -5..5)
+            rts2 = newton1d(f, f′, -∞..∞)
+            rts3 = newton1d(f1, f1′, -10..10)
+        end
+
+        @test length(rts1) == 3
+        L = [(-π.. -π), (0..0), (π..π)]
+        for i = 1:length(rts1)
+            @test L[i] == rts1[i].interval && :unique == rts1[i].status
+        end
+
+        @test length(rts2) == 1
+        @test (0..0) == rts2[1].interval && :unique == rts2[1].status
+
+        @test length(rts3) == 4
+        L = [1, 2, 3, 4]
+        for i = 1:length(rts3)
+            @test L[i] in rts3[i].interval && :unique == rts3[i].status
+        end
+    end
 end

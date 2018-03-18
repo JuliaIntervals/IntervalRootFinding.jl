@@ -1,11 +1,11 @@
 """`newton1d` performs the interval Newton method on the given function `f`
 with its derivative `f′` and initial interval `x`.
-Optional keyword arguments give the tolerances `epsX` and `epsf`.
-`epsX` is the tolerance on the relative error whereas `epsf` is the tolerance on |f(X)|,
+Optional keyword arguments give the tolerances `reltol` and `abstol`.
+`reltol` is the tolerance on the relative error whereas `abstol` is the tolerance on |f(X)|,
 and a `debug` boolean argument that prints out diagnostic information."""
 
 function newton1d{T}(f::Function, f′::Function, x::Interval{T};
-                    epsX=eps(T), epsf=eps(T), debug=false)
+                    reltol=eps(T), abstol=eps(T), debug=false)
 
     L = Interval{T}[]
 
@@ -51,8 +51,8 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
                     expansion_pt = X.hi
 
                 else
-                    x1 = 0.25 * (3 * X.lo + X.hi)
-                    x2 = 0.25 * (X.lo + 3 * X.hi)
+                    x1 = mid(Interval(X.lo, mid(X)))
+                    x2 = mid(Interval(mid(X), X.hi))
                     if 0 ∉ f(Interval(x1)) || 0 ∉ f(Interval(x2))
                         push!(L, Interval(X.lo, m))
                         push!(L, Interval(m, X.hi))
@@ -67,7 +67,7 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
             else
                 # 0 ∉ fⁱ(x)
 
-                if (diam(X)/mag(X)) < epsX && diam(f(X)) < epsf
+                if (diam(X)/mag(X)) < reltol && diam(f(X)) < abstol
                     push!(R, Root(X, :unknown))
                     continue
                 end
@@ -120,8 +120,8 @@ end
 
 
 """`newton1d` performs the interval Newton method on the given function `f` and initial interval `x`.
-Optional keyword arguments give the tolerances `epsX` and `epsf`.
-`epsX` is the tolerance on the relative error whereas `epsf` is the tolerance on |f(X)|,
+Optional keyword arguments give the tolerances `reltol` and `abstol`.
+`reltol` is the tolerance on the relative error whereas `abstol` is the tolerance on |f(X)|,
 and a `debug` boolean argument that prints out diagnostic information."""
 
 newton1d{T}(f::Function, x::Interval{T};  args...) =
