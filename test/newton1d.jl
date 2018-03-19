@@ -18,15 +18,15 @@ three_halves_pi = 3*big_pi/2
 
 @testset "Testing newton1d" begin
 
-    f(x) = e^(x^2) - cos(x)
-    f′(x) = 2*x*e^(x^2) + sin(x)
+    f(x) = exp(x^2) - cos(x)
+    f′(x) = 2*x*exp(x^2) + sin(x)
     f1(x) = x^4 - 10x^3 + 35x^2 - 50x + 24
     f1′(x) = 4x^3 - 30x^2 + 70x - 50
 
     for autodiff in (false, true)
         if autodiff
             rts1 = newton1d(sin, -5..5)
-            rts2 = newton1d(f, f′, -∞..∞)   # AD gives error with f 
+            rts2 = newton1d(f, -∞..∞)
             rts3 = newton1d(f1, -10..10)
 
         else
