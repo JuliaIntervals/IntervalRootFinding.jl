@@ -15,7 +15,7 @@ export
     derivative, jacobian,  # reexport derivative from ForwardDiff
     Root, is_unique,
     roots, find_roots,
-    bisect
+    bisect, newton1d
 
 import Base: ⊆, show
 
@@ -62,6 +62,8 @@ include("newton.jl")
 include("krawczyk.jl")
 include("complex.jl")
 include("branch_and_prune.jl")
+include("newton1d.jl")
+
 
 
 gradient(f) = X -> ForwardDiff.gradient(f, SVector(X))
