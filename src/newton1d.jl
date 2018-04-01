@@ -5,7 +5,7 @@ Optional keyword arguments give the tolerances `reltol` and `abstol`.
 and a `debug` boolean argument that prints out diagnostic information."""
 
 function newton1d{T}(f::Function, f′::Function, x::Interval{T};
-                    reltol=eps(T), abstol=eps(T), debug=false)
+                    reltol=10eps(T), abstol=eps(T), debug=false)
 
     L = Interval{T}[]
 
@@ -15,15 +15,24 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
 
     while !isempty(L)
         X = pop!(L)
+
+        debug && (print("Current interval popped: "); @show X)
+
         m = mid(X)
         if (isempty(X))
             continue
         end
 
         if 0 ∉ f′(X)
+
+            debug && println("0 ∉ f′(X)")
+
             while true
                 m = mid(X)
                 N = m - (f(Interval(m)) / f′(X))
+
+                debug && (print("Newton step: "); @show (X, X ∩ N))
+
                 X = X ∩ N
 
                 if isempty(X)
@@ -31,18 +40,25 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
 
                 elseif 0 ∈ f(Interval(prevfloat(m), nextfloat(m)))
                     push!(R, Root(X, :unique))
+
+                    debug && @show "Root found", X
+
                     break
                 end
             end
 
         else
             # 0 ∈ f'(X)
+
+            debug && println("0 ∈ f'(X)")
+
             expansion_pt = Inf
             # expansion point for the newton step might be m, X.lo or X.hi according to some conditions
 
             if 0 ∈ f(Interval(mid(X)))
                 # 0 ∈ fⁱ(x)
-                # Step 7
+
+                debug && println("0 ∈ fⁱ(x)")
 
                 if 0 ∉ f(Interval(X.lo))
                     expansion_pt = X.lo
@@ -59,7 +75,10 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
                         continue
 
                     else
-                        push!(R, Root(X, :unique))
+                        push!(R, Root(X, :unknown))
+
+                        debug && @show "Multiple root found", X
+
                         continue
                     end
                 end
@@ -67,8 +86,13 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
             else
                 # 0 ∉ fⁱ(x)
 
+                debug && println("0 ∉ fⁱ(x)")
+
                 if (diam(X)/mag(X)) < reltol && diam(f(X)) < abstol
                     push!(R, Root(X, :unknown))
+
+                    debug && @show "Tolerance root found", X
+
                     continue
                 end
             end
@@ -98,6 +122,9 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
 
             else
                 N = expansion_pt - (f(Interval(expansion_pt))/f′(X))
+
+                debug && (print("Newton step: "); @show (X, X ∩ N))
+
                 X = X ∩ N
                 m = mid(X)
 
