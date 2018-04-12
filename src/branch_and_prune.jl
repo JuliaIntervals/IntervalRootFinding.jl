@@ -5,10 +5,93 @@ export branch_and_prune, Bisection, Newton
 
 diam(x::Root) = diam(x.interval)
 
-
 Base.size(x::Interval) = (1,)
 
 isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
+
+# contractors:
+"""
+    Contractor{F}
+
+    Abstract type for contractors.
+"""
+abstract type Contractor{F} end
+
+export Bisection, Newton
+
+struct Bisection{F} <: Contractor{F}
+    dimension::Int
+    f::F
+end
+
+Bisection{n}(::Type{Val{n}}, f) = Bisection(n, f)
+
+function (contractor::Bisection)(X)
+    image = contractor.f(X)
+
+    if !(contains_zero(image))
+        return :empty, X
+    end
+
+    return :unknown, X
+end
+
+
+struct Newton{F,FP,O} <: Contractor{F}
+    dimension::Int
+    f::F
+    fp::FP
+    op::O
+end
+
+function Newton(::Type{Val{1}}, f::Function)
+    f_prime = x -> ForwardDiff.derivative(f, x)
+    Newton(1, f, f_prime, N)
+end
+
+function Newton{n}(::Type{Val{n}}, f::Function)
+    f_prime = x -> ForwardDiff.jacobian(f, x)
+    Newton(n, f, f_prime, N)
+end
+
+function Newton(f_prime::Function)
+    NewtonConstructor(f_prime)
+end
+
+function (C::Newton)(X)
+
+    # use Bisection contractor for this:
+    if !(contains_zero(IntervalBox(C.f(X))))
+        return :empty, X
+    end
+
+    # given that have the Jacobian, can also do mean value form
+
+    NX = C.op(C.f, C.fp, X) ∩ X
+
+    isempty(NX) && return :empty, X
+
+    if NX ⪽ X  # isinterior; know there's a unique root inside
+        NX =  refine(X -> C.op(C.f, C.fp, X), NX)
+        return :unique, NX
+    end
+
+    return :unknown, NX
+end
+
+"""
+    NewtonConstructor{FP}
+
+    Allow to store the derivative of a function before the creation of the
+    actual `Newton` contractor.
+"""
+struct NewtonConstructor{FP}
+    fp::FP
+end
+
+function (NC::NewtonConstructor){n}(::Type{Val{n}}, f)
+    Newton(n, f, NC.fp, N)
+end
 
 
 """
@@ -22,7 +105,8 @@ Inputs:
 - `X`: `Interval` or `IntervalBox`
 - `contractor`: function that, when applied to the function `f`, determines
     the status of a given box `X`. It returns the new box and a symbol indicating
-    the status. Current possible values are `Bisection` and `Newton`.
+    the status. Current possible values are `Bisection`, `Newton` and
+    `Newton(f_prime)` where `f_prime` is the derivative or jacobian of `f`.
 
 """
 function branch_and_prune(f, X, contractor, tol=1e-3)
@@ -103,7 +187,6 @@ end
 If the input interval is complex, treat `f` as a complex function, currently of one complex variable `z`.
 """
 function branch_and_prune{T}(f, Xc::Complex{Interval{T}}, contractor, tol=1e-3)
-
     g = realify(f)
     Y = IntervalBox(reim(Xc))
 
@@ -114,37 +197,21 @@ function branch_and_prune{T}(f, Xc::Complex{Interval{T}}, contractor, tol=1e-3)
     return [Root(Complex(root.interval...), root.status) for root in roots]
 end
 
+function branch_and_prune{T}(f, Xc::Complex{Interval{T}}, nc::NewtonConstructor, tol=1e-3)
+    g = realify(f)
+    Y = IntervalBox(reim(Xc))
+    nc_real = NewtonConstructor(realify_derivative(nc.fp))
+
+    roots = branch_and_prune(g, Y, nc_real, tol)
+
+    return [Root(Complex(root.interval...), root.status) for root in roots]
+end
+
 
 
 contains_zero{T}(X::Interval{T}) = zero(T) ∈ X
 contains_zero(X::SVector) = all(contains_zero.(X))
 contains_zero(X::IntervalBox) = all(contains_zero(X[i]) for i in 1:length(X))
-
-
-# contractors:
-
-abstract type Contractor{F} end
-
-export Bisection, Newton
-
-struct Bisection{F} <: Contractor{F}
-    dimension::Int
-    f::F
-end
-
-Bisection{n}(::Type{Val{n}}, f) = Bisection(n, f)
-
-
-function (contractor::Bisection)(X)
-    image = contractor.f(X)
-
-    if !(contains_zero(image))
-        return :empty, X
-    end
-
-    return :unknown, X
-end
-
 
 
 """
@@ -166,50 +233,6 @@ function refine(op, X)
 end
 
 
-
-struct Newton{F,FP,O} <: Contractor{F}
-    dimension::Int
-    f::F
-    fp::FP
-    op::O
-end
-
-function Newton(::Type{Val{1}}, f::Function)
-    f_prime = x -> ForwardDiff.derivative(f, x)
-    Newton(1, f, f_prime, N)
-end
-
-function Newton{n}(::Type{Val{n}}, f::Function)
-    f_prime = x -> ForwardDiff.jacobian(f, x)
-    Newton(n, f, f_prime, N)
-end
-
-
-function (C::Newton)(X)
-
-    # use Bisection contractor for this:
-    if !(contains_zero(IntervalBox(C.f(X))))
-        return :empty, X
-    end
-
-    # given that have the Jacobian, can also do mean value form
-
-
-    NX = C.op(C.f, C.fp, X) ∩ X
-
-    isempty(NX) && return :empty, X
-
-
-    if NX ⪽ X  # isinterior; know there's a unique root inside
-        NX =  refine(X -> C.op(C.f, C.fp, X), NX)
-        return :unique, NX
-    end
-
-
-    return :unknown, NX
-end
-
-
 """
     roots(f, X, contractor, tol=1e-3)
 
@@ -221,9 +244,12 @@ Inputs:
 - `X`: `Interval` or `IntervalBox`
 - `contractor`: function that, when applied to the function `f`, determines
     the status of a given box `X`. It returns the new box and a symbol indicating
-    the status. Current possible values are `Bisection` and `Newton`.
+    the status. Current possible values are `Bisection`, `Newton` and
+    `Newton(f_prime)` where `f_prime` is the derivative or jacobian of `f`.
 
 """
 roots{C<:Contractor}(f, X, contractor::Type{C}, tol::Float64=1e-3) = branch_and_prune(f, X, contractor, tol)
+
+roots(f, X, nc::NewtonConstructor, tol::Float64=1e-3) = branch_and_prune(f, X, nc, tol)
 
 roots(f, X, tol::Float64=1e-3) = branch_and_prune(f, X, Newton, tol)
