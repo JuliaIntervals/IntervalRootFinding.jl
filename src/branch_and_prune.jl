@@ -20,11 +20,10 @@ abstract type Contractor{F} end
 export Bisection, Newton
 
 struct Bisection{F} <: Contractor{F}
-    dimension::Int
     f::F
 end
 
-Bisection{n}(::Type{Val{n}}, f) = Bisection(n, f)
+Bisection{n}(::Type{Val{n}}, f) = Bisection(f)
 
 function (contractor::Bisection)(X)
     image = contractor.f(X)
@@ -38,7 +37,6 @@ end
 
 
 struct Newton{F,FP,O} <: Contractor{F}
-    dimension::Int
     f::F
     fp::FP
     op::O
@@ -46,16 +44,16 @@ end
 
 function Newton(::Type{Val{1}}, f::Function)
     f_prime = x -> ForwardDiff.derivative(f, x)
-    Newton(1, f, f_prime, N)
+    Newton(f, f_prime, N)
 end
 
 function Newton{n}(::Type{Val{n}}, f::Function)
     f_prime = x -> ForwardDiff.jacobian(f, x)
-    Newton(n, f, f_prime, N)
+    Newton(f, f_prime, N)
 end
 
 function Newton(f_prime::Function)
-    NewtonConstructor(f_prime)
+    return NewtonConstructor(f_prime)
 end
 
 function (C::Newton)(X)
@@ -79,52 +77,26 @@ function (C::Newton)(X)
     return :unknown, NX
 end
 
-"""
-    NewtonConstructor{FP}
 
-    Allow to store the derivative of a function before the creation of the
-    actual `Newton` contractor.
-"""
 struct NewtonConstructor{FP}
-    fp::FP
-end
-
-function (NC::NewtonConstructor){n}(::Type{Val{n}}, f)
-    Newton(n, f, NC.fp, N)
+    f_prime::FP
 end
 
 
 """
-    branch_and_prune(f, X, contractor, tol=1e-3)
+    branch_and_prune(X, contract, tol=1e-3)
 
-Generic branch and prune routine for finding isolated roots of a function
-`f:R^n → R^n` in a box.
+Generic branch and prune routine for finding isolated roots using the `contract`
+function as the contractor.
 
 Inputs:
-- `f`: function whose roots will be found
 - `X`: `Interval` or `IntervalBox`
-- `contractor`: function that, when applied to the function `f`, determines
-    the status of a given box `X`. It returns the new box and a symbol indicating
-    the status. Current possible values are `Bisection`, `Newton` and
-    `Newton(f_prime)` where `f_prime` is the derivative or jacobian of `f`.
+- `contractor`: function that determines the status of a given box `X`. It
+    returns the new box and a symbol indicating the status. Current possible
+    values are of type `Bisection` or `Newton`
 
 """
-function branch_and_prune(f, X, contractor, tol=1e-3)
-
-    input_dim = length(X)
-    output_dim = length(X)
-
-    # @show input_dim
-    # @show output_dim
-
-    # if !(input_dim == output_dim)
-    #     throw(ArgumentError("Input dimension ($input_dim) and output dimension ($output_dim) must be the same."))
-    # end
-
-    contract = contractor(Val{input_dim}, f)
-
-    # main algorithm:
-
+function branch_and_prune(X, contract, tol=1e-3)
     working = [X]
     outputs = Root{typeof(X)}[]
 
@@ -151,23 +123,11 @@ function branch_and_prune(f, X, contractor, tol=1e-3)
 
             push!(working, X1, X2)
         end
-
     end
 
     return outputs
 end
 
-branch_and_prune(f, X::Root, contractor, tol=1e-3) =
-    branch_and_prune(f, X.interval, contractor, tol)
-
-
-function branch_and_prune(f, V::Vector{Root{T}}, contractor, tol=1e-3) where {T}
-    reduce(append!, Root{T}[], [branch_and_prune(f, X.interval, contractor, tol) for X in V])
-end
-
-function branch_and_prune(f, V::Vector{T}, contractor, tol=1e-3) where {T}
-    reduce(append!, Root{T}[], [branch_and_prune(f, X, contractor, tol) for X in V])
-end
 
 export recursively_branch_and_prune
 
@@ -182,31 +142,6 @@ function recursively_branch_and_prune(h, X, contractor=BisectionContractor, fina
 
     return roots
 end
-
-"""
-If the input interval is complex, treat `f` as a complex function, currently of one complex variable `z`.
-"""
-function branch_and_prune{T}(f, Xc::Complex{Interval{T}}, contractor, tol=1e-3)
-    g = realify(f)
-    Y = IntervalBox(reim(Xc))
-
-    roots = branch_and_prune(g, Y, contractor, tol)
-
-    # @show roots
-
-    return [Root(Complex(root.interval...), root.status) for root in roots]
-end
-
-function branch_and_prune{T}(f, Xc::Complex{Interval{T}}, nc::NewtonConstructor, tol=1e-3)
-    g = realify(f)
-    Y = IntervalBox(reim(Xc))
-    nc_real = NewtonConstructor(realify_derivative(nc.fp))
-
-    roots = branch_and_prune(g, Y, nc_real, tol)
-
-    return [Root(Complex(root.interval...), root.status) for root in roots]
-end
-
 
 
 contains_zero{T}(X::Interval{T}) = zero(T) ∈ X
@@ -233,6 +168,8 @@ function refine(op, X)
 end
 
 
+IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
+
 """
     roots(f, X, contractor, tol=1e-3)
 
@@ -248,8 +185,41 @@ Inputs:
     `Newton(f_prime)` where `f_prime` is the derivative or jacobian of `f`.
 
 """
-roots{C<:Contractor}(f, X, contractor::Type{C}, tol::Float64=1e-3) = branch_and_prune(f, X, contractor, tol)
+function roots{T, C<:Contractor}(f, X::IntervalLike{T}, contractor::Type{C}, tol::Float64=1e-3)
+    dim = length(X)
+    contract = contractor(Val{dim}, f)
+    branch_and_prune(X, contract, tol)
+end
 
-roots(f, X, nc::NewtonConstructor, tol::Float64=1e-3) = branch_and_prune(f, X, nc, tol)
+function roots{T}(f, X::IntervalLike{T}, nc::NewtonConstructor, tol::Float64=1e-3)
+    dim = length(X)
+    contract = Newton(f, nc.f_prime, N)
+    branch_and_prune(X, contract, tol)
+end
 
-roots(f, X, tol::Float64=1e-3) = branch_and_prune(f, X, Newton, tol)
+function roots(f, V::Vector{Root{T}}, contract, tol=1e-3) where {T}
+    reduce(append!, Root{T}[], [roots(f, X.interval, contract, tol) for X in V])
+end
+
+function roots(f, V::Vector{T}, contract, tol=1e-3) where {T}
+    reduce(append!, Root{T}[], [roots(f, X, contract, tol) for X in V])
+end
+
+function roots{T, C<:Contractor}(f, Xc::Complex{Interval{T}}, contractor::Type{C}, tol::Float64=1e-3)
+    g = realify(f)
+    Y = IntervalBox(reim(Xc))
+    rts = roots(g, Y, contractor, tol)
+
+    return [Root(Complex(root.interval...), root.status) for root in rts]
+end
+
+function roots{T}(f, Xc::Complex{Interval{T}}, nc::NewtonConstructor, tol::Float64=1e-3)
+    g = realify(f)
+    g_prime = realify_derivative(nc.f_prime)
+    Y = IntervalBox(reim(Xc))
+    rts = roots(g, Y, Newton(g_prime), tol)
+
+    return [Root(Complex(root.interval...), root.status) for root in rts]
+end
+
+roots(f, X, tol::Float64=1e-3) = roots(f, X, Newton, tol)
