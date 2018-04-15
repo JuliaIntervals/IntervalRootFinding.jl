@@ -38,3 +38,16 @@ function realify(f)
     return g
 
 end
+
+"""
+Takes the derivative of a complex function and returns the real jacobian
+that implements it.
+"""
+function realify_derivative(fp)
+    function g_jac(x)
+        z = Compl(x[1], x[2])
+        fpz = fp(z)
+        SMatrix{2, 2}(fpz.re, fpz.im, -fpz.im, fpz.re)
+    end
+    return g_jac
+end
