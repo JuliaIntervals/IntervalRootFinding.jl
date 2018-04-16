@@ -21,19 +21,19 @@ end
 doc"""
 Single-variable Newton operator
 """
-function N{T}(f, x::Interval{T}, deriv::Interval{T})
+function 𝒩{T}(f, x::Interval{T}, deriv::Interval{T})
     m = Interval( guarded_mid(f, x) )
 
     m - (f(m) / deriv)
 end
 
-function N{T}(f, x::Interval{T})
+function 𝒩{T}(f, x::Interval{T})
     m = Interval( guarded_mid(f, x) )
 
     m - (f(m) / ForwardDiff.derivative(f, x))
 end
 
-function N{T}(f, f_prime, X::Interval{T})
+function 𝒩{T}(f, f_prime, X::Interval{T})
     m = Interval( guarded_mid(f, X) )
 
     m - (f(m) / f_prime(X))
@@ -45,7 +45,7 @@ doc"""
 Multi-variable Newton operator.
 Requires the function to be defined using the `@intervalbox` macro.
 """
-function N(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
+function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
     m = IntervalBox(Interval.(mid(X)))
     J = jacobian(SVector(X))
 
@@ -65,7 +65,7 @@ function newton_refine{N,T}(f::Function, f_prime::Function, X::Union{Interval{T}
 
     while diam(X) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
         deriv = f_prime(X)
-        NX = N(f, X, deriv)
+        NX = 𝒩(f, X, deriv)
 
         debug && @show(X, NX)
 
@@ -91,7 +91,7 @@ function newton_refine{T}(f::Function, f_prime::Function, X::Interval{T};
 
     while diam(X) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
         deriv = f_prime(X)
-        NX = N(f, X, deriv)
+        NX = 𝒩(f, X, deriv)
 
         debug && @show(X, NX)
 
@@ -134,7 +134,7 @@ function newton{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
     debug && @show(deriv)
 
     if !(z in deriv)
-        Nx = N(f, x, deriv)
+        Nx = 𝒩(f, x, deriv)
         debug && @show(Nx, Nx ⊆ x, Nx ∩ x)
 
         isempty(Nx ∩ x) && return Root{typeof(x)}[]
@@ -170,8 +170,8 @@ function newton{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
             @show N(f, x, y2)
         end
 
-        y1 = N(f, x, y1) ∩ x
-        y2 = N(f, x, y2) ∩ x
+        y1 = 𝒩(f, x, y1) ∩ x
+        y2 = 𝒩(f, x, y2) ∩ x
 
         debug && @show(y1, y2)
 
