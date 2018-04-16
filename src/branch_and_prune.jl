@@ -135,9 +135,9 @@ function recursively_branch_and_prune(h, X, contractor=BisectionContractor, fina
 end
 
 
-contains_zero{T}(X::Interval{T}) = zero(T) ∈ X
+contains_zero(X::Interval{T}) where {T} = zero(T) ∈ X
 contains_zero(X::SVector) = all(contains_zero.(X))
-contains_zero(X::IntervalBox) = all(contains_zero(X[i]) for i in 1:length(X))
+contains_zero(X::IntervalBox) = all(contains_zero.(X))
 
 
 """
