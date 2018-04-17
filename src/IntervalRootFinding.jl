@@ -57,11 +57,11 @@ end
 
 
 include("bisect.jl")
-include("bisection.jl")
 include("newton.jl")
 include("krawczyk.jl")
 include("complex.jl")
-include("branch_and_prune.jl")
+include("contractors.jl")
+include("roots.jl")
 include("newton1d.jl")
 
 
