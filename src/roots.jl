@@ -111,14 +111,19 @@ function roots(f, X::IntervalBox{T}, ::Type{Newton}, tol::Float64=1e-3;
 end
 
 
-# `roots` function for cases where `X` is not an `Interval` or `IntervalBox`
+# Acting on a Vector:
+
+# TODO: Use previous status information about roots:
 function roots(f, V::Vector{Root{T}}, contractor::Type{C}, tol::Float64=1e-3) where {T, C<:Contractor}
     reduce(append!, Root{T}[], [roots(f, X.interval, contractor, tol) for X in V])
 end
 
-function roots(f, V::Vector{T}, contractor::Type{C}, tol::Float64=1e-3) where {T, C<:Contractor}
-    reduce(append!, Root{T}[], [roots(f, X, contractor, tol) for X in V])
+function roots(f, V::Vector{T}, contractor::Type{C}, tol::Float64=1e-3; deriv=nothing) where {T, C<:Contractor}
+    reduce(append!, Root{T}[], [roots(f, X, contractor, tol; deriv=deriv) for X in V])
 end
+
+
+# Complex:
 
 function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C}, tol::Float64=1e-3) where {T, C<:Contractor}
     g = realify(f)
@@ -128,14 +133,15 @@ function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C}, tol::Float64=1e
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end
 
-# function roots(f, Xc::Complex{Interval{T}}, nc::NewtonConstructor, tol::Float64=1e-3) where {T}
-#     g = realify(f)
-#     g_prime = realify_derivative(nc.f_prime)
-#     Y = IntervalBox(reim(Xc))
-#     rts = roots(g, Y, Newton(g_prime), tol)
-#
-#     return [Root(Complex(root.interval...), root.status) for root in rts]
-# end
+function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-3;
+        deriv = x -> ForwardDiff.derivative(f)) where {T}
+    g = realify(f)
+    g_prime = realify_derivative(deriv)
+    Y = IntervalBox(reim(Xc))
+    rts = roots(g, Y, Newton, tol; deriv=g_prime)
+
+    return [Root(Complex(root.interval...), root.status) for root in rts]
+end
 
 # Default
 roots(f, X, tol::Float64=1e-3) = roots(f, X, Newton, tol)

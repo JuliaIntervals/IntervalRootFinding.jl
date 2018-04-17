@@ -13,7 +13,7 @@ using Base.Test
     @test all(root.status == :unique for root in rts)
 
     rts = roots(sin, -5..5, Newton)
-    @test rts == roots(sin, -5..5, Newton(x -> ForwardDiff.derivative(sin, x)))
+    @test rts == roots(sin, -5..5, Newton; deriv = cos)
 end
 
 
@@ -29,7 +29,38 @@ end
     @test length(rts) == 2
 
     rts = roots(f, X, Newton)
-    @test rts == roots(f, X, Newton(xx -> ForwardDiff.jacobian(f, xx)))
+    @test rts == roots(f, X, Newton; deriv = xx -> ForwardDiff.jacobian(f, xx))
+end
+
+
+# From R docs:
+# https://www.rdocumentation.org/packages/pracma/versions/1.9.9/topics/broyden
+
+@testset "3D roots" begin
+    function g(x)
+        (x1, x2, x3) = x
+        SVector(    x1^2 + x2^2 + x3^2 - 1,
+                    x1^2 + x3^2 - 0.25,
+                    x1^2 + x2^2 - 4x3
+                )
+    end
+
+    X = (-5..5)
+    XX = IntervalBox(X, 3)
+    rts = roots(g, XX, Newton)
+    @test length(rts) == 4
+    @test rts == roots(g, XX, Newton; deriv = xx -> ForwardDiff.jacobian(g, xx))
+end
+
+@testset "Stationary points" begin
+    f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
+    gradf = ∇(f)
+    XX = IntervalBox(-5..6, 2)
+    tol = 1e-5
+
+    rts = roots(gradf, XX, Newton, tol)
+    @test length(rts) == 25
+    @test rts == roots(gradf, XX, Newton, tol; deriv = xx -> ForwardDiff.jacobian(gradf, xx))
 end
 
 @testset "Complex roots" begin
@@ -53,34 +84,4 @@ end
         append!(d, abs.(I .- I2))
     end
     @test all(d .< 1e-15)
-end
-
-# From R docs:
-# https://www.rdocumentation.org/packages/pracma/versions/1.9.9/topics/broyden
-
-@testset "3D roots" begin
-    function g(x)
-        (x1, x2, x3) = x
-        SVector(    x1^2 + x2^2 + x3^2 - 1,
-                    x1^2 + x3^2 - 0.25,
-                    x1^2 + x2^2 - 4x3
-                )
-    end
-
-    X = (-5..5)
-    XX = IntervalBox(X, 3)
-    rts = roots(g, XX, Newton)
-    @test length(rts) == 4
-    @test rts == roots(g, XX, Newton(xx -> ForwardDiff.jacobian(g, xx)))
-end
-
-@testset "Stationary points" begin
-    f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
-    gradf = ∇(f)
-    XX = IntervalBox(-5..6, 2)
-    tol = 1e-5
-
-    rts = roots(gradf, XX, Newton, tol)
-    @test length(rts) == 25
-    @test rts == roots(gradf, XX, Newton(xx -> ForwardDiff.jacobian(gradf, xx)), tol)
 end

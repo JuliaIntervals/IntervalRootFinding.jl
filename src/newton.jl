@@ -2,58 +2,6 @@
 
 # Newton method
 
-# What is this guarded_mid for? Shouldn't it be checking if f(m)==0?
-doc"""Returns the midpoint of the interval x, slightly shifted in case
-the midpoint is an exact root"""
-function guarded_mid{T}(f, x::Interval{T})
-    m = mid(x)
-
-    if f(m) == 0                      # midpoint exactly a root
-        α = convert(T, 0.46875)      # close to 0.5, but exactly representable as a floating point
-        m = α*x.lo + (one(T)-α)*x.hi   # displace to another point in the interval
-    end
-
-    @assert m ∈ x
-
-    m
-end
-
-doc"""
-Single-variable Newton operator
-"""
-function 𝒩{T}(f, x::Interval{T}, deriv::Interval{T})
-    m = Interval( guarded_mid(f, x) )
-
-    m - (f(m) / deriv)
-end
-
-function 𝒩{T}(f, x::Interval{T})
-    m = Interval( guarded_mid(f, x) )
-
-    m - (f(m) / ForwardDiff.derivative(f, x))
-end
-
-function 𝒩{T}(f, f_prime, X::Interval{T})
-    m = Interval( guarded_mid(f, X) )
-
-    m - (f(m) / f_prime(X))
-end
-
-
-
-doc"""
-Multi-variable Newton operator.
-Requires the function to be defined using the `@intervalbox` macro.
-"""
-function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
-    m = IntervalBox(Interval.(mid(X)))
-    J = jacobian(SVector(X))
-
-    # @show m
-    # @show J
-
-    return IntervalBox( (m - (J \ f(m))... ) )
-end
 
 
 doc"""If a root is known to be inside an interval,

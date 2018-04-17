@@ -17,7 +17,7 @@ export
     roots, find_roots,
     bisect, newton1d
 
-import Base: ⊆, show
+import Base: ⊆, show, big
 
 const Interval = IntervalArithmetic.Interval
 
@@ -37,6 +37,7 @@ is_unique{T}(root::Root{T}) = root.status == :unique
 ⊆(a::Interval, b::Root) = a ⊆ b.interval   # the Root object has the interval in the first entry
 ⊆(a::Root, b::Root) = a.interval ⊆ b.interval
 
+big(a::Root) = Root(big(a.interval), a.status)
 
 # Common functionality:
 
