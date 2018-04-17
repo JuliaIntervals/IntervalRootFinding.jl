@@ -134,9 +134,16 @@ function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C}, tol::Float64=1e
 end
 
 function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-3;
-        deriv = x -> ForwardDiff.derivative(f)) where {T}
+        deriv = nothing) where {T}
+
     g = realify(f)
-    g_prime = realify_derivative(deriv)
+
+    if deriv == nothing
+        g_prime = x -> ForwardDiff.jacobian(g, x)
+    else
+        g_prime = realify_derivative(deriv)
+    end
+
     Y = IntervalBox(reim(Xc))
     rts = roots(g, Y, Newton, tol; deriv=g_prime)
 
