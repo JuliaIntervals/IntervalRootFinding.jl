@@ -4,8 +4,8 @@ using Base.Test
 
 @testset "1D roots" begin
     rts = roots(sin, -5..5)
-    @test length(rts) == 4
-    @test length(find(x->x==:unique, [root.status for root in rts])) == 2
+    @test length(rts) == 3
+    @test length(find(x->x==:unique, [root.status for root in rts])) == 3
 
     rts = roots(sin, -5..6, Bisection)
     @test length(rts) == 3
@@ -30,6 +30,13 @@ end
 
     rts = roots(f, X, Newton)
     @test rts == roots(f, X, Newton; deriv = xx -> ForwardDiff.jacobian(f, xx))
+
+    rts = roots(f, Xc, Bisection, 1e-3)
+    @test length(rts) == 5
+    rts = roots(f, rts, Newton)
+    @test length(rts) == 3
+    rts = roots(f, Xc)
+    @test length(rts) == 3
 end
 
 
