@@ -92,7 +92,7 @@ function newton{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
             return newton_refine(f, f_prime, Nx, tolerance=tolerance, debug=debug)
         end
 
-        m = guarded_mid(f, x)
+        m = mid(x)
 
         debug && @show(x,m)
 

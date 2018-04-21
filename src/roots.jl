@@ -98,29 +98,32 @@ function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3) wher
     branch_and_prune(X, Bisection(f), tol)
 end
 
-function roots(f, X::Interval{T}, ::Type{Newton}, tol::Float64=1e-3;
-            deriv = x -> ForwardDiff.derivative(f, x) ) where {T}
+function roots(f, X::Interval{T}, ::Type{Newton}, tol::Float64=1e-3; deriv = nothing) where {T}
+
+    if deriv == nothing
+        deriv = x -> ForwardDiff.derivative(f, x)
+    end
 
     branch_and_prune(X, Newton(f, deriv), tol)
 end
 
-function roots(f, X::IntervalBox{T}, ::Type{Newton}, tol::Float64=1e-3;
-            deriv = x -> ForwardDiff.jacobian(f, x) ) where {T}
+function roots(f, X::IntervalBox{T}, ::Type{Newton}, tol::Float64=1e-3; deriv = nothing) where {T}
+
+    if deriv == nothing
+        deriv = x -> ForwardDiff.jacobian(f, x)
+    end
 
     branch_and_prune(X, Newton(f, deriv), tol)
 end
 
+
+roots(f, r::Root, contractor, tol::Float64=1e-3; deriv= nothing)  = roots(f, r.interval, contractor, tol; deriv = deriv)
 
 # Acting on a Vector:
 
 # TODO: Use previous status information about roots:
-function roots(f, V::Vector{Root{T}}, contractor::Type{C}, tol::Float64=1e-3) where {T, C<:Contractor}
-    reduce(append!, Root{T}[], [roots(f, X.interval, contractor, tol) for X in V])
-end
+roots(f, V::Vector{Root{T}}, contractor, tol::Float64=1e-3; deriv = nothing) where {T} = vcat(roots.(f, V, contractor, tol; deriv = deriv)...)
 
-function roots(f, V::Vector{T}, contractor::Type{C}, tol::Float64=1e-3; deriv=nothing) where {T, C<:Contractor}
-    reduce(append!, Root{T}[], [roots(f, X, contractor, tol; deriv=deriv) for X in V])
-end
 
 
 # Complex:
@@ -151,4 +154,4 @@ function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-3;
 end
 
 # Default
-roots(f, X, tol::Float64=1e-3) = roots(f, X, Newton, tol)
+roots(f, X, tol::Float64=1e-3; deriv = nothing) = roots(f, X, Newton, tol, deriv = deriv)
