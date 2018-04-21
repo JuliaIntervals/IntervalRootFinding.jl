@@ -33,6 +33,11 @@ end
 
     rts = roots(f, X, Newton)
     @test rts == roots(f, X, Newton; deriv = xx -> ForwardDiff.jacobian(f, xx))
+
+    X = IntervalBox(-∞..∞, 2)
+    rts = roots(f, X, Newton)
+    @test length(rts) == 2
+
 end
 
 
