@@ -14,6 +14,9 @@ using Base.Test
 
     rts = roots(sin, -5..5, Newton)
     @test rts == roots(sin, -5..5, Newton; deriv = cos)
+
+    rts = roots(x -> x^2 - 2, -∞..∞)
+    @test length(rts) == 2
 end
 
 

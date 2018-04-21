@@ -29,6 +29,8 @@ struct Newton{F,FP} <: Contractor{F}
     f′::FP   # use \prime<TAB> for ′
 end
 
+Base.isinf(X::IntervalBox) = any(isinf.(X))
+
 function (C::Newton)(X, tol)
     # use Bisection contractor for this:
     if !(contains_zero(C.f(X)))
@@ -40,6 +42,10 @@ function (C::Newton)(X, tol)
     NX = 𝒩(C.f, C.f′, X) ∩ X
 
     isempty(NX) && return :empty, X
+
+    if isinf(X)
+        return :unknown, NX  # force bisection
+    end
 
     if NX ⪽ X  # isinterior; know there's a unique root inside
         NX =  refine(X -> 𝒩(C.f, C.f′, X), NX, tol)
