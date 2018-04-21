@@ -117,12 +117,12 @@ function roots(f, X::IntervalBox{T}, ::Type{Newton}, tol::Float64=1e-3; deriv = 
 end
 
 
-roots(f, r::Root, contractor, tol::Float64=1e-3; deriv= nothing)  = roots(f, r.interval, contractor, tol; deriv = deriv)
+roots(f, r::Root, contractor::Type{C}, tol::Float64=1e-3; deriv= nothing) where {C<:Contractor}  = roots(f, r.interval, contractor, tol; deriv = deriv)
 
 # Acting on a Vector:
 
 # TODO: Use previous status information about roots:
-roots(f, V::Vector{Root{T}}, contractor, tol::Float64=1e-3; deriv = nothing) where {T} = vcat(roots.(f, V, contractor, tol; deriv = deriv)...)
+roots(f, V::Vector{Root{T}}, contractor::Type{C}, tol::Float64=1e-3; deriv = nothing) where {T, C<:Contractor} = vcat(roots.(f, V, contractor, tol; deriv = deriv)...)
 
 
 
@@ -136,7 +136,7 @@ function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C}, tol::Float64=1e
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end
 
-function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-3;
+function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-15;
         deriv = nothing) where {T}
 
     g = realify(f)
@@ -154,4 +154,4 @@ function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-3;
 end
 
 # Default
-roots(f, X, tol::Float64=1e-3; deriv = nothing) = roots(f, X, Newton, tol, deriv = deriv)
+roots(f, X, tol::Float64=1e-15; deriv = nothing) = roots(f, X, Newton, tol; deriv = deriv)

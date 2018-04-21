@@ -50,30 +50,30 @@ function (C::Newton)(X, tol)
 end
 
 
-
 doc"""
 Single-variable Newton operator
 """
-function 𝒩{T}(f, x::Interval{T})
-    m = Interval(mid(X))
+function 𝒩{T}(f, X::Interval{T})
+    m = Interval(mid(X, where_bisect))
 
-    m - (f(m) / ForwardDiff.derivative(f, x))
+    m - (f(m) / ForwardDiff.derivative(f, X))
 end
 
 function 𝒩{T}(f, f′, X::Interval{T})
-    m = Interval(mid(X))
+    m = Interval(mid(X, where_bisect))
 
     m - (f(m) / f′(X))
 end
 
 
+IntervalArithmetic.mid(X::IntervalBox, α) = mid.(X, α)
 
 doc"""
 Multi-variable Newton operator.
 """
 function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
 
-    m = IntervalBox(Interval.(mid(X)))
+    m = IntervalBox(Interval.(mid(X, where_bisect)))
     J = jacobian(SVector(X))
 
     return IntervalBox(m - (J \ f(m)))

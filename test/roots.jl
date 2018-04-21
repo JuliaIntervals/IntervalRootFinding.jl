@@ -30,13 +30,6 @@ end
 
     rts = roots(f, X, Newton)
     @test rts == roots(f, X, Newton; deriv = xx -> ForwardDiff.jacobian(f, xx))
-
-    rts = roots(f, Xc, Bisection, 1e-3)
-    @test length(rts) == 5
-    rts = roots(f, rts, Newton)
-    @test length(rts) == 3
-    rts = roots(f, Xc)
-    @test length(rts) == 3
 end
 
 
@@ -71,8 +64,8 @@ end
 end
 
 @testset "Complex roots" begin
-    x = -5..6
-    Xc = Complex(x, x)
+    X = -5..5
+    Xc = Complex(X, X)
     f(z) = z^3 - 1
 
     rts = roots(f, Xc, Bisection, 1e-3)
@@ -83,9 +76,11 @@ end
     @test length(rts) == 3
 
     rts = roots(f, Xc, Newton)
-    rts2 = roots(f, Xc, Newton(z -> 3*z^2))
+    rts2 = roots(f, Xc, Newton; deriv = z -> 3*z^2)
+
     intervals = [reim(rt.interval) for rt in rts]
     intervals2 = [reim(rt.interval) for rt in rts2]
+
     d = []
     for (I, I2) in zip(sort(intervals), sort(intervals2))
         append!(d, abs.(I .- I2))
