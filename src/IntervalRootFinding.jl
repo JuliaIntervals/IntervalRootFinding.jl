@@ -19,16 +19,24 @@ export
 
 import Base: ⊆, show, big
 
-const Interval = IntervalArithmetic.Interval
+export root_status
+
+
+import IntervalArithmetic.interval
+
+
 
 const derivative = ForwardDiff.derivative
 const D = derivative
 
 # Root object:
-immutable Root{T}
+struct Root{T}
     interval::T
     status::Symbol
 end
+
+interval(x::Root) = x.interval
+root_status(x::Root) = x.status
 
 show(io::IO, root::Root) = print(io, "Root($(root.interval), :$(root.status))")
 
