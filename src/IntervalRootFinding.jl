@@ -48,9 +48,12 @@ function guarded_mid{T}(f::Function, x::Interval{T})
 end
 
 
+include("root_object.jl")
 include("bisect.jl")
+
 include("newton.jl")
 include("krawczyk.jl")
+
 include("complex.jl")
 include("contractors.jl")
 include("roots.jl")

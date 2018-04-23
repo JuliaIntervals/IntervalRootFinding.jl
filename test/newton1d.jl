@@ -36,7 +36,7 @@ three_halves_pi = 3*big_pi/2
         end
 
         @test length(rts1) == 3
-        L = [(-π.. -π), (0..0), (π..π)]
+        L = [ -pi_interval(Float64), 0..0, pi_interval(Float64)]
         for i = 1:length(rts1)
             @test L[i] == rts1[i].interval && :unique == rts1[i].status
         end
