@@ -4,8 +4,8 @@ using Base.Test
 
 @testset "1D roots" begin
     rts = roots(sin, -5..5)
-    @test length(rts) == 4
-    @test length(find(x->x==:unique, [root.status for root in rts])) == 2
+    @test length(rts) == 3
+    @test length(find(x->x==:unique, [root.status for root in rts])) == 3
 
     rts = roots(sin, -5..6, Bisection)
     @test length(rts) == 3
@@ -13,7 +13,10 @@ using Base.Test
     @test all(root.status == :unique for root in rts)
 
     rts = roots(sin, -5..5, Newton)
-    @test rts == roots(sin, -5..5, Newton(x -> ForwardDiff.derivative(sin, x)))
+    @test rts == roots(sin, -5..5, Newton; deriv = cos)
+
+    rts = roots(x -> x^2 - 2, -∞..∞)
+    @test length(rts) == 2
 end
 
 
@@ -29,31 +32,14 @@ end
     @test length(rts) == 2
 
     rts = roots(f, X, Newton)
-    @test rts == roots(f, X, Newton(xx -> ForwardDiff.jacobian(f, xx)))
+    @test rts == roots(f, X, Newton; deriv = xx -> ForwardDiff.jacobian(f, xx))
+
+    X = IntervalBox(-∞..∞, 2)
+    rts = roots(f, X, Newton)
+    @test length(rts) == 2
+
 end
 
-@testset "Complex roots" begin
-    x = -5..6
-    Xc = Complex(x, x)
-    f(z) = z^3 - 1
-
-    rts = roots(f, Xc, Bisection, 1e-3)
-    @test length(rts) == 7
-    rts = roots(f, rts, Newton)
-    @test length(rts) == 3
-    rts = roots(f, Xc)
-    @test length(rts) == 3
-
-    rts = roots(f, Xc, Newton)
-    rts2 = roots(f, Xc, Newton(z -> 3*z^2))
-    intervals = [reim(rt.interval) for rt in rts]
-    intervals2 = [reim(rt.interval) for rt in rts2]
-    d = []
-    for (I, I2) in zip(sort(intervals), sort(intervals2))
-        append!(d, abs.(I .- I2))
-    end
-    @test all(d .< 1e-15)
-end
 
 # From R docs:
 # https://www.rdocumentation.org/packages/pracma/versions/1.9.9/topics/broyden
@@ -71,7 +57,7 @@ end
     XX = IntervalBox(X, 3)
     rts = roots(g, XX, Newton)
     @test length(rts) == 4
-    @test rts == roots(g, XX, Newton(xx -> ForwardDiff.jacobian(g, xx)))
+    @test rts == roots(g, XX, Newton; deriv = xx -> ForwardDiff.jacobian(g, xx))
 end
 
 @testset "Stationary points" begin
@@ -82,5 +68,30 @@ end
 
     rts = roots(gradf, XX, Newton, tol)
     @test length(rts) == 25
-    @test rts == roots(gradf, XX, Newton(xx -> ForwardDiff.jacobian(gradf, xx)), tol)
+    @test rts == roots(gradf, XX, Newton, tol; deriv = xx -> ForwardDiff.jacobian(gradf, xx))
+end
+
+@testset "Complex roots" begin
+    X = -5..5
+    Xc = Complex(X, X)
+    f(z) = z^3 - 1
+
+    rts = roots(f, Xc, Bisection, 1e-3)
+    @test length(rts) == 7
+    rts = roots(f, rts, Newton)
+    @test length(rts) == 3
+    rts = roots(f, Xc)
+    @test length(rts) == 3
+
+    rts = roots(f, Xc, Newton)
+    rts2 = roots(f, Xc, Newton; deriv = z -> 3*z^2)
+
+    intervals = [reim(rt.interval) for rt in rts]
+    intervals2 = [reim(rt.interval) for rt in rts2]
+
+    d = []
+    for (I, I2) in zip(sort(intervals), sort(intervals2))
+        append!(d, abs.(I .- I2))
+    end
+    @test all(d .< 1e-15)
 end

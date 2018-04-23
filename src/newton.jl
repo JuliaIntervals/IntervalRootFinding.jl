@@ -2,58 +2,6 @@
 
 # Newton method
 
-# What is this guarded_mid for? Shouldn't it be checking if f(m)==0?
-doc"""Returns the midpoint of the interval x, slightly shifted in case
-the midpoint is an exact root"""
-function guarded_mid{T}(f, x::Interval{T})
-    m = mid(x)
-
-    if f(m) == 0                      # midpoint exactly a root
-        α = convert(T, 0.46875)      # close to 0.5, but exactly representable as a floating point
-        m = α*x.lo + (one(T)-α)*x.hi   # displace to another point in the interval
-    end
-
-    @assert m ∈ x
-
-    m
-end
-
-doc"""
-Single-variable Newton operator
-"""
-function N{T}(f::Function, x::Interval{T}, deriv::Interval{T})
-    m = Interval( guarded_mid(f, x) )
-
-    m - (f(m) / deriv)
-end
-
-function N{T}(f::Function, x::Interval{T})
-    m = Interval( guarded_mid(f, x) )
-
-    m - (f(m) / ForwardDiff.derivative(f, x))
-end
-
-function N{T}(f::Function, f_prime::Function, X::Interval{T})
-    m = Interval( guarded_mid(f, X) )
-
-    m - (f(m) / f_prime(X))
-end
-
-
-
-doc"""
-Multi-variable Newton operator.
-Requires the function to be defined using the `@intervalbox` macro.
-"""
-function N(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
-    m = IntervalBox(Interval.(mid(X)))
-    J = jacobian(SVector(X))
-
-    # @show m
-    # @show J
-
-    return IntervalBox( (m - (J \ f(m))... ) )
-end
 
 
 doc"""If a root is known to be inside an interval,
@@ -65,7 +13,7 @@ function newton_refine{N,T}(f::Function, f_prime::Function, X::Union{Interval{T}
 
     while diam(X) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
         deriv = f_prime(X)
-        NX = N(f, X, deriv)
+        NX = 𝒩(f, X, deriv)
 
         debug && @show(X, NX)
 
@@ -91,7 +39,7 @@ function newton_refine{T}(f::Function, f_prime::Function, X::Interval{T};
 
     while diam(X) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
         deriv = f_prime(X)
-        NX = N(f, X, deriv)
+        NX = 𝒩(f, X, deriv)
 
         debug && @show(X, NX)
 
@@ -134,7 +82,7 @@ function newton{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
     debug && @show(deriv)
 
     if !(z in deriv)
-        Nx = N(f, x, deriv)
+        Nx = 𝒩(f, x, deriv)
         debug && @show(Nx, Nx ⊆ x, Nx ∩ x)
 
         isempty(Nx ∩ x) && return Root{typeof(x)}[]
@@ -144,7 +92,7 @@ function newton{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
             return newton_refine(f, f_prime, Nx, tolerance=tolerance, debug=debug)
         end
 
-        m = guarded_mid(f, x)
+        m = mid(x)
 
         debug && @show(x,m)
 
@@ -170,8 +118,8 @@ function newton{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
             @show N(f, x, y2)
         end
 
-        y1 = N(f, x, y1) ∩ x
-        y2 = N(f, x, y2) ∩ x
+        y1 = 𝒩(f, x, y1) ∩ x
+        y2 = 𝒩(f, x, y2) ∩ x
 
         debug && @show(y1, y2)
 

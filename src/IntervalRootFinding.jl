@@ -8,6 +8,9 @@ using IntervalArithmetic
 using ForwardDiff
 using StaticArrays
 
+
+import Base: ⊆, show, big
+
 import Polynomials: roots
 
 ## Root finding
@@ -17,26 +20,15 @@ export
     roots, find_roots,
     bisect, newton1d
 
-import Base: ⊆, show
+export isunique, root_status
 
-const Interval = IntervalArithmetic.Interval
+
+import IntervalArithmetic.interval
+
+
 
 const derivative = ForwardDiff.derivative
 const D = derivative
-
-# Root object:
-immutable Root{T}
-    interval::T
-    status::Symbol
-end
-
-show(io::IO, root::Root) = print(io, "Root($(root.interval), :$(root.status))")
-
-is_unique{T}(root::Root{T}) = root.status == :unique
-
-⊆(a::Interval, b::Root) = a ⊆ b.interval   # the Root object has the interval in the first entry
-⊆(a::Root, b::Root) = a.interval ⊆ b.interval
-
 
 # Common functionality:
 
@@ -56,12 +48,15 @@ function guarded_mid{T}(f::Function, x::Interval{T})
 end
 
 
+include("root_object.jl")
 include("bisect.jl")
-include("bisection.jl")
+
 include("newton.jl")
 include("krawczyk.jl")
+
 include("complex.jl")
-include("branch_and_prune.jl")
+include("contractors.jl")
+include("roots.jl")
 include("newton1d.jl")
 
 
