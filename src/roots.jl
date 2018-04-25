@@ -78,6 +78,7 @@ contains_zero(X::IntervalBox) = all(contains_zero.(X))
 
 
 IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
+DerivativeType = Union{Type{Newton}, Type{Krawczyk}}
 
 """
     roots(f, X, contractor, tol=1e-3)
@@ -98,37 +99,41 @@ function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3) wher
     branch_and_prune(X, Bisection(f), tol)
 end
 
-function roots(f, X::Interval{T}, ::Type{Newton}, tol::Float64=1e-3; deriv = nothing) where {T}
+function roots(f, X::Interval{T}, C::DerivativeType, tol::Float64=1e-3; deriv = nothing) where {T}
 
     if deriv == nothing
         deriv = x -> ForwardDiff.derivative(f, x)
     end
 
-    branch_and_prune(X, Newton(f, deriv), tol)
+    branch_and_prune(X, C(f, deriv), tol)
 end
 
-function roots(f, X::IntervalBox{T}, ::Type{Newton}, tol::Float64=1e-3; deriv = nothing) where {T}
+function roots(f, X::IntervalBox{T}, C::DerivativeType, tol::Float64=1e-3; deriv = nothing) where {T}
 
     if deriv == nothing
         deriv = x -> ForwardDiff.jacobian(f, x)
     end
 
-    branch_and_prune(X, Newton(f, deriv), tol)
+    branch_and_prune(X, C(f, deriv), tol)
 end
 
 
-roots(f, r::Root, contractor::Type{C}, tol::Float64=1e-3; deriv= nothing) where {C<:Contractor}  = roots(f, r.interval, contractor, tol; deriv = deriv)
+roots(f, r::Root, contractor::Type{C}, tol::Float64=1e-3;
+        deriv= nothing) where {C<:Contractor}  = roots(f, r.interval, contractor, tol; deriv = deriv)
 
 # Acting on a Vector:
 
 # TODO: Use previous status information about roots:
-roots(f, V::Vector{Root{T}}, contractor::Type{C}, tol::Float64=1e-3; deriv = nothing) where {T, C<:Contractor} = vcat(roots.(f, V, contractor, tol; deriv = deriv)...)
+roots(f, V::Vector{Root{T}}, contractor::Type{C}, tol::Float64=1e-3;
+    deriv = nothing) where {T, C<:Contractor} = vcat(roots.(f, V, contractor, tol; deriv = deriv)...)
 
 
 
 # Complex:
 
-function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C}, tol::Float64=1e-3) where {T, C<:Contractor}
+function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
+        tol::Float64=1e-3) where {T, C<:Contractor}
+
     g = realify(f)
     Y = IntervalBox(reim(Xc))
     rts = roots(g, Y, contractor, tol)

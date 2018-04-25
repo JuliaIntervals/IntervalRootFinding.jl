@@ -6,7 +6,7 @@
 """
 abstract type Contractor{F} end
 
-export Bisection, Newton
+export Bisection, Newton, Krawczyk
 
 # bisection
 struct Bisection{F} <: Contractor{F}
@@ -42,10 +42,7 @@ function (C::Newton)(X, tol)
     NX = 𝒩(C.f, C.f′, X) ∩ X
 
     isempty(NX) && return :empty, X
-
-    if isinf(X)
-        return :unknown, NX  # force bisection
-    end
+    isinf(X) && return :unknown, NX  # force bisection
 
     if NX ⪽ X  # isinterior; know there's a unique root inside
         NX =  refine(X -> 𝒩(C.f, C.f′, X), NX, tol)
@@ -72,13 +69,10 @@ function 𝒩{T}(f, f′, X::Interval{T})
 end
 
 
-IntervalArithmetic.mid(X::IntervalBox, α) = mid.(X, α)
-
 doc"""
 Multi-variable Newton operator.
 """
 function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
-
     m = IntervalBox(Interval.(mid(X, where_bisect)))
     J = jacobian(SVector(X))
 
@@ -86,6 +80,58 @@ function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimension
 end
 
 
+# Krawczyk
+struct Krawczyk{F, FP} <: Contractor{F}
+    f::F
+    f′::FP   # use \prime<TAB> for ′
+end
+
+function (C::Krawczyk)(X, tol)
+    # use Bisection contractor for this:
+    if !(contains_zero(C.f(X)))
+        return :empty, X
+    end
+
+    KX = 𝒦(C.f, C.f′, X) ∩ X
+
+    isempty(KX) && return :empty, X
+    isinf(X) && return :unknown, KX  # force bisection
+
+    if KX ⪽ X  # isinterior; know there's a unique root inside
+        KX =  refine(X -> 𝒦(C.f, C.f′, X), KX, tol)
+        return :unique, KX
+    end
+
+    return :unknown, KX
+end
+
+
+doc"""
+Single-variable Krawczyk operator
+"""
+function 𝒦(f, f′, X::Interval{T}) where {T}
+    m = Interval(mid(X, where_bisect))
+    Y = 1/f′(m)
+
+    m - Y*f(m) + (1 - Y*f′(X))*(X - m)
+end
+
+
+@generated function 𝒦(f, jacobian, X::IntervalBox{N, T}) where {N, T}
+    unit = eye(N)
+
+    ex = quote
+        m = mid(X, where_bisect)
+        J = jacobian(X)
+        Y = inv(jacobian(m))
+        m = IntervalBox(Interval.(m))
+
+        IntervalBox(m - Y*f(m) + ($unit - Y*J)*(X - m))
+    end
+    ex
+end
+
+IntervalArithmetic.mid(X::IntervalBox, α) = mid.(X, α)
 
 """
 Generic refine operation for Krawczyk and Newton.
