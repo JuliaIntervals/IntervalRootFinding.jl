@@ -141,7 +141,7 @@ function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end
 
-function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-15;
+function roots(f, Xc::Complex{Interval{T}}, C::DerivativeType, tol::Float64=1e-15;
         deriv = nothing) where {T}
 
     g = realify(f)
@@ -153,7 +153,7 @@ function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-15;
     end
 
     Y = IntervalBox(reim(Xc))
-    rts = roots(g, Y, Newton, tol; deriv=g_prime)
+    rts = roots(g, Y, C, tol; deriv=g_prime)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end
