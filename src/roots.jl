@@ -18,7 +18,8 @@ end
 RootSearchState{T<:Union{Interval,IntervalBox}}(region::T) =
     RootSearchState([region], Root{T}[])
 
-copy(state::RootSearchState) = RootSearchState(copy(working), copy(outputs))
+copy(state::RootSearchState) =
+    RootSearchState(copy(state.working), copy(state.outputs))
 
 """
     RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
@@ -34,8 +35,8 @@ struct RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
     tolerance::T
 end
 
-eltype{R}(::Type{RootSearch{R}}) = RootSearchState{R}
-iteratorsize(::Type{RootSearch}) = SizeUnknown()
+eltype{R, T <: RootSearch{R}}(t::Type{T}) = RootSearchState{R}
+iteratorsize{T <: RootSearch}(::Type{T}) = Base.SizeUnknown()
 
 function start(iter::RootSearch)
     state = RootSearchState(iter.region)
