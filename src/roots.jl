@@ -35,7 +35,7 @@ struct RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
     tolerance::T
 end
 
-eltype{R, T <: RootSearch{R}}(t::Type{T}) = RootSearchState{R}
+eltype{R, T <: RootSearch{R}}(::Type{T}) = RootSearchState{R}
 iteratorsize{T <: RootSearch}(::Type{T}) = Base.SizeUnknown()
 
 function start(iter::RootSearch)
