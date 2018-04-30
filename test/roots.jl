@@ -95,3 +95,18 @@ end
     end
     @test all(d .< 1e-15)
 end
+
+@testset "RootSearch interface" begin
+    contractor = Newton(sin, cos)
+    search = RootSearch(-10..10, contractor, 1e-3)
+    state = start(search)
+
+    # check that original and copy are independent
+    state_copy = copy(state)
+    pop!(state_copy.working) # mutate copy
+    @test length(state.working) != length(state_copy.working)
+
+    # cover optional iterator methods
+    @test eltype(search) != Any
+    @test_nowarn iteratorsize(search)
+end
