@@ -6,6 +6,15 @@ function all_unique(rts)
     all(root_status.(rts) .== :unique)
 end
 
+function test_newtonlike(f, X, method, nsol, tol=1e-3; deriv=nothing)
+    rts = roots(f, X, method)
+    @test length(rts) == nsol
+    @test all_unique(rts)
+    @test rts == roots(f, X, method; deriv = deriv)
+end
+
+newtonlike_methods = [Newton, Krawczyk]
+
 @testset "1D roots" begin
     # Default
     rts = roots(sin, -5..5)
@@ -20,17 +29,9 @@ end
     rts = roots(sin, rts, Newton)
     @test all_unique(rts)
 
-    # Newton
-    rts = roots(sin, -5..5, Newton)
-    @test length(rts) == 3
-    @test all_unique(rts)
-    @test rts == roots(sin, -5..5, Newton; deriv = cos)
-
-    # Krawczyz
-    rts = roots(sin, -5..5, Krawczyk)
-    @test length(rts) == 3
-    @test all_unique(rts)
-    @test rts == roots(sin, -5..5, Krawczyk; deriv = cos)
+    for method in newtonlike_methods
+        test_newtonlike(sin, -5..5, method, 3; deriv=cos)
+    end
 
     # Infinite interval
     rts = roots(x -> x^2 - 2, -∞..∞)
@@ -47,19 +48,9 @@ end
     rts = roots(f, X, Bisection, 1e-3)
     @test length(rts) == 4
 
-    # Newton
-    rts = roots(f, rts, Newton)
-    @test length(rts) == 2
-    @test all_unique(rts)
-
-    rts = roots(f, X, Newton)
-    @test rts == roots(f, X, Newton; deriv = xx -> ForwardDiff.jacobian(f, xx))
-
-    # Krawczyk
-    rts = roots(f, X, Krawczyk)
-    @test length(rts) == 2
-    @test all_unique(rts)
-    @test rts == roots(f, X, Krawczyk; deriv = xx -> ForwardDiff.jacobian(f, xx))
+    for method in newtonlike_methods
+        test_newtonlike(f, X, method, 2; deriv = xx -> ForwardDiff.jacobian(f, xx))
+    end
 
     # Infinite interval
     X = IntervalBox(-∞..∞, 2)
@@ -83,17 +74,12 @@ end
     X = (-5..5)
     XX = IntervalBox(X, 3)
 
-    # Newton
-    rts = roots(g, XX, Newton)
-    @test length(rts) == 4
-    @test all_unique(rts)
-    @test rts == roots(g, XX, Newton; deriv = xx -> ForwardDiff.jacobian(g, xx))
-
-    # Krawczyk
-    rts = roots(g, XX, Krawczyk)
-    @test length(rts) == 4
-    @test all_unique(rts)
-    @test rts == roots(g, XX, Krawczyk; deriv = xx -> ForwardDiff.jacobian(g, xx))
+    for method in newtonlike_methods
+        rts = roots(g, XX, method)
+        @test length(rts) == 4
+        @test all_unique(rts)
+        @test rts == roots(g, XX, method; deriv = xx -> ForwardDiff.jacobian(g, xx))
+    end
 end
 
 @testset "Stationary points" begin
@@ -102,17 +88,9 @@ end
     XX = IntervalBox(-5..6, 2)
     tol = 1e-5
 
-    # Newton
-    rts = roots(gradf, XX, Newton, tol)
-    @test length(rts) == 25
-    @test all_unique(rts)
-    @test rts == roots(gradf, XX, Newton, tol; deriv = xx -> ForwardDiff.jacobian(gradf, xx))
-
-    # Krawczyk
-    rts = roots(gradf, XX, Krawczyk, tol)
-    @test length(rts) == 25
-    @test all_unique(rts)
-    @test rts == roots(gradf, XX, Krawczyk, tol; deriv = xx -> ForwardDiff.jacobian(gradf, xx))
+    for method in newtonlike_methods
+        test_newtonlike(gradf, XX, method, 25, tol; deriv = xx -> ForwardDiff.jacobian(gradf, xx))
+    end
 end
 
 @testset "Complex roots" begin
@@ -128,17 +106,7 @@ end
     rts = roots(f, Xc, Bisection, 1e-3)
     @test length(rts) == 7
 
-    # Newton
-    rts = roots(f, rts, Newton)
-    @test length(rts) == 3
-    @test all_unique(rts)
-
-    rts = roots(f, Xc, Newton)
-    @test rts == roots(f, Xc, Newton; deriv = z -> 3*z^2)
-
-    # Krawczyk
-    rts = roots(f, Xc, Krawczyk)
-    @test length(rts) == 3
-    @test all_unique(rts)
-    @test rts == roots(f, Xc, Krawczyk; deriv = z -> 3*z^2)
+    for method in newtonlike_methods
+        test_newtonlike(f, Xc, method, 3; deriv = z -> 3*z^2)
+    end
 end
