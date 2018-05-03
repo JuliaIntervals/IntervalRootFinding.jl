@@ -132,7 +132,7 @@ Inputs:
 
 """
 # Contractor specific `roots` functions
-function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3) where {T}
+function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3; deriv = nothing) where {T}
     branch_and_prune(X, Bisection(f), tol)
 end
 
@@ -155,7 +155,7 @@ function roots(f, X::IntervalBox{T}, ::Type{Newton}, tol::Float64=1e-3; deriv = 
 end
 
 
-roots(f, r::Root, contractor::Type{C}, tol::Float64=1e-3; deriv= nothing) where {C<:Contractor}  = roots(f, r.interval, contractor, tol; deriv = deriv)
+roots(f, r::Root, contractor::Type{C}, tol::Float64=1e-3; deriv = nothing) where {C<:Contractor}  = roots(f, r.interval, contractor, tol; deriv = deriv)
 
 # Acting on a Vector:
 
