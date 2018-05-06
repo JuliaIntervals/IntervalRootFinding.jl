@@ -22,6 +22,15 @@ rts = roots(f, Xc, Bisection)
 rts = roots(f, rts, Newton)
 rts = roots(f, Xc)
 
+# track the number of working intervals during the iteration:
+f(x) = sin(x)
+contractor = Newton(f, x -> ForwardDiff.derivative(f, x))
+search = RootSearch(-10..10, contractor, 1e-3)
+for state in search
+    print(length(state.working), " ")
+end
+println("done.")
+
 # From R docs:
 
 # https://www.rdocumentation.org/packages/pracma/versions/1.9.9/topics/broyden

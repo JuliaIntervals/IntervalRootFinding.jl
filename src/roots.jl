@@ -1,7 +1,9 @@
 
 import IntervalArithmetic: diam, isinterior
+import Base: start, next, done, copy, eltype, iteratorsize
 
-export branch_and_prune, Bisection, Newton
+export branch_and_prune, Bisection, Newton, RootSearch
+export start, next, done, copy, step!, eltype, iteratorsize
 
 diam(x::Root) = diam(x.interval)
 
@@ -9,7 +11,68 @@ Base.size(x::Interval) = (1,)
 
 isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
 
+struct RootSearchState{T <: Union{Interval,IntervalBox}}
+    working::Vector{T}
+    outputs::Vector{Root{T}}
+end
+RootSearchState{T<:Union{Interval,IntervalBox}}(region::T) =
+    RootSearchState([region], Root{T}[])
 
+copy(state::RootSearchState) =
+    RootSearchState(copy(state.working), copy(state.outputs))
+
+"""
+    RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
+
+Type implementing the `Base.Iterator` interface to the branch and prune routine.
+Returns the `RootSearchState` at each iteration. Note: Each iteration mutates
+the `RootSearchState`. Use `copy(state::RootSearchState)` to create an
+independent instance if necessary.
+"""
+struct RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
+    region::R
+    contractor::S
+    tolerance::T
+end
+
+eltype{R, T <: RootSearch{R}}(::Type{T}) = RootSearchState{R}
+iteratorsize{T <: RootSearch}(::Type{T}) = Base.SizeUnknown()
+
+function start(iter::RootSearch)
+    state = RootSearchState(iter.region)
+    sizehint!(state.outputs, 100)
+    sizehint!(state.working, 1000)
+    return state
+end
+
+"""
+    step!(state::RootSearchState, contractor, tolerance)
+
+Progress `state` by treating one of its `working` regions. Note: `state.working`
+is always modified. If a root is found, it is added to `state.outputs`.
+"""
+function step!(state::RootSearchState, contractor, tolerance)
+    X = pop!(state.working)
+    status, output = contractor(X, tolerance)
+    if status == :empty
+        return nothing
+    elseif status == :unique
+        push!(state.outputs, Root(output, :unique))
+    elseif diam(output) < tolerance
+        push!(state.outputs, Root(output, :unknown))
+    else # branch
+        X1, X2 = bisect(X)
+        push!(state.working, X1, X2)
+    end
+    return nothing
+end
+
+function next(iter::RootSearch, state::RootSearchState)
+    step!(state, iter.contractor, iter.tolerance)
+    return state, state
+end
+
+done(iter::RootSearch, state::RootSearchState) = isempty(state.working)
 
 """
     branch_and_prune(X, contract, tol=1e-3)
@@ -25,37 +88,12 @@ Inputs:
 
 """
 function branch_and_prune(X, contractor, tol=1e-3)
-    working = [X]
-    outputs = Root{typeof(X)}[]
-
-    sizehint!(outputs, 100)
-    sizehint!(working, 1000)
-
-    while !isempty(working)
-        # @show working
-        X = pop!(working)
-
-        status, output = contractor(X, tol)
-
-        if status == :empty
-            continue
-
-        elseif status == :unique
-            push!(outputs, Root(output, :unique))
-
-        elseif diam(output) < tol
-            push!(outputs, Root(output, :unknown))
-
-        else  # branch
-            X1, X2 = bisect(X)
-
-            push!(working, X1, X2)
-        end
-    end
-
-    return outputs
+    iter = RootSearch(X, contractor, tol)
+    local state
+    # complete iteration
+    for state in iter end
+    return state.outputs
 end
-
 
 export recursively_branch_and_prune
 
@@ -96,7 +134,7 @@ Inputs:
 
 """
 # Contractor specific `roots` functions
-function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3) where {T}
+function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3; deriv = nothing) where {T}
     branch_and_prune(X, Bisection(f), tol)
 end
 
@@ -118,9 +156,8 @@ function roots(f, X::IntervalBox{T}, C::NewtonLike, tol::Float64=1e-3; deriv = n
     branch_and_prune(X, C(f, deriv), tol)
 end
 
+roots(f, r::Root, contractor::Type{C}, tol::Float64=1e-3; deriv = nothing) where {C<:Contractor}  = roots(f, r.interval, contractor, tol; deriv = deriv)
 
-roots(f, r::Root, contractor::Type{C}, tol::Float64=1e-3;
-        deriv= nothing) where {C<:Contractor}  = roots(f, r.interval, contractor, tol; deriv = deriv)
 
 # Acting on a Vector:
 
