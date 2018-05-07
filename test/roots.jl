@@ -6,11 +6,11 @@ function all_unique(rts)
     all(root_status.(rts) .== :unique)
 end
 
-function test_newtonlike(f, X, method, nsol, tol=1e-3; deriv=nothing)
+function test_newtonlike(f, deriv, X, method, nsol, tol=1e-3)
     rts = roots(f, X, method)
     @test length(rts) == nsol
     @test all_unique(rts)
-    @test rts == roots(f, X, method; deriv = deriv)
+    @test rts == roots(f, deriv, X, method)
 end
 
 newtonlike_methods = [Newton, Krawczyk]
@@ -30,7 +30,7 @@ newtonlike_methods = [Newton, Krawczyk]
     @test all_unique(rts)
 
     for method in newtonlike_methods
-        test_newtonlike(sin, -5..5, method, 3; deriv=cos)
+        test_newtonlike(sin, cos, -5..5, method, 3)
     end
 
     # Infinite interval
@@ -49,7 +49,8 @@ end
     @test length(rts) == 4
 
     for method in newtonlike_methods
-        test_newtonlike(f, X, method, 2; deriv = xx -> ForwardDiff.jacobian(f, xx))
+        deriv = xx -> ForwardDiff.jacobian(f, xx)
+        test_newtonlike(f, deriv, X, method, 2)
     end
 
     # Infinite interval
@@ -78,7 +79,8 @@ end
         rts = roots(g, XX, method)
         @test length(rts) == 4
         @test all_unique(rts)
-        @test rts == roots(g, XX, method; deriv = xx -> ForwardDiff.jacobian(g, xx))
+        deriv = xx -> ForwardDiff.jacobian(g, xx)
+        @test rts == roots(g, deriv, XX, method)
     end
 end
 
@@ -89,7 +91,8 @@ end
     tol = 1e-5
 
     for method in newtonlike_methods
-        test_newtonlike(gradf, XX, method, 25, tol; deriv = xx -> ForwardDiff.jacobian(gradf, xx))
+        deriv = xx -> ForwardDiff.jacobian(gradf, xx)
+        test_newtonlike(gradf, deriv, XX, method, 25, tol)
     end
 end
 
@@ -107,7 +110,8 @@ end
     @test length(rts) == 7
 
     for method in newtonlike_methods
-        test_newtonlike(f, Xc, method, 3; deriv = z -> 3*z^2)
+        deriv = z -> 3*z^2
+        test_newtonlike(f, deriv, Xc, method, 3)
     end
 end
 
