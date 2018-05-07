@@ -71,6 +71,11 @@ function 𝒩{T}(f, f′, X::Interval{T})
     m - (f(m) / f′(X))
 end
 
+function 𝒩{T}(f, X::Interval{T}, dX::Interval{T})
+    m = Interval(mid(X, where_bisect))
+
+    m - (f(m) / dX)
+end
 
 IntervalArithmetic.mid(X::IntervalBox, α) = mid.(X, α)
 
