@@ -82,7 +82,7 @@ function as the contractor.
 
 Inputs:
 - `X`: `Interval` or `IntervalBox`
-- `contractor`: function that determines the status of a given box `X`. It
+- `contract`: function that determines the status of a given box `X`. It
     returns the new box and a symbol indicating the status. Current possible
     values are of type `Bisection` or `Newton`
 
@@ -116,9 +116,10 @@ contains_zero(X::IntervalBox) = all(contains_zero.(X))
 
 
 IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
+NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
 
 """
-    roots(f, X, contractor, tol=1e-3)
+    roots(f, X, contractor, tol=1e-3 ; deriv=nothing)
 
 Uses a generic branch and prune routine to find in principle all isolated roots of a function
 `f:R^n → R^n` in a box `X`, or a vector of boxes.
@@ -128,7 +129,8 @@ Inputs:
 - `X`: `Interval` or `IntervalBox`
 - `contractor`: function that, when applied to the function `f`, determines
     the status of a given box `X`. It returns the new box and a symbol indicating
-    the status. Current possible values are `Bisection` and `Newton`.
+    the status. Current possible values are `Bisection`, `Newton` and `Krawczyk`
+- `deriv` ; explicit derivative of `f` for `Newton` and `Krawczyk`
 
 """
 # Contractor specific `roots` functions
@@ -136,37 +138,40 @@ function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3; deri
     branch_and_prune(X, Bisection(f), tol)
 end
 
-function roots(f, X::Interval{T}, ::Type{Newton}, tol::Float64=1e-3; deriv = nothing) where {T}
+function roots(f, X::Interval{T}, C::NewtonLike, tol::Float64=1e-3; deriv = nothing) where {T}
 
     if deriv == nothing
         deriv = x -> ForwardDiff.derivative(f, x)
     end
 
-    branch_and_prune(X, Newton(f, deriv), tol)
+    branch_and_prune(X, C(f, deriv), tol)
 end
 
-function roots(f, X::IntervalBox{T}, ::Type{Newton}, tol::Float64=1e-3; deriv = nothing) where {T}
+function roots(f, X::IntervalBox{T}, C::NewtonLike, tol::Float64=1e-3; deriv = nothing) where {T}
 
     if deriv == nothing
         deriv = x -> ForwardDiff.jacobian(f, x)
     end
 
-    branch_and_prune(X, Newton(f, deriv), tol)
+    branch_and_prune(X, C(f, deriv), tol)
 end
 
-
 roots(f, r::Root, contractor::Type{C}, tol::Float64=1e-3; deriv = nothing) where {C<:Contractor}  = roots(f, r.interval, contractor, tol; deriv = deriv)
+
 
 # Acting on a Vector:
 
 # TODO: Use previous status information about roots:
-roots(f, V::Vector{Root{T}}, contractor::Type{C}, tol::Float64=1e-3; deriv = nothing) where {T, C<:Contractor} = vcat(roots.(f, V, contractor, tol; deriv = deriv)...)
+roots(f, V::Vector{Root{T}}, contractor::Type{C}, tol::Float64=1e-3;
+    deriv = nothing) where {T, C<:Contractor} = vcat(roots.(f, V, contractor, tol; deriv = deriv)...)
 
 
 
 # Complex:
 
-function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C}, tol::Float64=1e-3) where {T, C<:Contractor}
+function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
+        tol::Float64=1e-3) where {T, C<:Contractor}
+
     g = realify(f)
     Y = IntervalBox(reim(Xc))
     rts = roots(g, Y, contractor, tol)
@@ -174,7 +179,7 @@ function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C}, tol::Float64=1e
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end
 
-function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-15;
+function roots(f, Xc::Complex{Interval{T}}, C::NewtonLike, tol::Float64=1e-3;
         deriv = nothing) where {T}
 
     g = realify(f)
@@ -186,7 +191,7 @@ function roots(f, Xc::Complex{Interval{T}}, ::Type{Newton}, tol::Float64=1e-15;
     end
 
     Y = IntervalBox(reim(Xc))
-    rts = roots(g, Y, Newton, tol; deriv=g_prime)
+    rts = roots(g, Y, C, tol; deriv=g_prime)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end

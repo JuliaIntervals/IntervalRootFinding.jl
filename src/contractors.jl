@@ -1,14 +1,20 @@
-# contractors:
-"""
+export Bisection, Newton, Krawczyk
+
+Base.isinf(X::IntervalBox) = any(isinf.(X))
+IntervalArithmetic.mid(X::IntervalBox, α) = mid.(X, α)
+
+doc"""
     Contractor{F}
 
     Abstract type for contractors.
 """
 abstract type Contractor{F} end
 
-export Bisection, Newton
+doc"""
+    Bisection{F} <: Contractor{F}
 
-# bisection
+    Contractor type for the bisection method.
+"""
 struct Bisection{F} <: Contractor{F}
     f::F
 end
@@ -23,15 +29,16 @@ function (contractor::Bisection)(X, tol)
     return :unknown, X
 end
 
-# Newton
-struct Newton{F,FP} <: Contractor{F}
-    f::F
-    f′::FP   # use \prime<TAB> for ′
-end
+doc"""
+    newtonlike_contract(op, X, tol)
 
-Base.isinf(X::IntervalBox) = any(isinf.(X))
+    Contraction operation for contractors using the first derivative of the
+    function. This contraction use a bisection scheme to refine the intervals
+    with `:unkown` status.
 
-function (C::Newton)(X, tol)
+    Currently `Newton` and `Krawczyk` contractors uses this.
+"""
+function newtonlike_contract(op, C, X, tol)
     # use Bisection contractor for this:
     if !(contains_zero(C.f(X)))
         return :empty, X
@@ -39,20 +46,35 @@ function (C::Newton)(X, tol)
 
     # given that have the Jacobian, can also do mean value form
 
-    NX = 𝒩(C.f, C.f′, X) ∩ X
+    NX = op(C.f, C.f′, X) ∩ X
 
     isempty(NX) && return :empty, X
-
-    if isinf(X)
-        return :unknown, NX  # force bisection
-    end
+    isinf(X) && return :unknown, NX  # force bisection
 
     if NX ⪽ X  # isinterior; know there's a unique root inside
-        NX =  refine(X -> 𝒩(C.f, C.f′, X), NX, tol)
+        NX =  refine(X -> op(C.f, C.f′, X), NX, tol)
         return :unique, NX
     end
 
     return :unknown, NX
+end
+
+doc"""
+    Newton{F, FP} <: Contractor{F}
+
+    Contractor type for the Newton method.
+
+    # Fields
+        - `f::F`: function whose roots are searched
+        - `f::FP`: derivative or jacobian of `f`
+"""
+struct Newton{F,FP} <: Contractor{F}
+    f::F
+    f′::FP   # use \prime<TAB> for ′
+end
+
+function (C::Newton)(X, tol)
+    newtonlike_contract(𝒩, C, X, tol)
 end
 
 
@@ -77,13 +99,10 @@ function 𝒩{T}(f, X::Interval{T}, dX::Interval{T})
     m - (f(m) / dX)
 end
 
-IntervalArithmetic.mid(X::IntervalBox, α) = mid.(X, α)
-
 doc"""
 Multi-variable Newton operator.
 """
 function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
-
     m = IntervalBox(Interval.(mid(X, where_bisect)))
     J = jacobian(SVector(X))
 
@@ -91,6 +110,46 @@ function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimension
 end
 
 
+doc"""
+    Krawczyk{F, FP} <: Contractor{F}
+
+    Contractor type for the Krawczyk method.
+
+    # Fields
+        - `f::F`: function whose roots are searched
+        - `f::FP`: derivative or jacobian of `f`
+"""
+struct Krawczyk{F, FP} <: Contractor{F}
+    f::F
+    f′::FP   # use \prime<TAB> for ′
+end
+
+function (C::Krawczyk)(X, tol)
+    newtonlike_contract(𝒦, C, X, tol)
+end
+
+
+doc"""
+Single-variable Krawczyk operator
+"""
+function 𝒦(f, f′, X::Interval{T}) where {T}
+    m = Interval(mid(X))
+    Y = 1/f′(m)
+
+    m - Y*f(m) + (1 - Y*f′(X))*(X - m)
+end
+
+doc"""
+Multi-variable Krawczyk operator
+"""
+function 𝒦(f, jacobian, X::IntervalBox{T}) where {T}
+    m = mid(X)
+    J = jacobian(X)
+    Y = inv(jacobian(m))
+    m = IntervalBox(Interval.(m))
+
+    IntervalBox(m - Y*f(m) + (I - Y*J)*(X - m))
+end
 
 """
 Generic refine operation for Krawczyk and Newton.

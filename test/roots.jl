@@ -2,19 +2,38 @@
 using IntervalArithmetic, IntervalRootFinding, StaticArrays
 using Base.Test
 
+function all_unique(rts)
+    all(root_status.(rts) .== :unique)
+end
+
+function test_newtonlike(f, X, method, nsol, tol=1e-3; deriv=nothing)
+    rts = roots(f, X, method)
+    @test length(rts) == nsol
+    @test all_unique(rts)
+    @test rts == roots(f, X, method; deriv = deriv)
+end
+
+newtonlike_methods = [Newton, Krawczyk]
+
 @testset "1D roots" begin
+    # Default
     rts = roots(sin, -5..5)
     @test length(rts) == 3
-    @test length(find(x->x==:unique, [root.status for root in rts])) == 3
+    @test all_unique(rts)
 
+    # Bisection
     rts = roots(sin, -5..6, Bisection)
     @test length(rts) == 3
+
+    # Refinement
     rts = roots(sin, rts, Newton)
-    @test all(root.status == :unique for root in rts)
+    @test all_unique(rts)
 
-    rts = roots(sin, -5..5, Newton)
-    @test rts == roots(sin, -5..5, Newton; deriv = cos)
+    for method in newtonlike_methods
+        test_newtonlike(sin, -5..5, method, 3; deriv=cos)
+    end
 
+    # Infinite interval
     rts = roots(x -> x^2 - 2, -∞..∞)
     @test length(rts) == 2
 end
@@ -25,19 +44,18 @@ end
     f(X) = f(X...)
     X = (-6..6) × (-6..6)
 
+    # Bisection
     rts = roots(f, X, Bisection, 1e-3)
     @test length(rts) == 4
 
-    rts = roots(f, rts, Newton)
-    @test length(rts) == 2
+    for method in newtonlike_methods
+        test_newtonlike(f, X, method, 2; deriv = xx -> ForwardDiff.jacobian(f, xx))
+    end
 
-    rts = roots(f, X, Newton)
-    @test rts == roots(f, X, Newton; deriv = xx -> ForwardDiff.jacobian(f, xx))
-
+    # Infinite interval
     X = IntervalBox(-∞..∞, 2)
     rts = roots(f, X, Newton)
     @test length(rts) == 2
-
 end
 
 
@@ -55,9 +73,13 @@ end
 
     X = (-5..5)
     XX = IntervalBox(X, 3)
-    rts = roots(g, XX, Newton)
-    @test length(rts) == 4
-    @test rts == roots(g, XX, Newton; deriv = xx -> ForwardDiff.jacobian(g, xx))
+
+    for method in newtonlike_methods
+        rts = roots(g, XX, method)
+        @test length(rts) == 4
+        @test all_unique(rts)
+        @test rts == roots(g, XX, method; deriv = xx -> ForwardDiff.jacobian(g, xx))
+    end
 end
 
 @testset "Stationary points" begin
@@ -66,9 +88,9 @@ end
     XX = IntervalBox(-5..6, 2)
     tol = 1e-5
 
-    rts = roots(gradf, XX, Newton, tol)
-    @test length(rts) == 25
-    @test rts == roots(gradf, XX, Newton, tol; deriv = xx -> ForwardDiff.jacobian(gradf, xx))
+    for method in newtonlike_methods
+        test_newtonlike(gradf, XX, method, 25, tol; deriv = xx -> ForwardDiff.jacobian(gradf, xx))
+    end
 end
 
 @testset "Complex roots" begin
@@ -76,24 +98,17 @@ end
     Xc = Complex(X, X)
     f(z) = z^3 - 1
 
-    rts = roots(f, Xc, Bisection, 1e-3)
-    @test length(rts) == 7
-    rts = roots(f, rts, Newton)
-    @test length(rts) == 3
+    # Default
     rts = roots(f, Xc)
     @test length(rts) == 3
 
-    rts = roots(f, Xc, Newton)
-    rts2 = roots(f, Xc, Newton; deriv = z -> 3*z^2)
+    # Bisection
+    rts = roots(f, Xc, Bisection, 1e-3)
+    @test length(rts) == 7
 
-    intervals = [reim(rt.interval) for rt in rts]
-    intervals2 = [reim(rt.interval) for rt in rts2]
-
-    d = []
-    for (I, I2) in zip(sort(intervals), sort(intervals2))
-        append!(d, abs.(I .- I2))
+    for method in newtonlike_methods
+        test_newtonlike(f, Xc, method, 3; deriv = z -> 3*z^2)
     end
-    @test all(d .< 1e-15)
 end
 
 @testset "RootSearch interface" begin
