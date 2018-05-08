@@ -119,7 +119,8 @@ IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
 NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
 
 """
-    roots(f, X, contractor, tol=1e-3 ; deriv=nothing)
+    roots(f, X, contractor, tol=1e-3)
+    roots(f, deriv, X, contractor, tol=1e-3)
 
 Uses a generic branch and prune routine to find in principle all isolated roots of a function
 `f:R^n → R^n` in a box `X`, or a vector of boxes.
@@ -134,7 +135,7 @@ Inputs:
 
 """
 # Contractor specific `roots` functions
-function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3; deriv = nothing) where {T}
+function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3) where {T}
     branch_and_prune(X, Bisection(f), tol)
 end
 
@@ -142,7 +143,7 @@ function roots(f, X::Interval{T}, C::NewtonLike, tol::Float64=1e-3) where {T}
 
     deriv = x -> ForwardDiff.derivative(f, x)
 
-    branch_and_prune(X, C(f, deriv), tol)
+    roots(f, deriv, X, C, tol)
 end
 
 function roots(f, deriv, X::Interval{T}, C::NewtonLike, tol::Float64=1e-3) where {T}
@@ -153,7 +154,7 @@ function roots(f, X::IntervalBox{T}, C::NewtonLike, tol::Float64=1e-3) where {T}
 
     deriv = x -> ForwardDiff.jacobian(f, x)
 
-    branch_and_prune(X, C(f, deriv), tol)
+    roots(f, deriv, X, C, tol)
 end
 
 function roots(f, deriv, X::IntervalBox{T}, C::NewtonLike, tol::Float64=1e-3) where {T}
