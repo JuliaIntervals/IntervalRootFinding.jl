@@ -146,7 +146,7 @@ function gauss_seidel_contractor!{T}(x::Array{Interval{T}}, A::Matrix{Interval{T
     n = size(A, 1)
 
     diagA = Diagonal(A)
-    extdiagA = deepcopy(A)
+    extdiagA = copy(A)
     for i in 1:n
         extdiagA[i, i] = Interval(0)
     end
