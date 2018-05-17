@@ -1,4 +1,4 @@
-using IntervalArithmetic
+using IntervalArithmetic, StaticArrays
 """
 Preconditions the matrix A and b with the inverse of mid(A)
 """
@@ -128,6 +128,33 @@ function gauss_seidel_interval_static1!{T, N}(x::MVector{N, Interval{T}}, A::SMa
             Z = extended_div(Y, M[i, i])
             x[i] = hull((x[i] ∩ Z[1]), x[i] ∩ Z[2])
         end
+    end
+    x
+end
+
+function gauss_seidel_contractor{T}(A::Matrix{Interval{T}}, b::Array{Interval{T}}; precondition=true, maxiter=100)
+
+    n = size(A, 1)
+    x = fill(-1e16..1e16, n)
+    x = gauss_seidel_contractor!(x, A, b, precondition=precondition, maxiter=maxiter)
+    return x
+end
+
+function gauss_seidel_contractor!{T}(x::Array{Interval{T}}, A::Matrix{Interval{T}}, b::Array{Interval{T}}; precondition=true, maxiter=100)
+
+    precondition && ((A, b) = preconditioner(A, b))
+
+    n = size(A, 1)
+
+    diagA = Diagonal(A)
+    extdiagA = deepcopy(A)
+    for i in 1:n
+        extdiagA[i, i] = Interval(0)
+    end
+    inv_diagA = inv(diagA)
+
+    for iter in 1:maxiter
+        x = x .∩ (inv_diagA * (b - extdiagA * x))
     end
     x
 end
