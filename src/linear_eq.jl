@@ -1,4 +1,3 @@
-using IntervalArithmetic, StaticArrays
 """
 Preconditions the matrix A and b with the inverse of mid(A)
 """

@@ -19,7 +19,10 @@ export
     Root, is_unique,
     roots, find_roots,
     bisect, newton1d, slope,
-    slope_newton1d
+    slope_newton1d,
+    gauss_seidel_interval, gauss_seidel_interval!,
+    gauss_seidel_contractor, gauss_seidel_contractor!,
+    gauss_seidel_interval_static1, gauss_seidel_interval_static1!
 
 export isunique, root_status
 
@@ -59,6 +62,7 @@ include("complex.jl")
 include("contractors.jl")
 include("roots.jl")
 include("newton1d.jl")
+include("linear_eq.jl")
 include("slopes.jl")
 
 
