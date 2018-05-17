@@ -1,7 +1,5 @@
 using IntervalArithmetic, StaticArrays, BenchmarkTools, Compat
 
-include("../src/linear_eq.jl")
-
 function randVec(n::Int)
     a = randn(n)
     A = Interval.(a)
