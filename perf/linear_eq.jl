@@ -26,7 +26,9 @@ function benchmark(max=10)
         t2 =  @btime gauss_seidel_interval_static($mA, $mb)
         println("MArray: ", t2)
         t3 =  @btime gauss_seidel_interval_static1($sA, $sb)
-        println("SArray: ", t3)
+        println("SArray1: ", t3)
+        t4 =  @btime gauss_seidel_interval_static2($sA, $sb)
+        println("SArray2: ", t4)
         println()
     end
 end
