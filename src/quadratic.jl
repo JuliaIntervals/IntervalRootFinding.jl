@@ -1,6 +1,3 @@
-using IntervalRootFinding, IntervalArithmetic
-
-
 """
 Helper function for quadratic_interval
 """

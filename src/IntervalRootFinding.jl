@@ -18,7 +18,7 @@ export
     derivative, jacobian,  # reexport derivative from ForwardDiff
     Root, is_unique,
     roots, find_roots,
-    bisect, newton1d
+    bisect, newton1d, quadratic_interval
 
 export isunique, root_status
 
@@ -58,7 +58,7 @@ include("complex.jl")
 include("contractors.jl")
 include("roots.jl")
 include("newton1d.jl")
-
+include("quadratic.jl")
 
 
 gradient(f) = X -> ForwardDiff.gradient(f, SVector(X))
