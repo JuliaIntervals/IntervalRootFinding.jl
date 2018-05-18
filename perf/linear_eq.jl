@@ -29,6 +29,12 @@ function benchmark(max=10)
         t5 = @belapsed gauss_seidel_contractor($A, $b)
         df[Symbol("n = $n")] = [t1, t2, t3, t4, t5]
     end
-    println(df)
-    df
+    a = []
+    for i in 1:max
+        push!(a, Symbol("n = $i"))
+    end
+    df1 = stack(df, a)
+    dfnew = unstack(df1, :variable, :Method, :value)
+    println(dfnew)
+    dfnew
 end
