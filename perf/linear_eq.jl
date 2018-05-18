@@ -30,4 +30,5 @@ function benchmark(max=10)
         df[Symbol("n = $n")] = [t1, t2, t3, t4, t5]
     end
     println(df)
+    df
 end
