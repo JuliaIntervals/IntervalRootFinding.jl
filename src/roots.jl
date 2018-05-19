@@ -9,7 +9,7 @@ diam(x::Root) = diam(x.interval)
 
 Base.size(x::Interval) = (1,)
 
-isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
+isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X.v, Y.v))
 
 struct RootSearchState{T <: Union{Interval,IntervalBox}}
     working::Vector{T}

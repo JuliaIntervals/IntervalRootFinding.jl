@@ -1,6 +1,6 @@
 export Bisection, Newton, Krawczyk
 
-Base.isinf(X::IntervalBox) = any(isinf.(X))
+Base.isinf(X::IntervalBox) = any(isinf.(X.v))
 
 IntervalArithmetic.mid(X::IntervalBox, α) = mid.(X.v, α)
 
