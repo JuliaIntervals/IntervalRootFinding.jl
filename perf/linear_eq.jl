@@ -40,3 +40,24 @@ function benchmark(max=10)
     println(dfnew)
     dfnew
 end
+
+function benchmark_elimination(max=10)
+    df = DataFrame()
+    df[:Method] = ["Gauss Elimination", "Base.\\"]
+    for n in 1:max
+        A, mA, sA = randMat(n)
+        b, mb, sb = randVec(n)
+        t1 = @belapsed gauss_elimination_interval($A, $b)
+        t2 = @belapsed gauss_elimination_interval1($A, $b)
+        df[Symbol("$n")] = [t1, t2]
+    end
+    a = []
+    for i in 1:max
+        push!(a, Symbol("$i"))
+    end
+    df1 = stack(df, a)
+    dfnew = unstack(df1, :variable, :Method, :value)
+    dfnew = rename(dfnew, :variable => :n)
+    println(dfnew)
+    dfnew
+end
