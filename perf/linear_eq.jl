@@ -18,23 +18,25 @@ end
 
 function benchmark(max=10)
     df = DataFrame()
-    df[:Method] = ["Array", "MArray", "SArray1", "SArray2", "Contractor"]
+    df[:Method] = ["Array", "MArray", "SArray", "Contractor", "ContractorMArray", "ContractorSArray"]
     for n in 1:max
         A, mA, sA = randMat(n)
         b, mb, sb = randVec(n)
         t1 = @belapsed gauss_seidel_interval($A, $b)
-        t2 = @belapsed gauss_seidel_interval_static($mA, $mb)
-        t3 = @belapsed gauss_seidel_interval_static1($sA, $sb)
-        t4 = @belapsed gauss_seidel_interval_static2($sA, $sb)
-        t5 = @belapsed gauss_seidel_contractor($A, $b)
-        df[Symbol("n = $n")] = [t1, t2, t3, t4, t5]
+        t2 = @belapsed gauss_seidel_interval($mA, $mb)
+        t3 = @belapsed gauss_seidel_interval($sA, $sb)
+        t4 = @belapsed gauss_seidel_contractor($A, $b)
+        t5 = @belapsed gauss_seidel_contractor($mA, $mb)
+        t6 = @belapsed gauss_seidel_contractor($sA, $sb)
+        df[Symbol("$n")] = [t1, t2, t3, t4, t5, t6]
     end
     a = []
     for i in 1:max
-        push!(a, Symbol("n = $i"))
+        push!(a, Symbol("$i"))
     end
     df1 = stack(df, a)
     dfnew = unstack(df1, :variable, :Method, :value)
+    dfnew = rename(dfnew, :variable => :n)
     println(dfnew)
     dfnew
 end
