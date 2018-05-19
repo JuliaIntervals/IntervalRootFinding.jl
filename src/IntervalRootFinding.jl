@@ -20,8 +20,10 @@ export
     roots, find_roots,
     bisect, newton1d, quadratic_roots,
     gauss_seidel_interval, gauss_seidel_interval!,
-    gauss_seidel_contractor, gauss_seidel_contractor!,
-    gauss_seidel_interval_static1, gauss_seidel_interval_static1!
+    gauss_seidel_contractor, gauss_seidel_contractor!
+    # gauss_seidel_interval_static1, gauss_seidel_interval_static1!
+    # gauss_seidel_interval_static2, gauss_seidel_interval_static2!
+    # gauss_seidel_interval_static, gauss_seidel_interval_static!
 
 export isunique, root_status
 
