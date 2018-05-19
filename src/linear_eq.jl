@@ -1,3 +1,4 @@
+using IntervalArithmetic
 """
 Preconditions the matrix A and b with the inverse of mid(A)
 """
@@ -14,10 +15,6 @@ function gauss_seidel_interval(A::AbstractMatrix, b::AbstractArray; precondition
 
     n = size(A, 1)
     x = fill(-1e16..1e16, n)
-
-    if (typeof(b) <: SArray || typeof(b) <: MArray)
-        x = MVector{n}(x)
-    end
 
     gauss_seidel_interval!(x, A, b, precondition=precondition, maxiter=maxiter)
     return x
@@ -47,148 +44,11 @@ function gauss_seidel_interval!(x::AbstractArray, A::AbstractMatrix, b::Abstract
     end
     x
 end
-#
-# function preconditioner_static{T, N}(A::MMatrix{N, N, Interval{T}}, b::MVector{N, Interval{T}})
-#
-#     Aᶜ = mid.(A)
-#     B = inv(Aᶜ)
-#
-#     return B*A, B*b
-#
-# end
-#
-#
-# function gauss_seidel_interval_static{T, N}(A::MMatrix{N, N, Interval{T}}, b::MVector{N, Interval{T}}; precondition=true, maxiter=100)
-#
-#     n = size(A, 1)
-#     x = @MVector fill(-1e16..1e16, n)
-#     gauss_seidel_interval_static!(x, A, b, precondition=precondition, maxiter=maxiter)
-#     return x
-# end
-#
-# """
-# Iteratively solves the system of interval linear
-# equations and returns the solution set. Uses the
-# Gauss-Seidel method (Hansen-Sengupta version) to solve the system.
-# Keyword `precondition` to turn preconditioning off.
-# Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Page 115
-# """
-# function gauss_seidel_interval_static!{T, N}(x::MVector{N, Interval{T}}, A::MMatrix{N, N, Interval{T}}, b::MVector{N, Interval{T}}; precondition=true, maxiter=100)
-#
-#     precondition && ((A, b) = preconditioner_static(A, b))
-#
-#     n = size(A, 1)
-#
-#     for iter in 1:maxiter
-#         for i in 1:n
-#             Y = b[i]
-#             for j in 1:n
-#                 (i == j) || (Y -= A[i, j] * x[j])
-#             end
-#             Z = extended_div(Y, A[i, i])
-#             x[i] = hull((x[i] ∩ Z[1]), x[i] ∩ Z[2])
-#         end
-#     end
-#     x
-# end
-#
-# function preconditioner_static1{T, N}(A::SMatrix{N, N, Interval{T}}, b::SVector{N, Interval{T}})
-#
-#     Aᶜ = mid.(A)
-#     B = inv(Aᶜ)
-#
-#     return B*A, B*b
-#
-# end
-#
-#
-# function gauss_seidel_interval_static1{T, N}(A::SMatrix{N, N, Interval{T}}, b::SVector{N, Interval{T}}; precondition=true, maxiter=100)
-#
-#     n = size(A, 1)
-#     x = @MVector fill(-1e16..1e16, n)
-#     gauss_seidel_interval_static1!(x, A, b, precondition=precondition, maxiter=maxiter)
-#     return x
-# end
-#
-# """
-# Iteratively solves the system of interval linear
-# equations and returns the solution set. Uses the
-# Gauss-Seidel method (Hansen-Sengupta version) to solve the system.
-# Keyword `precondition` to turn preconditioning off.
-# Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Page 115
-# """
-# function gauss_seidel_interval_static1!{T, N}(x::MVector{N, Interval{T}}, A::SMatrix{N, N, Interval{T}}, b::SVector{N, Interval{T}}; precondition=true, maxiter=100)
-#
-#     precondition && ((A, b) = preconditioner_static1(A, b))
-#
-#     n = size(A, 1)
-#
-#     for iter in 1:maxiter
-#         for i in 1:n
-#             Y = b[i]
-#             for j in 1:n
-#                 (i == j) || (Y -= A[i, j] * x[j])
-#             end
-#             Z = extended_div(Y, A[i, i])
-#             x[i] = hull((x[i] ∩ Z[1]), x[i] ∩ Z[2])
-#         end
-#     end
-#     x
-# end
-#
-# function preconditioner_static2{T, N}(A::SMatrix{N, N, Interval{T}}, b::SVector{N, Interval{T}})
-#
-#     Aᶜ = mid.(A)
-#     B = inv(Aᶜ)
-#
-#     return B*A, B*b
-#
-# end
-#
-#
-# function gauss_seidel_interval_static2{T, N}(A::SMatrix{N, N, Interval{T}}, b::SVector{N, Interval{T}}; precondition=true, maxiter=100)
-#
-#     n = size(A, 1)
-#     x = @SVector fill(-1e16..1e16, n)
-#     x = gauss_seidel_interval_static2!(x, A, b, precondition=precondition, maxiter=maxiter)
-#     return x
-# end
-#
-# """
-# Iteratively solves the system of interval linear
-# equations and returns the solution set. Uses the
-# Gauss-Seidel method (Hansen-Sengupta version) to solve the system.
-# Keyword `precondition` to turn preconditioning off.
-# Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Page 115
-# """
-# function gauss_seidel_interval_static2!{T, N}(x::SVector{N, Interval{T}}, A::SMatrix{N, N, Interval{T}}, b::SVector{N, Interval{T}}; precondition=true, maxiter=100)
-#
-#     precondition && ((A, b) = preconditioner_static2(A, b))
-#
-#     n = size(A, 1)
-#
-#     for iter in 1:maxiter
-#         for i in 1:n
-#             Y = b[i]
-#             for j in 1:n
-#                 (i == j) || (Y -= A[i, j] * x[j])
-#             end
-#             Z = extended_div(Y, A[i, i])
-#             x = setindex(x, hull((x[i] ∩ Z[1]), x[i] ∩ Z[2]), i)
-#         end
-#     end
-#     x
-# end
 
 function gauss_seidel_contractor(A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
 
     n = size(A, 1)
     x = fill(-1e16..1e16, n)
-
-    if (typeof(b) <: SArray || typeof(b) <: MArray)
-        x = MVector{n}(x)
-    end
-
     x = gauss_seidel_contractor!(x, A, b, precondition=precondition, maxiter=maxiter)
     return x
 end
@@ -214,4 +74,78 @@ function gauss_seidel_contractor!(x::AbstractArray, A::AbstractMatrix, b::Abstra
         x = x .∩ (inv_diagA * (b - extdiagA * x))
     end
     x
+end
+
+function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precondition=true)
+
+    n = size(A, 1)
+    x = fill(-1e16..1e16, n)
+
+    x = gauss_seidel_interval!(x, A, b, precondition=precondition)
+
+    return x
+end
+"""
+Iteratively solves the system of interval linear
+equations and returns the solution set. Uses the
+Gauss-Seidel method (Hansen-Sengupta version) to solve the system.
+Keyword `precondition` to turn preconditioning off.
+Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Page 115
+"""
+function gauss_elimination_interval!(x::AbstractArray, a::AbstractMatrix, b::AbstractArray; precondition=true)
+
+    precondition && ((a, b) = preconditioner(a, b))
+
+    n = size(a, 1)
+
+    p = zeros(x)
+
+    for i in 1:(n-1)
+        if 0 ∈ a[i, i] # diagonal matrix is not invertible
+            p .= entireinterval(b[1])
+            return p .∩ x
+        end
+
+        for j in (i+1):n
+            α = a[j, i] / a[i, i]
+            b[j] -= α * b[i]
+
+            for k in (i+1):n
+                a[j, k] -= α * a[i, k]
+            end
+        end
+    end
+
+    for i in n:-1:1
+        sum = 0
+        for j in (i+1):n
+            sum += a[i, j] * p[j]
+        end
+        p[i] = (b[i] - sum) / a[i, i]
+    end
+
+    p .∩ x
+end
+
+function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precondition=true)
+
+    n = size(A, 1)
+    x = fill(-1e16..1e16, n)
+
+    x = gauss_seidel_interval!(x, A, b, precondition=precondition)
+
+    return x
+end
+"""
+Iteratively solves the system of interval linear
+equations and returns the solution set. Uses the
+Gauss-Seidel method (Hansen-Sengupta version) to solve the system.
+Keyword `precondition` to turn preconditioning off.
+Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Page 115
+"""
+function gauss_elimination_interval1!(x::AbstractArray, a::AbstractMatrix, b::AbstractArray; precondition=true)
+
+    precondition && ((a, b) = preconditioner(a, b))
+
+    a \ b
 end
