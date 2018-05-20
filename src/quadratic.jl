@@ -4,7 +4,7 @@ real quadratic using interval arithmetic to bound rounding errors.
 """
 function quadratic_helper!{T}(a::Interval{T}, b::Interval{T}, c::Interval{T}, L::Array{Interval{T}})
 
-    Δ = b*b - 4*a*c
+    Δ = b^2 - 4*a*c
 
     Δ.hi < 0 && return
 
