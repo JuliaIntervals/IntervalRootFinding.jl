@@ -13,8 +13,8 @@ end
 function gauss_seidel_interval(A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
 
     n = size(A, 1)
-    x = fill(-1e16..1e16, n)
-
+    x = similar(b)
+    x .= -1e16..1e16
     gauss_seidel_interval!(x, A, b, precondition=precondition, maxiter=maxiter)
     return x
 end
@@ -32,6 +32,7 @@ function gauss_seidel_interval!(x::AbstractArray, A::AbstractMatrix, b::Abstract
     n = size(A, 1)
 
     @inbounds for iter in 1:maxiter
+        x¹ = copy(x)
         for i in 1:n
             Y = b[i]
             for j in 1:n
@@ -40,6 +41,9 @@ function gauss_seidel_interval!(x::AbstractArray, A::AbstractMatrix, b::Abstract
             Z = extended_div(Y, A[i, i])
             x[i] = hull((x[i] ∩ Z[1]), x[i] ∩ Z[2])
         end
+        if all(x .== x¹)
+            break
+        end
     end
     x
 end
@@ -47,7 +51,8 @@ end
 function gauss_seidel_contractor(A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
 
     n = size(A, 1)
-    x = fill(-1e16..1e16, n)
+    x = similar(b)
+    x .= -1e16..1e16
     x = gauss_seidel_contractor!(x, A, b, precondition=precondition, maxiter=maxiter)
     return x
 end
@@ -70,7 +75,11 @@ function gauss_seidel_contractor!(x::AbstractArray, A::AbstractMatrix, b::Abstra
     inv_diagA = inv(diagA)
 
     for iter in 1:maxiter
+        x¹ = copy(x)
         x = x .∩ (inv_diagA * (b - extdiagA * x))
+        if all(x .== x¹)
+            break
+        end
     end
     x
 end
@@ -78,8 +87,8 @@ end
 function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precondition=true)
 
     n = size(A, 1)
-    x = fill(-1e16..1e16, n)
-
+    x = similar(b)
+    x .= -1e16..1e16
     x = gauss_elimination_interval!(x, A, b, precondition=precondition)
 
     return x
