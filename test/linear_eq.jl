@@ -1,6 +1,6 @@
 using IntervalArithmetic, StaticArrays, IntervalRootFinding
 
-@testset "Testing Gauss Seidel Method" begin
+@testset "Linear Equations" begin
 
     A = [[2..3 0..1;1..2 2..3], ]
     b = [[0..120, 60..240], ]
@@ -9,7 +9,7 @@ using IntervalArithmetic, StaticArrays, IntervalRootFinding
 
     for i in 1:length(A)
         for precondition in (false, true)
-            for f in (gauss_seidel_interval, gauss_seidel_contractor)
+            for f in (gauss_seidel_interval, gauss_seidel_contractor, gauss_elimination_interval)
                 @test all(x[i] .⊆ f(A[i], b[i]))
             end
         end

@@ -21,10 +21,8 @@ export
     bisect, newton1d, slope,
     slope_newton1d,
     gauss_seidel_interval, gauss_seidel_interval!,
-    gauss_seidel_contractor, gauss_seidel_contractor!
-    # gauss_seidel_interval_static1, gauss_seidel_interval_static1!
-    # gauss_seidel_interval_static2, gauss_seidel_interval_static2!
-    # gauss_seidel_interval_static, gauss_seidel_interval_static!
+    gauss_seidel_contractor, gauss_seidel_contractor!,
+    gauss_elimination_interval, gauss_elimination_interval!
 
 export isunique, root_status
 

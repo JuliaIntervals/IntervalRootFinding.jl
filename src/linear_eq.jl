@@ -1,4 +1,3 @@
-using IntervalArithmetic
 """
 Preconditions the matrix A and b with the inverse of mid(A)
 """
@@ -81,16 +80,14 @@ function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precond
     n = size(A, 1)
     x = fill(-1e16..1e16, n)
 
-    x = gauss_seidel_interval!(x, A, b, precondition=precondition)
+    x = gauss_elimination_interval!(x, A, b, precondition=precondition)
 
     return x
 end
 """
-Iteratively solves the system of interval linear
-equations and returns the solution set. Uses the
-Gauss-Seidel method (Hansen-Sengupta version) to solve the system.
-Keyword `precondition` to turn preconditioning off.
-Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Page 115
+Solves the system of linear equations using Gaussian Elimination,
+with (or without) preconditioning. (kwarg - `precondition`)
+Luc Jaulin, Michel Kieffer, Olivier Didrit and Eric Walter - Applied Interval Analysis - Page 72
 """
 function gauss_elimination_interval!(x::AbstractArray, a::AbstractMatrix, b::AbstractArray; precondition=true)
 
@@ -132,16 +129,12 @@ function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precon
     n = size(A, 1)
     x = fill(-1e16..1e16, n)
 
-    x = gauss_seidel_interval!(x, A, b, precondition=precondition)
+    x = gauss_elimination_interval1!(x, A, b, precondition=precondition)
 
     return x
 end
 """
-Iteratively solves the system of interval linear
-equations and returns the solution set. Uses the
-Gauss-Seidel method (Hansen-Sengupta version) to solve the system.
-Keyword `precondition` to turn preconditioning off.
-Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Page 115
+Using `Base.\``
 """
 function gauss_elimination_interval1!(x::AbstractArray, a::AbstractMatrix, b::AbstractArray; precondition=true)
 
