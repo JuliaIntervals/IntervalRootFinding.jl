@@ -21,7 +21,8 @@ export
     bisect, newton1d, quadratic_roots,
     gauss_seidel_interval, gauss_seidel_interval!,
     gauss_seidel_contractor, gauss_seidel_contractor!,
-    gauss_elimination_interval, gauss_elimination_interval!
+    gauss_elimination_interval, gauss_elimination_interval!,
+    slope
 
 export isunique, root_status
 
@@ -47,6 +48,7 @@ include("roots.jl")
 include("newton1d.jl")
 include("quadratic.jl")
 include("linear_eq.jl")
+include("slopes.jl")
 
 
 gradient(f) = X -> ForwardDiff.gradient(f, X[:])

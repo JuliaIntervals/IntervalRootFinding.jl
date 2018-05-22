@@ -1,9 +1,15 @@
 # Reference : Dietmar Ratz - An Optimized Interval Slope Arithmetic and its Application
-using IntervalArithmetic
-import Base: +, -, *, /, ^, sqrt, exp, log
+using IntervalArithmetic, ForwardDiff
+import Base: +, -, *, /, ^, sqrt, exp, log, sin, cos, tan, asin, acos, atan
 
 function slope(f::Function, x::Interval, c::Real)
-    f(SlopeVar(x, c)).fs
+    try
+        f(SlopeVar(x, c)).fs
+    catch y
+        if isa(y, MethodError)
+            ForwardDiff.derivative(f, x)
+        end
+    end
 end
 
 struct SlopeType
@@ -71,6 +77,7 @@ end
 +(v::SlopeType, u::Union{Interval, Real}) = u + v
 
 -(v::SlopeType, u::Union{Interval, Real}) = u - v
+-(u::SlopeType) = u * -1
 
 *(v::SlopeType, u::Union{Interval, Real}) = u * v
 
@@ -147,4 +154,46 @@ function log(u::SlopeType)
         h1 = interval((hx.hi - hc.hi) / s, (hx.lo - hc.lo) / i)
     end
     SlopeType(hx, hc, h1 * u.fs)
+end
+
+function sin(u::SlopeType) # Using derivative to upper bound the slope expansion for now
+    hx = sin(u.fx)
+    hc = sin(u.fc)
+    hs = cos(u.fx)
+    SlopeType(hx, hc, hs)
+end
+
+function cos(u::SlopeType) # Using derivative to upper bound the slope expansion for now
+    hx = cos(u.fx)
+    hc = cos(u.fc)
+    hs = -sin(u.fx)
+    SlopeType(hx, hc, hs)
+end
+
+function tan(u::SlopeType) # Using derivative to upper bound the slope expansion for now
+    hx = tan(u.fx)
+    hc = tan(u.fc)
+    hs = (sec(u.fx)) ^ 2
+    SlopeType(hx, hc, hs)
+end
+
+function asin(u::SlopeType)
+    hx = asin(u.fx)
+    hc = asin(u.fc)
+    hs = 1 / sqrt(1 - (u.fx ^ 2))
+    SlopeType(hx, hc, hs)
+end
+
+function acos(u::SlopeType)
+    hx = acos(u.fx)
+    hc = acos(u.fc)
+    hs = -1 / sqrt(1 - (u.fx ^ 2))
+    SlopeType(hx, hc, hs)
+end
+
+function atan(u::SlopeType)
+    hx = atan(u.fx)
+    hc = atan(u.fc)
+    hs = 1 / 1 + (u.fx ^ 2)
+    SlopeType(hx, hc, hs)
 end
