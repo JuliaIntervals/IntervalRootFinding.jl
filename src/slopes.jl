@@ -1,10 +1,11 @@
 # Reference : Dietmar Ratz - An Optimized Interval Slope Arithmetic and its Application
 using IntervalArithmetic, ForwardDiff
 import Base: +, -, *, /, ^, sqrt, exp, log, sin, cos, tan, asin, acos, atan
+import IntervalArithmetic: mid, interval
 
 function slope(f::Function, x::Interval, c::Real)
     try
-        f(SlopeVar(x, c)).fs
+        f(slope_var(x, c)).s
     catch y
         if isa(y, MethodError)
             ForwardDiff.derivative(f, x)
@@ -12,125 +13,123 @@ function slope(f::Function, x::Interval, c::Real)
     end
 end
 
-struct SlopeType
-    fx::Interval
-    fc::Interval
-    fs::Interval
+struct Slope{T}
+    x::Interval{T}
+    c::Interval{T}
+    s::Interval{T}
+    Slope{T}(a, b, c) where T = new(a, b, c)
+    Slope{T}(c) where T = Slope{T}(c, c, 0)
 end
 
-function SlopeConst(c::Union{Real, Interval})
-    SlopeType(c, c, 0)
+function slope_var(v::Real)
+    Slope{Float64}(v, v, 1)
 end
 
-function SlopeVar(v::Real)
-    SlopeType(v, v, 1)
+function slope_var(v::Interval, c::Real)
+    Slope{Float64}(v, c, 1)
 end
 
-function SlopeVar(v::Interval, c::Real)
-    SlopeType(v, c, 1)
+function interval(u::Slope)
+    u.x
 end
 
-function fxValue(u::SlopeType)
-    u.fx
+function mid(u::Slope)
+    u.c
 end
 
-function fcValue(u::SlopeType)
-    u.fc
+function slope(u::Slope)
+    u.s
 end
 
-function fsValue(u::SlopeType)
-    u.fs
+function +(u::Slope, v::Slope)
+    Slope{Float64}(u.x + v.x, u.c + v.c, u.s + v.s)
 end
 
-function +(u::SlopeType, v::SlopeType)
-    SlopeType(u.fx + v.fx, u.fc + v.fc, u.fs + v.fs)
+function -(u::Slope, v::Slope)
+    Slope{Float64}(u.x - v.x, u.c - v.c, u.s - v.s)
 end
 
-function -(u::SlopeType, v::SlopeType)
-    SlopeType(u.fx - v.fx, u.fc - v.fc, u.fs - v.fs)
+function *(u::Slope, v::Slope)
+    Slope{Float64}(u.x * v.x, u.c * v.c, u.s * v.c + u.x * v.s)
 end
 
-function *(u::SlopeType, v::SlopeType)
-    SlopeType(u.fx * v.fx, u.fc * v.fc, u.fs * v.fc + u.fx * v.fs)
+function /(u::Slope, v::Slope)
+    Slope{Float64}(u.x / v.x, u.c / v.c, (u.s - (u.c / v.c) * v.s) / v.x)
 end
 
-function /(u::SlopeType, v::SlopeType)
-    SlopeType(u.fx / v.fx, u.fc / v.fc, (u.fs - (u.fc / v.fc) * v.fs) / v.fx)
+function +(u::Union{Interval, Real}, v::Slope)
+    Slope{Float64}(u + v.x, u + v.c, v.s)
 end
 
-function +(u::Union{Interval, Real}, v::SlopeType)
-    SlopeType(u + v.fx, u + v.fc, v.fs)
+function -(u::Union{Interval, Real}, v::Slope)
+    Slope{Float64}(u - v.x, u - v.c, -v.s)
 end
 
-function -(u::Union{Interval, Real}, v::SlopeType)
-    SlopeType(u - v.fx, u - v.fc, -v.fs)
+function *(u::Union{Interval, Real}, v::Slope)
+    Slope{Float64}(u * v.x, u * v.c, u * v.s)
 end
 
-function *(u::Union{Interval, Real}, v::SlopeType)
-    SlopeType(u * v.fx, u * v.fc, u * v.fs)
+function /(u::Union{Interval, Real}, v::Slope)
+    Slope{Float64}(u / v.x, u / v.c, -(u / v.c) * (v.s / v.x))
 end
 
-function /(u::Union{Interval, Real}, v::SlopeType)
-    SlopeType(u / v.fx, u / v.fc, -(u / v.fc) * (v.fs / v.fx))
++(v::Slope, u::Union{Interval, Real}) = u + v
+
+-(v::Slope, u::Union{Interval, Real}) = u - v
+-(u::Slope) = u * -1
+
+*(v::Slope, u::Union{Interval, Real}) = u * v
+
+/(v::Slope, u::Union{Interval, Real}) = u / v
+
+function sqr(u::Slope)
+    Slope{Float64}(u.x ^ 2, u.c ^ 2, (u.x + u.c) * u.s)
 end
 
-+(v::SlopeType, u::Union{Interval, Real}) = u + v
-
--(v::SlopeType, u::Union{Interval, Real}) = u - v
--(u::SlopeType) = u * -1
-
-*(v::SlopeType, u::Union{Interval, Real}) = u * v
-
-/(v::SlopeType, u::Union{Interval, Real}) = u / v
-
-function sqr(u::SlopeType)
-    SlopeType(u.fx ^ 2, u.fc ^ 2, (u.fx + u.fc) * u.fs)
-end
-
-function ^(u::SlopeType, k::Integer)
+function ^(u::Slope, k::Integer)
     if k == 0
-        return SlopeConst(1)
+        return Slope{Float64}(1)
     elseif k == 1
         return u
     elseif k == 2
         return sqr(u)
     else
-        hxi = interval(u.fx.lo) ^ k
-        hxs = interval(u.fx.hi) ^ k
+        hxi = interval(u.x.lo) ^ k
+        hxs = interval(u.x.hi) ^ k
         hx = hull(hxi, hxs)
 
-        if (k % 2 == 0) && (0 ∈ u.fx)
+        if (k % 2 == 0) && (0 ∈ u.x)
             hx = interval(0, hx.hi)
         end
 
-        hc = u.fc ^ k
+        hc = u.c ^ k
 
-        i = u.fx.lo - u.fc.lo
-        s = u.fx.hi - u.fc.hi
+        i = u.x.lo - u.c.lo
+        s = u.x.hi - u.c.hi
 
-        if ((i == 0) || (s == 0) || (k % 2 == 1 && Interval(0) ⪽ u.fx))
-            h1 = k * (u.fx ^ (k - 1))
+        if ((i == 0) || (s == 0) || (k % 2 == 1 && Interval(0) ⪽ u.x))
+            h1 = k * (u.x ^ (k - 1))
         else
-            if k % 2 == 0 || u.fx.lo >= 0
+            if k % 2 == 0 || u.x.lo >= 0
                 h1 = interval((hxi.hi - hc.lo) / i, (hxs.hi - hc.lo) / s)
             else
                 h1 = interval((hxs.lo - hc.hi) / s, (hxi.lo - hc.hi) / i)
             end
         end
-        return SlopeType(hx, hc, h1 * u.fs)
+        return Slope{Float64}(hx, hc, h1 * u.s)
     end
 end
 
-function sqrt(u::SlopeType)
-    SlopeType(sqrt(u.fx), sqrt(u.fc), u.fs / (sqrt(u.fx) + sqrt(u.fc)))
+function sqrt(u::Slope)
+    Slope{Float64}(sqrt(u.x), sqrt(u.c), u.s / (sqrt(u.x) + sqrt(u.c)))
 end
 
-function exp(u::SlopeType)
-    hx = exp(u.fx)
-    hc = exp(u.fc)
+function exp(u::Slope)
+    hx = exp(u.x)
+    hc = exp(u.c)
 
-    i = u.fx.lo - u.fc.lo
-    s = u.fx.hi - u.fc.hi
+    i = u.x.lo - u.c.lo
+    s = u.x.hi - u.c.hi
 
     if (i == 0 || s == 0)
         h1 = hx
@@ -138,62 +137,62 @@ function exp(u::SlopeType)
         h1 = interval((hx.lo - hc.lo) / i, (hx.hi - hc.hi) / s)
     end
 
-    SlopeType(hx, hc, h1 * u.fs)
+    Slope{Float64}(hx, hc, h1 * u.s)
 end
 
-function log(u::SlopeType)
-    hx = log(u.fx)
-    hc = log(u.fc)
+function log(u::Slope)
+    hx = log(u.x)
+    hc = log(u.c)
 
-    i = u.fx.lo - u.fc.lo
-    s = u.fx.hi - u.fc.hi
+    i = u.x.lo - u.c.lo
+    s = u.x.hi - u.c.hi
 
     if (i == 0 || s == 0)
-        h1 = 1 / u.fx
+        h1 = 1 / u.x
     else
         h1 = interval((hx.hi - hc.hi) / s, (hx.lo - hc.lo) / i)
     end
-    SlopeType(hx, hc, h1 * u.fs)
+    Slope{Float64}(hx, hc, h1 * u.s)
 end
 
-function sin(u::SlopeType) # Using derivative to upper bound the slope expansion for now
-    hx = sin(u.fx)
-    hc = sin(u.fc)
-    hs = cos(u.fx)
-    SlopeType(hx, hc, hs)
+function sin(u::Slope) # Using derivative to upper bound the slope expansion for now
+    hx = sin(u.x)
+    hc = sin(u.c)
+    hs = cos(u.x)
+    Slope{Float64}(hx, hc, hs)
 end
 
-function cos(u::SlopeType) # Using derivative to upper bound the slope expansion for now
-    hx = cos(u.fx)
-    hc = cos(u.fc)
-    hs = -sin(u.fx)
-    SlopeType(hx, hc, hs)
+function cos(u::Slope) # Using derivative to upper bound the slope expansion for now
+    hx = cos(u.x)
+    hc = cos(u.c)
+    hs = -sin(u.x)
+    Slope{Float64}(hx, hc, hs)
 end
 
-function tan(u::SlopeType) # Using derivative to upper bound the slope expansion for now
-    hx = tan(u.fx)
-    hc = tan(u.fc)
-    hs = (sec(u.fx)) ^ 2
-    SlopeType(hx, hc, hs)
+function tan(u::Slope) # Using derivative to upper bound the slope expansion for now
+    hx = tan(u.x)
+    hc = tan(u.c)
+    hs = (sec(u.x)) ^ 2
+    Slope{Float64}(hx, hc, hs)
 end
 
-function asin(u::SlopeType)
-    hx = asin(u.fx)
-    hc = asin(u.fc)
-    hs = 1 / sqrt(1 - (u.fx ^ 2))
-    SlopeType(hx, hc, hs)
+function asin(u::Slope)
+    hx = asin(u.x)
+    hc = asin(u.c)
+    hs = 1 / sqrt(1 - (u.x ^ 2))
+    Slope{Float64}(hx, hc, hs)
 end
 
-function acos(u::SlopeType)
-    hx = acos(u.fx)
-    hc = acos(u.fc)
-    hs = -1 / sqrt(1 - (u.fx ^ 2))
-    SlopeType(hx, hc, hs)
+function acos(u::Slope)
+    hx = acos(u.x)
+    hc = acos(u.c)
+    hs = -1 / sqrt(1 - (u.x ^ 2))
+    Slope{Float64}(hx, hc, hs)
 end
 
-function atan(u::SlopeType)
-    hx = atan(u.fx)
-    hc = atan(u.fc)
-    hs = 1 / 1 + (u.fx ^ 2)
-    SlopeType(hx, hc, hs)
+function atan(u::Slope)
+    hx = atan(u.x)
+    hc = atan(u.c)
+    hs = 1 / 1 + (u.x ^ 2)
+    Slope{Float64}(hx, hc, hs)
 end
