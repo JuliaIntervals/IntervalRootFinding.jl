@@ -9,6 +9,8 @@ function benchmark_results()
     push!(f, x->(exp(x^2)))
     push!(f, x->(x^4 - 12x^3 + 47x^2 - 60x - 20exp(-x)))
     push!(f, x->(x^6 - 15x^4 + 27x^2 + 250))
+    push!(f, x->(atan(cos(tan(x)))))
+    push!(f, x->(asin(cos(acos(sin(x))))))
 
     s = interval(0.75, 1.75)
     df = DataFrame()
@@ -40,12 +42,16 @@ function benchmark_time()
     push!(f, x->(exp(x^2)))
     push!(f, x->(x^4 - 12x^3 + 47x^2 - 60x - 20exp(-x)))
     push!(f, x->(x^6 - 15x^4 + 27x^2 + 250))
+    push!(f, x->(atan(cos(tan(x)))))
+    push!(f, x->(asin(cos(acos(sin(x))))))
+
+    s = interval(0.75, 1.75)
     df = DataFrame()
     df[:Method] = ["Automatic Differentiation", "Slope Expansion"]
     for n in 1:length(f)
 
-        t1 = @belapsed ForwardDiff.derivative($f[$n], 0.75..1.75)
-        t2 = @belapsed slope($f[$n], 0.75..1.75, 1.25)
+        t1 = @belapsed ForwardDiff.derivative($f[$n], $s)
+        t2 = @belapsed slope($f[$n], $s, mid($s))
         df[Symbol("f" * "$n")] = [t1, t2]
     end
     a = []

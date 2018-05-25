@@ -3,7 +3,7 @@ using IntervalArithmetic, ForwardDiff
 import Base: +, -, *, /, ^, sqrt, exp, log, sin, cos, tan, asin, acos, atan
 import IntervalArithmetic: mid, interval
 
-function slope(f::Function, x::Interval, c::Real)
+function slope(f::Function, x::Interval, c::Number)
     try
         f(slope_var(x, c)).s
     catch y
@@ -17,16 +17,17 @@ struct Slope{T}
     x::Interval{T}
     c::Interval{T}
     s::Interval{T}
-    Slope{T}(a, b, c) where T = new(a, b, c)
-    Slope{T}(c) where T = Slope{T}(c, c, 0)
 end
 
-function slope_var(v::Real)
-    Slope{Float64}(v, v, 1)
+Slope(c) = Slope(c, c, 0)
+Slope(a, b, c) = Slope(promote(convert(Interval, a), b, c)...)
+
+function slope_var(v::Number)
+    Slope(v, v, 1)
 end
 
-function slope_var(v::Interval, c::Real)
-    Slope{Float64}(v, c, 1)
+function slope_var(v::Interval, c::Number)
+    Slope(v, c, 1)
 end
 
 function interval(u::Slope)
@@ -42,53 +43,53 @@ function slope(u::Slope)
 end
 
 function +(u::Slope, v::Slope)
-    Slope{Float64}(u.x + v.x, u.c + v.c, u.s + v.s)
+    Slope(u.x + v.x, u.c + v.c, u.s + v.s)
 end
 
 function -(u::Slope, v::Slope)
-    Slope{Float64}(u.x - v.x, u.c - v.c, u.s - v.s)
+    Slope(u.x - v.x, u.c - v.c, u.s - v.s)
 end
 
 function *(u::Slope, v::Slope)
-    Slope{Float64}(u.x * v.x, u.c * v.c, u.s * v.c + u.x * v.s)
+    Slope(u.x * v.x, u.c * v.c, u.s * v.c + u.x * v.s)
 end
 
 function /(u::Slope, v::Slope)
-    Slope{Float64}(u.x / v.x, u.c / v.c, (u.s - (u.c / v.c) * v.s) / v.x)
+    Slope(u.x / v.x, u.c / v.c, (u.s - (u.c / v.c) * v.s) / v.x)
 end
 
-function +(u::Union{Interval, Real}, v::Slope)
-    Slope{Float64}(u + v.x, u + v.c, v.s)
+function +(u, v::Slope)
+    Slope(u + v.x, u + v.c, v.s)
 end
 
-function -(u::Union{Interval, Real}, v::Slope)
-    Slope{Float64}(u - v.x, u - v.c, -v.s)
+function -(u, v::Slope)
+    Slope(u - v.x, u - v.c, -v.s)
 end
 
-function *(u::Union{Interval, Real}, v::Slope)
-    Slope{Float64}(u * v.x, u * v.c, u * v.s)
+function *(u, v::Slope)
+    Slope(u * v.x, u * v.c, u * v.s)
 end
 
-function /(u::Union{Interval, Real}, v::Slope)
-    Slope{Float64}(u / v.x, u / v.c, -(u / v.c) * (v.s / v.x))
+function /(u, v::Slope)
+    Slope(u / v.x, u / v.c, -(u / v.c) * (v.s / v.x))
 end
 
-+(v::Slope, u::Union{Interval, Real}) = u + v
++(v::Slope, u) = u + v
 
--(v::Slope, u::Union{Interval, Real}) = u - v
--(u::Slope) = u * -1
+-(v::Slope, u) = u - v
+-(u::Slope) = u * -1.0
 
-*(v::Slope, u::Union{Interval, Real}) = u * v
+*(v::Slope, u) = u * v
 
-/(v::Slope, u::Union{Interval, Real}) = u / v
+/(v::Slope, u) = u / v
 
 function sqr(u::Slope)
-    Slope{Float64}(u.x ^ 2, u.c ^ 2, (u.x + u.c) * u.s)
+    Slope(u.x ^ 2, u.c ^ 2, (u.x + u.c) * u.s)
 end
 
 function ^(u::Slope, k::Integer)
     if k == 0
-        return Slope{Float64}(1)
+        return Slope(1)
     elseif k == 1
         return u
     elseif k == 2
@@ -107,7 +108,7 @@ function ^(u::Slope, k::Integer)
         i = u.x.lo - u.c.lo
         s = u.x.hi - u.c.hi
 
-        if ((i == 0) || (s == 0) || (k % 2 == 1 && Interval(0) ⪽ u.x))
+        if ((i == 0) || (s == 0) || (k % 2 == 1 && zero(u.x) ⪽ u.x))
             h1 = k * (u.x ^ (k - 1))
         else
             if k % 2 == 0 || u.x.lo >= 0
@@ -116,12 +117,12 @@ function ^(u::Slope, k::Integer)
                 h1 = interval((hxs.lo - hc.hi) / s, (hxi.lo - hc.hi) / i)
             end
         end
-        return Slope{Float64}(hx, hc, h1 * u.s)
+        return Slope(hx, hc, h1 * u.s)
     end
 end
 
 function sqrt(u::Slope)
-    Slope{Float64}(sqrt(u.x), sqrt(u.c), u.s / (sqrt(u.x) + sqrt(u.c)))
+    Slope(sqrt(u.x), sqrt(u.c), u.s / (sqrt(u.x) + sqrt(u.c)))
 end
 
 function exp(u::Slope)
@@ -137,7 +138,7 @@ function exp(u::Slope)
         h1 = interval((hx.lo - hc.lo) / i, (hx.hi - hc.hi) / s)
     end
 
-    Slope{Float64}(hx, hc, h1 * u.s)
+    Slope(hx, hc, h1 * u.s)
 end
 
 function log(u::Slope)
@@ -152,47 +153,47 @@ function log(u::Slope)
     else
         h1 = interval((hx.hi - hc.hi) / s, (hx.lo - hc.lo) / i)
     end
-    Slope{Float64}(hx, hc, h1 * u.s)
+    Slope(hx, hc, h1 * u.s)
 end
 
 function sin(u::Slope) # Using derivative to upper bound the slope expansion for now
     hx = sin(u.x)
     hc = sin(u.c)
     hs = cos(u.x)
-    Slope{Float64}(hx, hc, hs)
+    Slope(hx, hc, hs)
 end
 
 function cos(u::Slope) # Using derivative to upper bound the slope expansion for now
     hx = cos(u.x)
     hc = cos(u.c)
     hs = -sin(u.x)
-    Slope{Float64}(hx, hc, hs)
+    Slope(hx, hc, hs)
 end
 
 function tan(u::Slope) # Using derivative to upper bound the slope expansion for now
     hx = tan(u.x)
     hc = tan(u.c)
     hs = (sec(u.x)) ^ 2
-    Slope{Float64}(hx, hc, hs)
+    Slope(hx, hc, hs)
 end
 
 function asin(u::Slope)
     hx = asin(u.x)
     hc = asin(u.c)
     hs = 1 / sqrt(1 - (u.x ^ 2))
-    Slope{Float64}(hx, hc, hs)
+    Slope(hx, hc, hs)
 end
 
 function acos(u::Slope)
     hx = acos(u.x)
     hc = acos(u.c)
     hs = -1 / sqrt(1 - (u.x ^ 2))
-    Slope{Float64}(hx, hc, hs)
+    Slope(hx, hc, hs)
 end
 
 function atan(u::Slope)
     hx = atan(u.x)
     hc = atan(u.c)
     hs = 1 / 1 + (u.x ^ 2)
-    Slope{Float64}(hx, hc, hs)
+    Slope(hx, hc, hs)
 end
