@@ -118,11 +118,7 @@ function ^(u::Slope, k::Integer)
                 h1 = interval((hxs.lo - hc.hi) / s, (hxi.lo - hc.hi) / i)
             end
         end
-<<<<<<< 5a0027a5e8291888d4cdb02568ab5e0a12eaeafc
         return Slope(hx, hc, h1 * u.s)
-=======
-        return Slope{Float64}(hx, hc, h1 * u.s)
->>>>>>> Incorporate review comments
     end
 end
 
