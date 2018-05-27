@@ -1,9 +1,12 @@
 # Reference : Dietmar Ratz - An Optimized Interval Slope Arithmetic and its Application
-using IntervalArithmetic, ForwardDiff
+using IntervalArithmetic, ForwardDiff, StaticArrays
 import Base: +, -, *, /, ^, sqrt, exp, log, sin, cos, tan, asin, acos, atan
 import IntervalArithmetic: mid, interval
 
-function slope(f::Function, x::Interval, c::Number)
+"""
+Expands the slope of `f` over `x` at the point `c` (default `c = mid(x)`)
+"""
+function slope(f::Function, x::Interval, c::Number = mid(x))
     try
         f(slope_var(x, c)).s
     catch y
@@ -11,6 +14,25 @@ function slope(f::Function, x::Interval, c::Number)
             ForwardDiff.derivative(f, x)
         end
     end
+end
+
+function slope(f::Function, x::Union{IntervalBox, SVector}, c::AbstractVector = mid.(x)) # multidim
+    try
+        T = typeof(x[1].lo)
+        n = length(x)
+        s = Vector{Slope{T}}[]
+        for i in 1:n
+            arr = fill(Slope(zero(T)), n)
+            arr[i] = slope_var(x[i], c[i])
+            push!(s, arr)
+        end
+        return slope.(hcat(([(f(s[i])) for i=1:n])...))
+    catch y
+        if isa(y, MethodError)
+            ForwardDiff.jacobian(f, x)
+        end
+    end
+
 end
 
 struct Slope{T}
@@ -76,12 +98,19 @@ end
 
 +(v::Slope, u) = u + v
 
--(v::Slope, u) = u - v
--(u::Slope) = u * -1.0
-
 *(v::Slope, u) = u * v
 
-/(v::Slope, u) = u / v
+function -(u::Slope, v)
+    Slope(u.x - v, u.c - v, u.s)
+end
+
+function -(u::Slope)
+    Slope(-u.x, -u.c, -u.s)
+end
+
+function /(u::Slope, v)
+    Slope(u.x / v, u.c / v, u.s / v)
+end
 
 function sqr(u::Slope)
     Slope(u.x ^ 2, u.c ^ 2, (u.x + u.c) * u.s)
