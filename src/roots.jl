@@ -12,8 +12,15 @@ struct RootSearchState{V, VR}
     outputs::VR  # Should ba a container of root of the form CONT{Root{T}}
 end
 
-RootSearchState(region::T) where {T<:Union{Interval,IntervalBox}} =
-    RootSearchState([region], Root{T}[])
+function RootSearchState(region::T) where {T<:Union{Interval,IntervalBox}}
+    working = [region]
+    outputs = Root{T}[]
+
+    sizehint!(working, 1000)
+    sizehint!(outputs, 100)
+
+    RootSearchState(working, outputs)
+end
 
 copy(state::RootSearchState) =
     RootSearchState(deepcopy(state.working), deepcopy(state.outputs))
@@ -57,8 +64,6 @@ eltype{RSS, C, S, T, RS <: RootSearch{RSS, C, S, T}}(::Type{RS}) = RSS
 iteratorsize{T <: RootSearch}(::Type{T}) = Base.SizeUnknown()
 
 function start(iter::RootSearch)
-    sizehint!(iter.state.outputs, 100)
-    sizehint!(iter.state.working, 1000)
     return iter.state
 end
 
