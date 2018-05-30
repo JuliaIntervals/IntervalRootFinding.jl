@@ -2,20 +2,37 @@
 import IntervalArithmetic: diam, isinterior
 import Base: start, next, done, copy, eltype, iteratorsize
 
-export branch_and_prune, Bisection, Newton, RootSearch
+export branch_and_prune, Bisection, Newton, RootSearch, @searchstrategy
 export start, next, done, copy, step!, eltype, iteratorsize
 
 diam(x::Root) = diam(x.interval)
 
-struct RootSearchState{T <: Union{Interval,IntervalBox}}
-    working::Vector{T}
-    outputs::Vector{Root{T}}
+struct RootSearchState{V, VR}
+    working::V  # Should be a container of the form  CONT{T}
+    outputs::VR  # Should ba a container of root of the form CONT{Root{T}}
 end
-RootSearchState{T<:Union{Interval,IntervalBox}}(region::T) =
+
+RootSearchState(region::T) where {T<:Union{Interval,IntervalBox}} =
     RootSearchState([region], Root{T}[])
 
 copy(state::RootSearchState) =
-    RootSearchState(copy(state.working), copy(state.outputs))
+    RootSearchState(deepcopy(state.working), deepcopy(state.outputs))
+
+"""
+    SearchStrategy
+
+Type used to describe the chosen strategy to choose the order in which the
+intervals must be processed. The functions `store!` and `retrieve!` must work on
+the set of working intervals in place. `store!(set, interval)` must add `interval`
+to `set` and `retrieve!(set)` must return the next interval to be processed and
+delete it from `set`.
+"""
+struct SearchStrategy
+    store!::Function
+    retrieve!::Function
+end
+
+SearchStrategy() = SearchStrategy(push!, pop!)
 
 """
     RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
@@ -25,20 +42,24 @@ Returns the `RootSearchState` at each iteration. Note: Each iteration mutates
 the `RootSearchState`. Use `copy(state::RootSearchState)` to create an
 independent instance if necessary.
 """
-struct RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
-    region::R
-    contractor::S
+struct RootSearch{V, VR, C <: Contractor, S <: SearchStrategy, T <: Real}
+    state::RootSearchState{V, VR}
+    contractor::C
+    strategy::S
     tolerance::T
 end
 
-eltype{R, T <: RootSearch{R}}(::Type{T}) = RootSearchState{R}
+function RootSearch(region::R, contractor::C, tol::T) where {R <: Union{Interval,IntervalBox}, C <: Contractor, T <: Real}
+    RootSearch(RootSearchState(region), contractor, SearchStrategy(), tol)
+end
+
+eltype{RSS, C, S, T, RS <: RootSearch{RSS, C, S, T}}(::Type{RS}) = RSS
 iteratorsize{T <: RootSearch}(::Type{T}) = Base.SizeUnknown()
 
 function start(iter::RootSearch)
-    state = RootSearchState(iter.region)
-    sizehint!(state.outputs, 100)
-    sizehint!(state.working, 1000)
-    return state
+    sizehint!(iter.state.outputs, 100)
+    sizehint!(iter.state.working, 1000)
+    return iter.state
 end
 
 """
@@ -47,24 +68,24 @@ end
 Progress `state` by treating one of its `working` regions. Note: `state.working`
 is always modified. If a root is found, it is added to `state.outputs`.
 """
-function step!(state::RootSearchState, contractor, tolerance)
-    X = pop!(state.working)
+function step!(state::RootSearchState, contractor, searchstrat, tolerance)
+    X = searchstrat.retrieve!(state.working)
     status, output = contractor(X, tolerance)
     if status == :empty
         return nothing
     elseif status == :unique
-        push!(state.outputs, Root(output, :unique))
+        searchstrat.store!(state.outputs, Root(output, :unique))
     elseif diam(output) < tolerance
-        push!(state.outputs, Root(output, :unknown))
+        searchstrat.store!(state.outputs, Root(output, :unknown))
     else # branch
         X1, X2 = bisect(X)
-        push!(state.working, X1, X2)
+        searchstrat.store!(state.working, X1, X2)
     end
     return nothing
 end
 
 function next(iter::RootSearch, state::RootSearchState)
-    step!(state, iter.contractor, iter.tolerance)
+    step!(state, iter.contractor, iter.strategy, iter.tolerance)
     return state, state
 end
 
