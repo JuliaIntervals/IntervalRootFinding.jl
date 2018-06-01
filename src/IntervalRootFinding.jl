@@ -27,7 +27,7 @@ export
 export isunique, root_status
 
 
-import IntervalArithmetic.interval
+import IntervalArithmetic: interval, wideinterval
 
 
 

@@ -7,16 +7,16 @@ and a `debug` boolean argument that prints out diagnostic information."""
 function newton1d{T}(f::Function, f′::Function, x::Interval{T};
                     reltol=eps(T), abstol=eps(T), debug=false, debugroot=false)
 
-    L = Interval{T}[]
+    L = Interval{T}[] # Array to hold the intervals still to be processed
 
-    R = Root{Interval{T}}[]
+    R = Root{Interval{T}}[] # Array to hold the `root` objects obtained
     reps = reps1 = 0
 
-    push!(L, x)
+    push!(L, x) # Initialize
     initial_width = ∞
-    X = emptyinterval(T)
-    while !isempty(L)
-        X = pop!(L)
+    X = emptyinterval(T) # Initialize
+    while !isempty(L)   # Until all intervals have been processed
+        X = pop!(L)     # Process next interval
 
         debug && (print("Current interval popped: "); @show X)
 
@@ -32,10 +32,10 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
             while true
 
                 m = mid(X)
-                N = m - (f(interval(m)) / f′(X))
+                N = m - (f(interval(m)) / f′(X))    # Newton step
 
                 debug && (print("Newton step1: "); @show (X, X ∩ N))
-                if X == X ∩ N
+                if X == X ∩ N   # Checking if Newton step was redundant
                     reps1 += 1
                     if reps1 > 20
                         reps1 = 0
@@ -44,36 +44,36 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
                 end
                 X = X ∩ N
 
-                if (isempty(X) || diam(X) == 0)
+                if (isempty(X))         # No root in X
                     break
 
-                elseif 0 ∈ f(interval(prevfloat(mid(X)), nextfloat(mid(X))))
+                elseif 0 ∈ f(wideinterval(mid(X)))  # Root guaranteed to be in X
                     n = fa = fb = 0
                     root_exist = true
-                    while (n < 4 && (fa == 0 || fb == 0))
+                    while (n < 4 && (fa == 0 || fb == 0))   # Narrowing the interval further
                         if fa == 0
-                            if 0 ∈ f(interval(prevfloat(X.lo), nextfloat(X.lo)))
+                            if 0 ∈ f(wideinterval(X.lo))
                                 fa = 1
                             else
                                 N = X.lo - (f(interval(X.lo)) / f′(X))
                                 X = X ∩ N
-                                if (isempty(X) || diam(X) == 0)
+                                if (isempty(X))
                                     root_exist = false
                                     break
                                 end
                             end
                         end
                         if fb == 0
-                            if 0 ∈ f(interval(prevfloat(X.hi), nextfloat(X.hi)))
+                            if 0 ∈ f(wideinterval(X.hi))
                                 fb = 1
                             else
-                                if 0 ∈ f(interval(prevfloat(mid(X)), nextfloat(mid(X))))
+                                if 0 ∈ f(wideinterval(mid(X)))
                                     N = X.hi - (f(interval(X.hi)) / f′(X))
                                 else
                                     N = mid(X) - (f(interval(mid(X))) / f′(X))
                                 end
                                 X = X ∩ N
-                                if (isempty(X) || diam(X) == 0)
+                                if (isempty(X))
                                     root_exist = false
                                     break
                                 end
@@ -81,7 +81,7 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
                         end
                         N = mid(X) - (f(interval(mid(X))) / f′(X))
                         X = X ∩ N
-                        if (isempty(X) || diam(X) == 0)
+                        if (isempty(X))
                             root_exist = false
                             break
                         end
@@ -89,19 +89,19 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
                     end
                     if root_exist
                         push!(R, Root(X, :unique))
-                        debugroot && @show "Root found", X
+                        debugroot && @show "Root found", X  # Storing determined unique root
                     end
 
                     break
                 end
             end
 
-        else
-            if diam(X) == initial_width
+        else                                # 0 ∈ f′(X)
+            if diam(X) == initial_width     # if no improvement occuring for a number of iterations
                 reps += 1
                 if reps > 10
                     push!(R, Root(X, :unknown))
-                    debugroot && @show "Repititive root found", X
+                    debugroot && @show "Repeated root found", X
                     reps = 0
                     continue
                 end
@@ -112,21 +112,21 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
             expansion_pt = Inf
             # expansion point for the newton step might be m, X.lo or X.hi according to some conditions
 
-            if 0 ∈ f(interval(prevfloat(mid(X)), nextfloat(mid(X))))
+            if 0 ∈ f(wideinterval(mid(X)))  # if root in X, narrow interval further
                 # 0 ∈ fⁱ(x)
 
                 debug && println("0 ∈ fⁱ(x)")
 
-                if 0 ∉ f(interval(prevfloat(X.lo), nextfloat(X.lo)))
+                if 0 ∉ f(wideinterval(X.lo))
                     expansion_pt = X.lo
 
-                elseif 0 ∉ f(interval(prevfloat(X.hi), nextfloat(X.hi)))
+                elseif 0 ∉ f(wideinterval(X.hi))
                     expansion_pt = X.hi
 
                 else
                     x1 = mid(interval(X.lo, mid(X)))
                     x2 = mid(interval(mid(X), X.hi))
-                    if 0 ∉ f(interval(prevfloat(x1), nextfloat(x1))) || 0 ∉ f(interval(prevfloat(x2), nextfloat(x2)))
+                    if 0 ∉ f(wideinterval(x1)) || 0 ∉ f(wideinterval(x2))
                         push!(L, interval(X.lo, m))
                         push!(L, interval(m, X.hi))
                         continue
@@ -145,7 +145,7 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
 
                 debug && println("0 ∉ fⁱ(x)")
 
-                if (diam(X)/mag(X)) < reltol && diam(f(X)) < abstol
+                if (diam(X)/mag(X)) < reltol && diam(f(X)) < abstol     # checking if X is still within tolerances
                     push!(R, Root(X, :unknown))
 
                     debugroot && @show "Tolerance root found", X
@@ -189,7 +189,7 @@ function newton1d{T}(f::Function, f′::Function, x::Interval{T};
                 end
             end
 
-            push!(L, X)
+            push!(L, X) # Pushing X into L to be processed again
         end
     end
 
