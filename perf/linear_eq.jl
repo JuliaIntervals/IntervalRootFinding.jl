@@ -43,13 +43,14 @@ end
 
 function benchmark_elimination(max=10)
     df = DataFrame()
-    df[:Method] = ["Gauss Elimination", "Base.\\"]
+    df[:Method] = ["Gauss Elimination", "Base.\\", "Linear Hull"]
     for n in 1:max
         A, mA, sA = randMat(n)
         b, mb, sb = randVec(n)
         t1 = @belapsed gauss_elimination_interval($A, $b)
         t2 = @belapsed gauss_elimination_interval1($A, $b)
-        df[Symbol("$n")] = [t1, t2]
+        t3 = @belapsed linear_hull($A, $b)
+        df[Symbol("$n")] = [t1, t2, t3]
     end
     a = []
     for i in 1:max

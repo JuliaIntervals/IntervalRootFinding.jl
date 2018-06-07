@@ -9,7 +9,7 @@ using IntervalArithmetic, StaticArrays, IntervalRootFinding
 
     for i in 1:length(A)
         for precondition in (false, true)
-            for f in (gauss_seidel_interval, gauss_seidel_contractor, gauss_elimination_interval)
+            for f in (gauss_seidel_interval, gauss_seidel_contractor, gauss_elimination_interval, linear_hull)
                 @test all(x[i] .⊆ f(A[i], b[i]))
             end
         end

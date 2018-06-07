@@ -143,3 +143,32 @@ function gauss_elimination_interval1!(x::AbstractArray, a::AbstractMatrix, b::Ab
 
     a \ b
 end
+
+function linear_hull(M::AbstractMatrix, r::AbstractArray)
+
+	n = size(M, 1)
+
+    ((M, r) = preconditioner(M, r))
+    M_lo = inf.(M)
+    M_hi = sup.(M)
+    if all(.≤(M_lo, zero(M_lo)))
+        return M \ r
+    end
+    P = inv(M_lo)
+    if all(.≤(eye(n), (P)))
+        H1 = P * sup.(r)
+        C = 1 ./ (2diag(P) - 1)
+        Z = ((2mid.(r)) .* diag(P)) - H1
+        H2 = C .* Z
+        for i in 1:n
+            if Z[i] < 0
+                H2[i] = Z[i]
+            end
+        end
+        H = interval.(min.(H1, H2), max.(H1, H2))
+
+        return H
+    else
+        return M \ r
+    end
+end
