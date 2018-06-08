@@ -144,6 +144,10 @@ function gauss_elimination_interval1!(x::AbstractArray, a::AbstractMatrix, b::Ab
     a \ b
 end
 
+"""
+Method to compute a tight hull of the solution set of a regular system of interval linear equations.
+Reference - Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Section 5.8
+"""
 function linear_hull(M::AbstractMatrix, r::AbstractArray)
 
 	n = size(M, 1)
