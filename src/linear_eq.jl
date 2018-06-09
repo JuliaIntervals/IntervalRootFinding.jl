@@ -166,7 +166,12 @@ function linear_hull(M::AbstractMatrix, r::AbstractArray)
         H2 = C .* Z
         for i in 1:n
             if Z[i] < 0
-                H2[i] = Z[i]
+                #H2[i] = Z[i]
+                if (typeof(M) <: SArray)
+                    H2 = setindex(H2, Z[i], i)
+                else
+                    H2[i] = Z[i]
+                end
             end
         end
         H = interval.(min.(H1, H2), max.(H1, H2))
