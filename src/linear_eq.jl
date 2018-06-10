@@ -153,12 +153,17 @@ function linear_hull(M::AbstractMatrix, r::AbstractArray)
 	n = size(M, 1)
 
     ((M, r) = preconditioner(M, r))
+    M = interval.((2*eye(n) - sup.(M)), sup.(M))
     M_lo = inf.(M)
     M_hi = sup.(M)
+    P = eye(n)
     if all(.≤(M_lo, zero(M_lo)))
         return M \ r
     end
     P = inv(M_lo)
+    if any(isinf.(P)) || any(isnan.(P))
+        return gauss_seidel_interval(M, r, precondition=false, maxiter=2)
+    end
     if all(.≤(eye(n), (P)))
         H1 = P * sup.(r)
         C = 1 ./ (2diag(P) - 1)

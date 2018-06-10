@@ -4,7 +4,7 @@ Preconditions the matrix A and b with the inverse of mid(A)
 function preconditioner(A::AbstractMatrix, b::AbstractArray)
 
     Aᶜ = mid.(A)
-    B = pinv(Aᶜ)     # TODO If Aᶜ is singular
+    B = inv(Aᶜ)     # TODO If Aᶜ is singular
 
     return B*A, B*b
 
@@ -23,7 +23,10 @@ function newtonnd(f::Function, deriv::Function, x::IntervalBox{NUM, T}; reltol=e
         if !all(0 .∈ f(Xᴵ))
             continue
         end
+
         Xᴵ¹ = copy(Xᴵ)
+        use_B = false
+
         debug && (print("Current interval popped: ");  println(Xᴵ))
 
         if (isempty(Xᴵ))
@@ -45,22 +48,33 @@ function newtonnd(f::Function, deriv::Function, x::IntervalBox{NUM, T}; reltol=e
 
         while true
 
-            use_B = false
             next_iter = false
 
             initial_width = diam(Xᴵ)
             debug && (print("Current interval popped: ");  println(Xᴵ))
+            X = mid(Xᴵ)
             if use_B
-                # TODO Compute X using B in Step 19
-            else
-                X = mid(Xᴵ)
+                for i in 1:3
+                    z = X .- B * f(X)
+                    if all(z .∈ Xᴵ)
+                        if max(abs.(f(z))...) ≥ max(abs.(f(X))...)
+                            break
+                        end
+                        X = z
+                    else
+                        break
+                    end
+                end
+                if any(X .∉ Xᴵ)
+                    X = mid.(Xᴵ)
+                end
             end
 
             J = SMatrix{n}{n}(deriv(Xᴵ))   # either jacobian or calculated using slopes
-
-            # Xᴵ = IntervalBox((X + linear_hull(J, -f(interval.(X)))) .∩ Xᴵ)
+            B, r = preconditioner(J, -f(interval.(X)))
+            # Xᴵ = IntervalBox((X + linear_hull(B, r, precondition=false)) .∩ Xᴵ)
             Xᴵ = IntervalBox((X + (J \ -f(interval.(X)))) .∩ Xᴵ)
-
+            use_B = true
             if (isempty(Xᴵ))
                 next_iter = true
                 break
