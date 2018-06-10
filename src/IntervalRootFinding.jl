@@ -18,12 +18,16 @@ export
     derivative, jacobian,  # reexport derivative from ForwardDiff
     Root, is_unique,
     roots, find_roots,
-    bisect, newton1d
+    bisect, newton1d, slope,
+    slope_newton1d, linear_hull,
+    gauss_seidel_interval, gauss_seidel_interval!,
+    gauss_seidel_contractor, gauss_seidel_contractor!,
+    gauss_elimination_interval, gauss_elimination_interval!
 
 export isunique, root_status
 
 
-import IntervalArithmetic.interval
+import IntervalArithmetic: interval, wideinterval
 
 
 
@@ -58,7 +62,8 @@ include("complex.jl")
 include("contractors.jl")
 include("roots.jl")
 include("newton1d.jl")
-
+include("linear_eq.jl")
+include("slopes.jl")
 
 
 gradient(f) = X -> ForwardDiff.gradient(f, SVector(X))

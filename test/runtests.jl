@@ -5,3 +5,5 @@ using Base.Test
 #include("findroots.jl")
 include("roots.jl")
 include("newton1d.jl")
+include("linear_eq.jl")
+include("slopes.jl")
