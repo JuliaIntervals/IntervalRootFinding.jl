@@ -7,7 +7,7 @@
 doc"""Returns two intervals, the first being a point within the
 interval x such that the interval corresponding to the derivative of f there
 does not contain zero, and the second is the inverse of its derivative"""
-function guarded_derivative_midpoint{T}(f::Function, f_prime::Function, x::Interval{T})
+function guarded_derivative_midpoint(f::Function, f_prime::Function, x::Interval{T}) where {T}
 
     α = convert(T, 0.46875)   # close to 0.5, but exactly representable as a floating point
 
@@ -31,7 +31,7 @@ function guarded_derivative_midpoint{T}(f::Function, f_prime::Function, x::Inter
 end
 
 
-function K{T}(f::Function, f_prime::Function, x::Interval{T})
+function K(f::Function, f_prime::Function, x::Interval{T}) where {T}
     m, C = guarded_derivative_midpoint(f, f_prime, x)
     deriv = f_prime(x)
     Kx = m - C*f(m) + (one(T) - C*deriv) * (x - m)
@@ -39,8 +39,8 @@ function K{T}(f::Function, f_prime::Function, x::Interval{T})
 end
 
 
-function krawczyk_refine{T}(f::Function, f_prime::Function, x::Interval{T};
-    tolerance=eps(one(T)), debug=false)
+function krawczyk_refine(f::Function, f_prime::Function, x::Interval{T};
+    tolerance=eps(one(T)), debug=false) where {T}
 
     debug && (print("Entering krawczyk_refine:"); @show x)
 
@@ -58,8 +58,8 @@ end
 
 
 
-function krawczyk{T}(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
-    tolerance=eps(one(T)), debug=false, maxlevel=30)
+function krawczyk(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
+    tolerance=eps(one(T)), debug=false, maxlevel=30) where {T}
 
     debug && (print("Entering krawczyk:"); @show(level); @show(x))
 
@@ -98,15 +98,15 @@ end
 
 
 # use automatic differentiation if no derivative function given
-krawczyk{T}(f::Function,x::Interval{T}; args...) =
+krawczyk(f::Function,x::Interval{T}; args...) where {T} =
     krawczyk(f, x->D(f,x), x; args...)
 
 # krawczyk for vector of intervals:
-krawczyk{T}(f::Function, f_prime::Function, xx::Vector{Interval{T}}; args...) =
+krawczyk(f::Function, f_prime::Function, xx::Vector{Interval{T}}; args...) where {T} =
     vcat([krawczyk(f, f_prime, @interval(x); args...) for x in xx]...)
 
-krawczyk{T}(f::Function,  xx::Vector{Interval{T}}, level; args...) =
+krawczyk(f::Function,  xx::Vector{Interval{T}}, level; args...) where {T} =
     krawczyk(f, x->D(f,x), xx; args...)
 
-krawczyk{T}(f::Function,  xx::Vector{Root{T}}; args...) =
+krawczyk(f::Function,  xx::Vector{Root{T}}; args...) where {T} =
     krawczyk(f, x->D(f,x), [x.interval for x in xx]; args...)

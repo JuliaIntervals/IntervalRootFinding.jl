@@ -1,7 +1,5 @@
 export Bisection, Newton, Krawczyk
 
-Base.isinf(X::IntervalBox) = any(isinf.(X))
-IntervalArithmetic.mid(X::IntervalBox, α) = mid.(X, α)
 
 doc"""
     Contractor{F}
@@ -81,19 +79,19 @@ end
 doc"""
 Single-variable Newton operator
 """
-function 𝒩{T}(f, X::Interval{T})
+function 𝒩(f, X::Interval{T}) where {T}
     m = Interval(mid(X, where_bisect))
 
     m - (f(m) / ForwardDiff.derivative(f, X))
 end
 
-function 𝒩{T}(f, f′, X::Interval{T})
+function 𝒩(f, f′, X::Interval{T}) where {T}
     m = Interval(mid(X, where_bisect))
 
     m - (f(m) / f′(X))
 end
 
-function 𝒩{T}(f, X::Interval{T}, dX::Interval{T})
+function 𝒩(f, X::Interval{T}, dX::Interval{T}) where {T}
     m = Interval(mid(X, where_bisect))
 
     m - (f(m) / dX)

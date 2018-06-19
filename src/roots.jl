@@ -7,10 +7,6 @@ export start, next, done, copy, step!, eltype, iteratorsize
 
 diam(x::Root) = diam(x.interval)
 
-Base.size(x::Interval) = (1,)
-
-isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
-
 struct RootSearchState{T <: Union{Interval,IntervalBox}}
     working::Vector{T}
     outputs::Vector{Root{T}}
@@ -108,11 +104,6 @@ function recursively_branch_and_prune(h, X, contractor=BisectionContractor, fina
 
     return roots
 end
-
-
-contains_zero(X::Interval{T}) where {T} = zero(T) ∈ X
-contains_zero(X::SVector) = all(contains_zero.(X))
-contains_zero(X::IntervalBox) = all(contains_zero.(X))
 
 
 IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
