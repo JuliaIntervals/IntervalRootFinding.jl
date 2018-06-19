@@ -30,26 +30,10 @@ import IntervalArithmetic: interval, wideinterval
 const derivative = ForwardDiff.derivative
 const D = derivative
 
-# Common functionality:
-
-doc"""Returns the midpoint of the interval x, slightly shifted in case
-the midpoint is an exact root"""
-function guarded_mid{T}(f::Function, x::Interval{T})
-    m = mid(x)
-
-    if f(m) == zero(T)                      # midpoint exactly a root
-        α = convert(T, 0.46875)      # close to 0.5, but exactly representable as a floating point
-        m = α*x.lo + (one(T)-α)*x.hi   # displace to another point in the interval
-    end
-
-    @assert m ∈ x
-
-    return m
-end
+const where_bisect = IntervalArithmetic.where_bisect ## 127//256
 
 
 include("root_object.jl")
-include("bisect.jl")
 
 include("newton.jl")
 include("krawczyk.jl")
@@ -69,14 +53,14 @@ export ∇
 
 
 
-function find_roots{T}(f::Function, a::Interval{T}, method::Function = newton;
-                    tolerance = eps(T), debug = false, maxlevel = 30)
+function find_roots(f::Function, a::Interval{T}, method::Function = newton;
+                    tolerance = eps(T), debug = false, maxlevel = 30) where {T}
 
     method(f, a; tolerance=tolerance, debug=debug, maxlevel=maxlevel)
 end
 
-function find_roots{T}(f::Function, f_prime::Function, a::Interval{T}, method::Function=newton;
-                    tolerance=eps(T), debug=false, maxlevel=30)
+function find_roots(f::Function, f_prime::Function, a::Interval{T}, method::Function=newton;
+                    tolerance=eps(T), debug=false, maxlevel=30) where {T}
 
     method(f, f_prime, a; tolerance=tolerance, debug=debug, maxlevel=maxlevel)
 end
@@ -127,7 +111,7 @@ function find_roots_midpoint(f::Function, a::Real, b::Real, method::Function=new
 
 end
 
-function Base.lexcmp{T}(a::Interval{T}, b::Interval{T})
+function Base.lexcmp(a::Interval{T}, b::Interval{T}) where {T}
     #@show a, b
     if a.lo < b.lo
         return -1
@@ -142,7 +126,7 @@ function Base.lexcmp{T}(a::Interval{T}, b::Interval{T})
 
 end
 
-Base.lexcmp{T}(a::Root{T}, b::Root{T}) = lexcmp(a.interval, b.interval)
+Base.lexcmp(a::Root{T}, b::Root{T}) where {T} = lexcmp(a.interval, b.interval)
 
 
 function clean_roots(f, roots)
