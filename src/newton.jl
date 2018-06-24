@@ -23,6 +23,13 @@ function newton_refine{N,T}(f::Function, f_prime::Function, X::Union{Interval{T}
         X = NX
     end
 
+    if diam(X) < tolerance
+
+        debug && @show "Refined root, tolerance reached", X
+
+        return [Root(X, :unknown)]
+    end
+
     debug && @show "Refined root", X
 
     return [Root(X, :unique)]
@@ -47,6 +54,13 @@ function newton_refine{T}(f::Function, f_prime::Function, X::Interval{T};
         NX == X && break
 
         X = NX
+    end
+
+    if diam(X) < tolerance
+
+        debug && @show "Refined root, tolerance reached", X
+
+        return [Root(X, :unknown)]
     end
 
     debug && @show "Refined root", X
