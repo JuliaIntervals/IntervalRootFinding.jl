@@ -106,8 +106,8 @@ function recursively_branch_and_prune(h, X, contractor=BisectionContractor, fina
 end
 
 
-IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
-NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
+const IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
+const NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
 
 """
     roots(f, X, contractor, tol=1e-3)
