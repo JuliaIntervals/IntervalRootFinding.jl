@@ -126,7 +126,7 @@ const known_roots = [
     IntervalBox(-1.34030 ± 1e-5,  1.00134 ± 1e-5),
     IntervalBox( 1.34030 ± 1e-5,  0.99866 ± 1e-5),
     IntervalBox( 1.34298 ± 1e-5, -0.99866 ± 1e-5),
-    # following three roots are not reported accurately
+    # following three roots are not reported precisely
     IntervalBox(-7e-10 ± 1e-10,  1 ± 1e-5),
     IntervalBox(-7e-10 ± 1e-10, -1 ± 1e-5),
     IntervalBox(-5e2 ± 1, -5e2 ± 1)
