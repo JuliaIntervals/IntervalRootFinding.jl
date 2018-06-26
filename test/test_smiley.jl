@@ -11,7 +11,7 @@ function test_all_unique(xs)
     return nothing
 end
 
-const tol = 1e-7
+const tol = 1e-6
 const method = Newton # NOTE: Bisection method performs badly in all examples
 
 info("testing method $(method)")
