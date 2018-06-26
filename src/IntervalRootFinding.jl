@@ -45,7 +45,7 @@ include("newton1d.jl")
 include("quadratic.jl")
 
 
-gradient(f) = X -> ForwardDiff.gradient(f, SVector(X))
+gradient(f) = X -> ForwardDiff.gradient(f, X[:])
 const ∇ = gradient
 
 export ∇

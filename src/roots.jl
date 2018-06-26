@@ -174,7 +174,7 @@ function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
         tol::Float64=1e-3) where {T, C<:Contractor}
 
     g = realify(f)
-    Y = IntervalBox(reim(Xc))
+    Y = IntervalBox(reim(Xc)...)
     rts = roots(g, Y, contractor, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
@@ -186,7 +186,7 @@ function roots(f, Xc::Complex{Interval{T}}, C::NewtonLike, tol::Float64=1e-3) wh
 
     g_prime = x -> ForwardDiff.jacobian(g, x)
 
-    Y = IntervalBox(reim(Xc))
+    Y = IntervalBox(reim(Xc)...)
     rts = roots(g, g_prime, Y, C, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
@@ -198,7 +198,7 @@ function roots(f, deriv, Xc::Complex{Interval{T}}, C::NewtonLike, tol::Float64=1
 
     g_prime = realify_derivative(deriv)
 
-    Y = IntervalBox(reim(Xc))
+    Y = IntervalBox(reim(Xc)...)
     rts = roots(g, g_prime, Y, C, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
