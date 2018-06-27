@@ -60,8 +60,10 @@ include("roots.jl")
 include("newton1d.jl")
 include("quadratic.jl")
 
+gradient(f, x::IntervalBox) = ForwardDiff.gradient(f, x.v)
+gradient(f, x::SVector) = ForwardDiff.gradient(f, x)
+gradient(f) = x->gradient(f, x)
 
-gradient(f) = X -> ForwardDiff.gradient(f, SVector(X))
 const ∇ = gradient
 
 export ∇
