@@ -1,7 +1,6 @@
 export Bisection, Newton, Krawczyk
 
 Base.isinf(X::IntervalBox) = any(isinf.(X))
-IntervalArithmetic.mid(X::IntervalBox, α) = mid.(X, α)
 
 doc"""
     Contractor{F}
@@ -104,9 +103,9 @@ Multi-variable Newton operator.
 """
 function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
     m = IntervalBox(Interval.(mid(X, where_bisect)))
-    J = jacobian(SVector(X))
+    J = jacobian(X.v)
 
-    return IntervalBox(m - (J \ f(m)))
+    return m - IntervalBox(J \ f(m))
 end
 
 
