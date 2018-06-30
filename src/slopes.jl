@@ -4,19 +4,13 @@ import Base: +, -, *, /, ^, sqrt, exp, log, sin, cos, tan, asin, acos, atan
 import IntervalArithmetic: mid, interval
 
 function slope(f::Function, x::Interval, c::Number)
-    try
-        f(slope_var(x, c)).s
-    catch y
-        if isa(y, MethodError)
-            ForwardDiff.derivative(f, x)
-        end
-    end
+    f(slope_var(x, c)).s
 end
 
 struct Slope{T}
-    x::Interval{T}
-    c::Interval{T}
-    s::Interval{T}
+    x::Interval{T}  # Interval on which slope is evaluated
+    c::Interval{T}  # Point about which slope is evaluated (Interval to get bounded rounding errors)
+    s::Interval{T}  # Variable which propogates the slope information
 end
 
 Slope(c) = Slope(c, c, 0)
@@ -76,12 +70,19 @@ end
 
 +(v::Slope, u) = u + v
 
--(v::Slope, u) = u - v
--(u::Slope) = u * -1.0
-
 *(v::Slope, u) = u * v
 
-/(v::Slope, u) = u / v
+function -(u::Slope, v)
+    Slope(u.x - v, u.c - v, u.s)
+end
+
+function -(u::Slope)
+    Slope(-u.x, -u.c, -u.s)
+end
+
+function /(u::Slope, v)
+    Slope(u.x / v, u.c / v, u.s / v)
+end
 
 function sqr(u::Slope)
     Slope(u.x ^ 2, u.c ^ 2, (u.x + u.c) * u.s)
