@@ -9,7 +9,7 @@ using ForwardDiff
 using StaticArrays
 
 
-import Base: ⊆, show, big
+import Base: ⊆, show, big, \
 
 import Polynomials: roots
 
