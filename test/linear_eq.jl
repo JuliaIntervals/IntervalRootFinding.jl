@@ -15,6 +15,3 @@ using IntervalArithmetic, StaticArrays, IntervalRootFinding
         end
     end
 end
-
-\(A::StaticMatrix{Interval{T}}, b::StaticArray{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)
-\(A::Matrix{Interval{T}}, b::Array{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)
