@@ -2,14 +2,79 @@
 import IntervalArithmetic: diam, isinterior
 import Base: iterate, eltype, IteratorSize, copy
 
-export branch_and_prune, Bisection, Newton, RootSearch, @searchstrategy
+export branch_and_prune, Bisection, Newton, RootSearch, SearchStrategy
 export start, next, done, copy, step!, eltype, iteratorsize
 
 diam(x::Root) = diam(x.interval)
 
+"""
+    SearchStrategy(constructor, store!, retrieve!)
+
+Type describing the chosen strategy determining the order in which the
+intervals are processed. Given a type, the `constructor` function must return
+a container for elements of that type on which `store!` and `retrieve!` act.
+The function `store!(container, element)` must add `element` to `container` and
+`retrieve!(container)` must return the next element to be processed and delete
+it from `set`.
+
+The container type returned by `constructor` must support a `deepcopy` function
+to allow to copy the `RootSearchState` generated.
+"""
+struct SearchStrategy
+    constructor::Function
+    store!::Function
+    retrieve!::Function
+end
+
+"""
+    function SearchStrategy(CONTAINER::Type, push!::Function, retrieve!::Function)
+
+Constructor for a `SearchStrategy` constructing a container for elements of type
+`EL` with the sythax `CONTAINER{EL}()`.
+"""
+function SearchStrategy(CONTAINER::Type, push!::Function, retrieve!::Function)
+    SearchStrategy(EL -> CONTAINER{EL}(), push!, retrieve!)
+end
+
+SearchStrategy() = SearchStrategy(Vector, push!, pop!)
+
+"""
+    RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
+
+Type implementing the `Base.Iterator` interface to the branch and prune routine.
+Returns the `RootSearchState` at each iteration. Note: Each iteration mutates
+the `RootSearchState`. Use `copy(state::RootSearchState)` to create an
+independent instance if necessary.
+"""
+struct RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor, S <: SearchStrategy, T <: Real}
+    region::R
+    contractor::C
+    strategy::S
+    tolerance::T
+end
+
+function RootSearch(region::R, contractor::C, tol::T) where {R <: Union{Interval,IntervalBox}, C <: Contractor, T <: Real}
+    RootSearch(region, contractor, SearchStrategy(), tol)
+end
+
+eltype(::Type{RS}) where {RS <: RootSearch} = RootSearchState # Warning: Not a concrete type
+iteratorsize(::Type{RS}) where {RS <: RootSearch} = Base.SizeUnknown()
+
+
 struct RootSearchState{V, VR}
     working::V  # Should be a container of the form  CONT{T}
     outputs::VR  # Should ba a container of root of the form CONT{Root{T}}
+end
+
+function RootSearchState(rs::RootSearch)
+    return RootSearchState(rs.region, rs.strategy)
+end
+
+function RootSearchState(region::R, strat::S) where {R <: Union{Interval,IntervalBox}, S <: SearchStrategy}
+    working = strat.constructor(R)
+    outputs = strat.constructor(Root{R})
+    strat.store!(working, region)
+    return RootSearchState(working, outputs)
 end
 
 function RootSearchState(region::T) where {T<:Union{Interval,IntervalBox}}
@@ -25,46 +90,10 @@ end
 copy(state::RootSearchState) =
     RootSearchState(deepcopy(state.working), deepcopy(state.outputs))
 
-"""
-    SearchStrategy
-
-Type used to describe the chosen strategy to choose the order in which the
-intervals must be processed. The functions `store!` and `retrieve!` must work on
-the set of working intervals in place. `store!(set, interval)` must add `interval`
-to `set` and `retrieve!(set)` must return the next interval to be processed and
-delete it from `set`.
-"""
-struct SearchStrategy
-    store!::Function
-    retrieve!::Function
-end
-
-SearchStrategy() = SearchStrategy(push!, pop!)
-
-"""
-    RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
-
-Type implementing the `Base.Iterator` interface to the branch and prune routine.
-Returns the `RootSearchState` at each iteration. Note: Each iteration mutates
-the `RootSearchState`. Use `copy(state::RootSearchState)` to create an
-independent instance if necessary.
-"""
-struct RootSearch{V, VR, C <: Contractor, S <: SearchStrategy, T <: Real}
-    state::RootSearchState{V, VR}
-    contractor::C
-    strategy::S
-    tolerance::T
-end
-
-function RootSearch(region::R, contractor::C, tol::T) where {R <: Union{Interval,IntervalBox}, C <: Contractor, T <: Real}
-    RootSearch(RootSearchState(region), contractor, SearchStrategy(), tol)
-end
-
-eltype{RSS, C, S, T, RS <: RootSearch{RSS, C, S, T}}(::Type{RS}) = RSS
-iteratorsize{T <: RootSearch}(::Type{T}) = Base.SizeUnknown()
 
 function start(iter::RootSearch)
-    return iter.state
+    state = RootSearchState(iter)
+    return state
 end
 
 
@@ -99,14 +128,14 @@ end
 # done(iter::RootSearch, state::RootSearchState) = isempty(state.working)
 
 """
-    branch_and_prune(X, contract, tol=1e-3)
+    branch_and_prune(X, contractor, tol=1e-3)
 
 Generic branch and prune routine for finding isolated roots using the `contract`
 function as the contractor.
 
 Inputs:
 - `X`: `Interval` or `IntervalBox`
-- `contract`: function that determines the status of a given box `X`. It
+- `contractor`: function that determines the status of a given box `X`. It
     returns the new box and a symbol indicating the status. Current possible
     values are of type `Bisection` or `Newton`
 
