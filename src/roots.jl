@@ -8,33 +8,21 @@ export start, next, done, copy, step!, eltype, iteratorsize
 diam(x::Root) = diam(x.interval)
 
 """
-    SearchStrategy(constructor, store!, retrieve!)
+    SearchStrategy(CONTAINER, store!, retrieve!)
 
 Type describing the chosen strategy determining the order in which the
-intervals are processed. Given a type, the `constructor` function must return
-a container for elements of that type on which `store!` and `retrieve!` act.
+intervals are processed. Given a type `EL`, the `CONTAINER` type must allow to
+create an empty container for it with the syntax `CONTAINER{EL}().
 The function `store!(container, element)` must add `element` to `container` and
 `retrieve!(container)` must return the next element to be processed and delete
 it from `set`.
-
-The container type returned by `constructor` must support a `deepcopy` function
-to allow to copy the `RootSearchState` generated.
 """
-struct SearchStrategy
-    constructor::Function
+struct SearchStrategy{CONTAINER}
     store!::Function
     retrieve!::Function
 end
 
-"""
-    function SearchStrategy(CONTAINER::Type, push!::Function, retrieve!::Function)
-
-Constructor for a `SearchStrategy` constructing a container for elements of type
-`EL` with the sythax `CONTAINER{EL}()`.
-"""
-function SearchStrategy(CONTAINER::Type, push!::Function, retrieve!::Function)
-    SearchStrategy(EL -> CONTAINER{EL}(), push!, retrieve!)
-end
+SearchStrategy(CONTAINER::Type, store!, retrieve!) = SearchStrategy{CONTAINER}(store!, retrieve!)
 
 SearchStrategy() = SearchStrategy(Vector, push!, pop!)
 
@@ -57,7 +45,7 @@ function RootSearch(region::R, contractor::C, tol::T) where {R <: Union{Interval
     RootSearch(region, contractor, SearchStrategy(), tol)
 end
 
-eltype(::Type{RS}) where {RS <: RootSearch} = RootSearchState # Warning: Not a concrete type
+eltype(::Type{RS}) where {R, C, T, CONTAINER, S <: SearchStrategy{CONTAINER}, RS <: RootSearch{R, C, S, T}} = RootSearchState{CONTAINER{R}, CONTAINER{Root{R}}}
 iteratorsize(::Type{RS}) where {RS <: RootSearch} = Base.SizeUnknown()
 
 
@@ -70,9 +58,9 @@ function RootSearchState(rs::RootSearch)
     return RootSearchState(rs.region, rs.strategy)
 end
 
-function RootSearchState(region::R, strat::S) where {R <: Union{Interval,IntervalBox}, S <: SearchStrategy}
-    working = strat.constructor(R)
-    outputs = strat.constructor(Root{R})
+function RootSearchState(region::R, strat::S) where {R <: Union{Interval,IntervalBox}, CONTAINER, S <: SearchStrategy{CONTAINER}}
+    working = CONTAINER{R}()
+    outputs = CONTAINER{Root{R}}()
     strat.store!(working, region)
     return RootSearchState(working, outputs)
 end
@@ -91,7 +79,7 @@ copy(state::RootSearchState) =
     RootSearchState(deepcopy(state.working), deepcopy(state.outputs))
 
 
-function start(iter::RootSearch)
+function start(iter::RootSearch{R, C, S, T}) where {R, C, T, CONTAINER, S <: SearchStrategy{CONTAINER}}
     state = RootSearchState(iter)
     return state
 end
