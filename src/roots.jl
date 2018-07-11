@@ -57,7 +57,7 @@ Inputs:
 - `contractor`: function that, when applied to the function `f`, determines
     the status of a given box `X`. It returns the new box and a symbol indicating
     the status. Current possible values are `Bisection`, `Newton` and `Krawczyk`
-- `deriv` ; explicit derivative of `f` for `Newton` and `Krawczyk`
+- `deriv`: explicit derivative of `f` for `Newton` and `Krawczyk`
 
 """
 # Contractor specific `roots` functions

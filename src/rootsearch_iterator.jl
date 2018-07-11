@@ -4,14 +4,18 @@ export RootSearch, SearchStrategy
 export start, next, done, copy, step!, eltype, iteratorsize
 
 """
-    SearchStrategy(CON, store!, retrieve!)
+    SearchStrategy{CON}(store!, retrieve!)
 
-Type describing the chosen strategy determining the order in which the
-intervals are processed. Given a type `EL`, the `CON` type must allow to
-create an empty container for it with the syntax `CON{EL}().
-The function `store!(container, element)` must add `element` to `container` and
-`retrieve!(container)` must return the next element to be processed and delete
-it from `set`.
+Type describing the strategy followed to chose the order in which intervals are processed during a `RootSearch`, using a container of type `CON` to store
+intervals.
+
+The container type `CON` must support the syntax `CON{EL}()` to create an empty
+container for elements of type `EL`.
+
+# Fields:
+    - `store!(container, element)`: add `element` to `container`
+    - `retrieve!(container)`: return the next element to be processed and remove
+        it from `container`
 """
 struct SearchStrategy{CON}
     store!::Function
@@ -23,12 +27,19 @@ SearchStrategy(CON::Type, store!::Function, retrieve!::Function) = SearchStrateg
 SearchStrategy() = SearchStrategy(Vector, push!, pop!)
 
 """
-    RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
+    RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor, CON, T <: Real}
 
 Type implementing the `Base.Iterator` interface to the branch and prune routine.
 Returns the `RootSearchState` at each iteration. Note: Each iteration mutates
 the `RootSearchState`. Use `copy(state::RootSearchState)` to create an
 independent instance if necessary.
+
+# Fields:
+    - `region`: Region in which zeros are searched
+    - `contractor`: Contractor used to determine the status of a region
+    - `strategy`: Strategy determining the order in which regions are processed
+        and the type of container used to store them
+    - `tolerance`: Absolute tolerance of the search
 """
 struct RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor, CON, T <: Real}
     region::R
@@ -44,7 +55,14 @@ end
 eltype(::Type{RS}) where {R, C, T, CON, RS <: RootSearch{R, C, CON, T}} = RootSearchState{CON{R}, CON{Root{R}}}
 iteratorsize(::Type{RS}) where {RS <: RootSearch} = Base.SizeUnknown()
 
+"""
+    RootSearchState{V, VR}
 
+State type for a `RootSearch` iterator.
+
+The type of the containers used is determinde by the `SearchStrategy` used by
+the `RootSearch`.
+"""
 struct RootSearchState{V, VR}
     working::V  # Should be a container of the form  CON{T}
     outputs::VR  # Should ba a container of root of the form CON{Root{T}}
@@ -71,6 +89,13 @@ function RootSearchState(region::T) where {T<:Union{Interval,IntervalBox}}
     RootSearchState(working, outputs)
 end
 
+
+"""
+    copy(state::RootSearchState)
+
+Return an independant copy of `state`. The underlying container type used to
+store regions must support the `deepcopy` function.
+"""
 copy(state::RootSearchState) =
     RootSearchState(deepcopy(state.working), deepcopy(state.outputs))
 
