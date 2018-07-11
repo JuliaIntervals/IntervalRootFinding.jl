@@ -6,11 +6,39 @@ function all_unique(rts)
     all(root_status.(rts) .== :unique)
 end
 
-function test_newtonlike(f, deriv, X, method, nsol, tol=1e-3)
+function reldiff(X, Y)
+    if diam(X) == 0
+        return 0
+    else
+        return (abs(X.lo - Y.lo) + abs(X.lo - Y.lo))/diam(X)
+    end
+end
+
+function reldiff(X::Root{T}, Y::Root{T}) where {T}
+    return reldiff(X.interval, Y.interval)
+end
+
+function reldiff(X::Root{T}, Y::Root{T}) where {T <: IntervalBox}
+    s = 0
+    for (x, y) in zip(X.interval, Y.interval)
+        s += reldiff(x, y)
+    end
+    return s
+end
+
+function reldiff(X::Root{T}, Y::Root{T}) where {T <: Complex}
+    return reldiff(X.interval.re, Y.interval.re) + reldiff(X.interval.im, Y.interval.im)
+end
+
+function test_newtonlike(f, deriv, X, method, nsol, reltol=0)
     rts = roots(f, X, method)
     @test length(rts) == nsol
     @test all_unique(rts)
-    @test rts == roots(f, deriv, X, method)
+    if reltol == 0
+        @test rts == roots(f, deriv, X, method)
+    else
+        @test all(reldiff.(rts, roots(f, deriv, X, method)) .< reltol)
+    end
 end
 
 newtonlike_methods = [Newton, Krawczyk]
@@ -22,7 +50,7 @@ newtonlike_methods = [Newton, Krawczyk]
     @test all_unique(rts)
 
     # Bisection
-    rts = roots(sin, -5..6, Bisection)
+    rts = roots(sin, -5..6, Bisection, 1e-3)
     @test length(rts) == 3
 
     # Refinement
@@ -111,13 +139,13 @@ end
 
     for method in newtonlike_methods
         deriv = z -> 3*z^2
-        test_newtonlike(f, deriv, Xc, method, 3)
+        test_newtonlike(f, deriv, Xc, method, 3, 1e-10)
     end
 end
 
 @testset "RootSearch interface" begin
     contractor = Newton(sin, cos)
-    search = RootSearch(-10..10, contractor, 1e-3)
+    search = RootSearch(-10..10, contractor, BreadthFirstSearch, 1e-3)
     state = start(search)
 
     # check that original and copy are independent
