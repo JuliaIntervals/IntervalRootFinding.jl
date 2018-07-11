@@ -60,7 +60,8 @@ Inputs:
 - `contractor`: function that, when applied to the function `f`, determines
     the status of a given box `X`. It returns the new box and a symbol indicating
     the status. Current possible values are `Bisection`, `Newton` and `Krawczyk`
-- `deriv` ; explicit derivative of `f` for `Newton` and `Krawczyk`
+- `deriv`: explicit derivative of `f` for `Newton` and `Krawczyk`
+
 """
 function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3) where {T}
     branch_and_prune(X, Bisection(f), tol)
