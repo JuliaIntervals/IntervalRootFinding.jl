@@ -1,6 +1,7 @@
 import Base: start, next, done, copy, eltype, iteratorsize
 
 export RootSearch, SearchStrategy
+export BreadthFirstSearch, DepthFirstSearch
 export start, next, done, copy, step!, eltype, iteratorsize
 
 """
@@ -24,7 +25,8 @@ end
 
 SearchStrategy(CON::Type, store!::Function, retrieve!::Function) = SearchStrategy{CON}(store!, retrieve!)
 
-SearchStrategy() = SearchStrategy(Vector, push!, pop!)
+const BreadthFirstSearch = SearchStrategy{Vector}(push!, shift!)
+const DepthFirstSearch = SearchStrategy{Vector}(push!, pop!)
 
 """
     RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor, CON, T <: Real}
@@ -46,10 +48,6 @@ struct RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor, CON, T <: R
     contractor::C
     strategy::SearchStrategy{CON}
     tolerance::T
-end
-
-function RootSearch(region::R, contractor::C, tol::T) where {R <: Union{Interval,IntervalBox}, C <: Contractor, T <: Real}
-    RootSearch(region, contractor, SearchStrategy(), tol)
 end
 
 eltype(::Type{RS}) where {R, C, T, CON, RS <: RootSearch{R, C, CON, T}} = RootSearchState{CON{R}, CON{Root{R}}}
@@ -79,6 +77,7 @@ function RootSearchState(region::R, strat::SearchStrategy{CON}) where {R <: Unio
     return RootSearchState(working, outputs)
 end
 
+# Currently never reached
 function RootSearchState(region::T) where {T<:Union{Interval,IntervalBox}}
     working = [region]
     outputs = Root{T}[]

@@ -38,7 +38,7 @@ newtonlike_methods = [Newton, Krawczyk]
     @test all_unique(rts)
 
     # Bisection
-    rts = roots(sin, -5..6, Bisection)
+    rts = roots(sin, -5..6, Bisection, 1e-3)
     @test length(rts) == 3
 
     # Refinement
@@ -151,14 +151,14 @@ end
 
     for method in newtonlike_methods
         deriv = z -> 3*z^2
-        test_newtonlike(f, deriv, Xc, method, 3)
+        test_newtonlike(f, deriv, Xc, method, 3, 1e-10)
     end
 end
 
 @testset "RootSearch interface" begin
     contractor = Newton(sin, cos)
-    search = RootSearch(-10..10, contractor, 1e-3)
-    state, _ = iterate(search)
+    search = RootSearch(-10..10, contractor, BreadthFirstSearch, 1e-3)
+    state = start(search)
 
     # check that original and copy are independent
     state_copy = copy(state)
