@@ -154,6 +154,15 @@ end
     @test length(state.working) != length(state_copy.working)
 
     # cover optional iterator methods
-    @test eltype(search) != Any
+    @test eltype(search) == typeof(state)
     @test_nowarn iteratorsize(search)
+end
+
+@testset "Search strategy" begin
+    X = -5..5
+    rts = roots(sin, cos, X, Newton, DepthFirstSearch)
+    @test Set(rts) == Set(roots(sin, cos, X, Newton, BreadthFirstSearch))
+
+    strat = SearchStrategy{Vector}(unshift!, shift!)
+    @test roots(sin, cos, X, Newton, strat) == rts
 end
