@@ -100,8 +100,12 @@ Luc Jaulin, Michel Kieffer, Olivier Didrit and Eric Walter - Applied Interval An
 """
 function gauss_elimination_interval!(x::AbstractArray, a::AbstractMatrix, b::AbstractArray; precondition=true)
 
-    precondition && ((a, b) = preconditioner(a, b))
-
+    if precondition
+        ((a, b) = preconditioner(a, b))
+    else
+        a = copy(a)
+        b = copy(b)
+    end
     n = size(a, 1)
 
     p = zeros(x)
