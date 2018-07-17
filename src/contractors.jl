@@ -102,9 +102,9 @@ Multi-variable Newton operator.
 """
 function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
     m = IntervalBox(Interval.(mid(X, where_bisect)))
-    J = jacobian(X[:])
+    J = jacobian(X.v)
 
-    return IntervalBox(m .- (J \ f(m)))
+    return IntervalBox(m - (J \ f(m)))
 end
 
 
@@ -132,9 +132,9 @@ Single-variable Krawczyk operator
 """
 function 𝒦(f, f′, X::Interval{T}) where {T}
     m = Interval(mid(X))
-    Y = 1/f′(m)
+    Y = 1 / f′(m)
 
-    m - Y*f(m) + (1 - Y*f′(X))*(X - m)
+    m - Y*f(m) + (1 - Y*f′(X)) * (X - m)
 end
 
 doc"""
@@ -144,8 +144,9 @@ function 𝒦(f, jacobian, X::IntervalBox{T}) where {T}
     m = mid(X)
     J = jacobian(X[:])
     Y = inv(jacobian(m))
-    m = IntervalBox(Interval.(m))
-    res = m.v - Y*f(m) + (I - Y*J)*(X.v - m.v)
+    m = IntervalBox(m)
+
+    res = m.v - Y*f(m) + (I - Y*J) * (X.v - m.v)
     IntervalBox(res)
 end
 
