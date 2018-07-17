@@ -6,17 +6,15 @@ export branch_and_prune, Bisection, Newton
 diam(x::Root) = diam(x.interval)
 
 """
-    branch_and_prune(X, contractor, tol=1e-3)
+    branch_and_prune(X, contractor, strategy, tol)
 
 Generic branch and prune routine for finding isolated roots using the `contract`
-function as the contractor.
+function as the contractor. The argument `contractor` is function that
+determines the status of a given box `X`. It returns a new contracted box and
+a symbol indicating its status.
 
-Inputs:
-- `X`: `Interval` or `IntervalBox`
-- `contractor`: function that determines the status of a given box `X`. It
-    returns the new box and a symbol indicating the status. Current possible
-    values are of type `Bisection` or `Newton`
-
+See the documentation of the `roots` function for explanation of the other
+arguments.
 """
 function branch_and_prune(X, contractor, strategy, tol)
     iter = RootSearch(X, contractor, strategy, tol)
@@ -177,7 +175,7 @@ function _roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
                strategy::SearchStrategy, tol::Float64) where {T, C<:Contractor}
 
     g = realify(f)
-    Y = IntervalBox(reim(Xc))
+    Y = IntervalBox(reim(Xc)...)
     rts = _roots(g, Y, contractor, strategy, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
@@ -188,7 +186,7 @@ function _roots(f, Xc::Complex{Interval{T}}, contractor::NewtonLike,
 
     g = realify(f)
     g_prime = x -> ForwardDiff.jacobian(g, x)
-    Y = IntervalBox(reim(Xc))
+    Y = IntervalBox(reim(Xc)...)
     rts = _roots(g, g_prime, Y, contractor, strategy, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
@@ -199,7 +197,7 @@ function _roots(f, deriv, Xc::Complex{Interval{T}}, contractor::NewtonLike,
 
     g = realify(f)
     g_prime = realify_derivative(deriv)
-    Y = IntervalBox(reim(Xc))
+    Y = IntervalBox(reim(Xc)...)
     rts = _roots(g, g_prime, Y, contractor, strategy, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]

@@ -163,6 +163,6 @@ end
     rts = roots(sin, cos, X, Newton, DepthFirstSearch)
     @test Set(rts) == Set(roots(sin, cos, X, Newton, BreadthFirstSearch))
 
-    strat = SearchStrategy{Vector}(unshift!, shift!)
+    strat = SearchStrategy(Vector, unshift!, shift!)
     @test roots(sin, cos, X, Newton, strat) == rts
 end
