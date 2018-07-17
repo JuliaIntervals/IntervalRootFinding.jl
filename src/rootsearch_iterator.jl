@@ -18,15 +18,17 @@ container for elements of type `EL`.
     - `retrieve!(container)`: return the next element to be processed and remove
         it from `container`
 """
-struct SearchStrategy{CON}
-    store!::Function
-    retrieve!::Function
+struct SearchStrategy{CON, SFUNC <: Function, RFUNC <: Function}
+    store!::SFUNC
+    retrieve!::RFUNC
 end
 
-SearchStrategy(CON::Type, store!::Function, retrieve!::Function) = SearchStrategy{CON}(store!, retrieve!)
+function SearchStrategy(CON::Type, store!::SFUNC, retrieve!::RFUNC) where {SFUNC <: Function, RFUNC <: Function}
+    return SearchStrategy{CON, SFUNC, RFUNC}(store!, retrieve!)
+end
 
-const BreadthFirstSearch = SearchStrategy{Vector}(push!, shift!)
-const DepthFirstSearch = SearchStrategy{Vector}(push!, pop!)
+const BreadthFirstSearch = SearchStrategy(Vector, push!, shift!)
+const DepthFirstSearch = SearchStrategy(Vector, push!, pop!)
 
 """
     RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor, CON, T <: Real}
@@ -43,10 +45,11 @@ independent instance if necessary.
         and the type of container used to store them
     - `tolerance`: Absolute tolerance of the search
 """
-struct RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor, CON, T <: Real}
+struct RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor,
+                  CON, RFUNC <: Function, SFUNC <: Function, T <: Real}
     region::R
     contractor::C
-    strategy::SearchStrategy{CON}
+    strategy::SearchStrategy{CON, RFUNC, SFUNC}
     tolerance::T
 end
 
