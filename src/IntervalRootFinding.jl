@@ -45,7 +45,10 @@ include("newton1d.jl")
 include("quadratic.jl")
 
 
-gradient(f) = X -> ForwardDiff.gradient(f, X.v)
+gradient(f) = X -> ForwardDiff.gradient(f, X[:])
+
+ForwardDiff.jacobian(f, X::IntervalBox) = ForwardDiff.jacobian(f, X.v)
+
 const ∇ = gradient
 
 export ∇
