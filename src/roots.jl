@@ -7,10 +7,6 @@ export start, next, done, copy, step!, eltype, iteratorsize
 
 diam(x::Root) = diam(x.interval)
 
-Base.size(x::Interval) = (1,)
-
-isinterior{N}(X::IntervalBox{N}, Y::IntervalBox{N}) = all(isinterior.(X, Y))
-
 struct RootSearchState{T <: Union{Interval,IntervalBox}}
     working::Vector{T}
     outputs::Vector{Root{T}}
@@ -110,13 +106,8 @@ function recursively_branch_and_prune(h, X, contractor=BisectionContractor, fina
 end
 
 
-contains_zero(X::Interval{T}) where {T} = zero(T) ∈ X
-contains_zero(X::SVector) = all(contains_zero.(X))
-contains_zero(X::IntervalBox) = all(contains_zero.(X))
-
-
-IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
-NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
+const IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
+const NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
 
 """
     roots(f, X, contractor, tol=1e-3)
@@ -183,7 +174,7 @@ function roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
         tol::Float64=1e-3) where {T, C<:Contractor}
 
     g = realify(f)
-    Y = IntervalBox(reim(Xc))
+    Y = IntervalBox(reim(Xc)...)
     rts = roots(g, Y, contractor, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
@@ -195,7 +186,7 @@ function roots(f, Xc::Complex{Interval{T}}, C::NewtonLike, tol::Float64=1e-3) wh
 
     g_prime = x -> ForwardDiff.jacobian(g, x)
 
-    Y = IntervalBox(reim(Xc))
+    Y = IntervalBox(reim(Xc)...)
     rts = roots(g, g_prime, Y, C, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
@@ -207,7 +198,7 @@ function roots(f, deriv, Xc::Complex{Interval{T}}, C::NewtonLike, tol::Float64=1
 
     g_prime = realify_derivative(deriv)
 
-    Y = IntervalBox(reim(Xc))
+    Y = IntervalBox(reim(Xc)...)
     rts = roots(g, g_prime, Y, C, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
