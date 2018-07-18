@@ -1,10 +1,22 @@
 # Reference : Dietmar Ratz - An Optimized Interval Slope Arithmetic and its Application
-using IntervalArithmetic, ForwardDiff
+using IntervalArithmetic, ForwardDiff, StaticArrays
 import Base: +, -, *, /, ^, sqrt, exp, log, sin, cos, tan, asin, acos, atan
 import IntervalArithmetic: mid, interval
 
 function slope(f::Function, x::Interval, c::Number)
     f(slope_var(x, c)).s
+end
+
+function slope(f::Function, x::Union{IntervalBox, SVector}, c::AbstractVector = mid.(x)) # multidim
+    T = typeof(x[1].lo)
+    n = length(x)
+    s = Vector{Slope{T}}[]
+    for i in 1:n
+        arr = fill(Slope(zero(T)), n)
+        arr[i] = slope_var(x[i], c[i])
+        push!(s, arr)
+    end
+    return slope.(hcat(([(f(s[i])) for i=1:n])...))
 end
 
 struct Slope{T}
