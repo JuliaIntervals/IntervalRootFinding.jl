@@ -51,13 +51,15 @@ include("linear_eq.jl")
 include("slopes.jl")
 
 
-gradient(f) = X -> ForwardDiff.gradient(f, X[:])
+
+
+ForwardDiff.gradient(f, X::IntervalBox) = ForwardDiff.gradient(f, X.v)
+gradient(f) = X -> ForwardDiff.gradient(f, X)
+const ∇ = gradient
+export ∇
 
 ForwardDiff.jacobian(f, X::IntervalBox) = ForwardDiff.jacobian(f, X.v)
-
-const ∇ = gradient
-
-export ∇
+jacobian(f) = X -> ForwardDiff.jacobian(f, X)
 
 
 
