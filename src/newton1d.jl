@@ -205,7 +205,7 @@ and a `debug` boolean argument that prints out diagnostic information."""
 newton1d{T}(f::Function, x::Interval{T};  args...) =
     newton1d(f, x->D(f,x), x; args...)
 
-function slope_newton1d{T}(f::Function, x::Interval{T};
-                    reltol=eps(T), abstol=eps(T), debug=false, debugroot=false)
+function slope_newton1d(f::Function, x::Interval{T};
+                        reltol=eps(T), abstol=eps(T), debug=false, debugroot=false) where {T}
     newton1d(f, x->slope(f, x), x, reltol=reltol, abstol=abstol, debug=debug, debugroot=debugroot)
 end
