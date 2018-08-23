@@ -37,17 +37,21 @@ end
     Currently `Newton` and `Krawczyk` contractors uses this.
 """
 function newtonlike_contract(op, C, X, tol)
-    # use Bisection contractor for this:
-    if !(contains_zero(C.f(X)))
-        return :empty, X
-    end
+    imX = C.f(X)
+    !(contains_zero(imX)) && return :empty, X
+    # Only happens if X is fully outside the domain of f
+    isempty(imX) && return :empty, X
+
+    contracted_X = op(C.f, C.f′, X)
+
+    # Only happens if X is partially out of the domain of f
+    isempty(contracted_X) && return :unkown, X  # force bisection
 
     # given that have the Jacobian, can also do mean value form
+    NX = contracted_X ∩ X
 
-    NX = op(C.f, C.f′, X) ∩ X
-
-    isempty(NX) && return :empty, X
     isinf(X) && return :unknown, NX  # force bisection
+    isempty(NX) && return :empty, X
 
     if NX ⪽ X  # isinterior; know there's a unique root inside
         NX =  refine(X -> op(C.f, C.f′, X), NX, tol)

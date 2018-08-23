@@ -84,6 +84,13 @@ end
     end
 end
 
+@testset "Out of domain" begin
+    for method in newtonlike_methods
+        @test length(roots(log, -100..2, method)) == 1
+        @test length(roots(log, -100..(-1), method)) == 0
+    end
+end
+
 @testset "Stationary points" begin
     f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
     gradf = ∇(f)
