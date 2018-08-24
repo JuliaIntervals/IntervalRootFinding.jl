@@ -86,7 +86,6 @@ end
 
 function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precondition=true)
 
-    n = size(A, 1)
     x = similar(b)
     x .= -1e16..1e16
     x = gauss_elimination_interval!(x, A, b, precondition=precondition)
@@ -94,47 +93,54 @@ function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precond
     return x
 end
 """
-Solves the system of linear equations using Gaussian Elimination,
-with (or without) preconditioning. (kwarg - `precondition`)
-Luc Jaulin, Michel Kieffer, Olivier Didrit and Eric Walter - Applied Interval Analysis - Page 72
+Solves the system of linear equations using Gaussian Elimination.
+Preconditioning is used when the `precondition` keyword argument is `true`.
+
+REF: Luc Jaulin et al.,
+*Applied Interval Analysis*, pg. 72
 """
-function gauss_elimination_interval!(x::AbstractArray, a::AbstractMatrix, b::AbstractArray; precondition=true)
+function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true)
 
     if precondition
-        ((a, b) = preconditioner(a, b))
+        (A, b) = preconditioner(A, b)
     else
-        a = copy(a)
+        A = copy(A)
         b = copy(b)
     end
-    n = size(a, 1)
 
-    p = zeros(shape(x))
+    n = size(A, 1)
+
+    p = similar(b)
+    p .= 0
 
     for i in 1:(n-1)
-        if 0 ∈ a[i, i] # diagonal matrix is not invertible
+        if 0 ∈ A[i, i] # diagonal matrix is not invertible
             p .= entireinterval(b[1])
-            return p .∩ x
+            return p .∩ x  # return x?
         end
 
         for j in (i+1):n
-            α = a[j, i] / a[i, i]
+            α = A[j, i] / A[i, i]
             b[j] -= α * b[i]
 
             for k in (i+1):n
-                a[j, k] -= α * a[i, k]
+                A[j, k] -= α * A[i, k]
             end
         end
     end
 
     for i in n:-1:1
-        sum = 0
+
+        temp = zero(b[1])
+
         for j in (i+1):n
-            sum += a[i, j] * p[j]
+            temp += A[i, j] * p[j]
         end
-        p[i] = (b[i] - sum) / a[i, i]
+
+        p[i] = (b[i] - temp) / A[i, i]
     end
 
-    p .∩ x
+    return p .∩ x
 end
 
 function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precondition=true)
