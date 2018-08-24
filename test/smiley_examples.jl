@@ -50,11 +50,13 @@ const cs = _c.(θs)
 _d(c) = d01 * c / c0
 const ds = _d.(cs)
 
+@show as, bs, cs, ds
+
 f(x) = SVector(
     (x[1]^2 + x[2]^2 + x[3]^2 - r1^2) * (x[1]^2 + x[2]^2 + x[3]^2 - r2^2),
     (a0 * x[1] + b0 * x[2] + c0 * x[3] - d01) *
         (a0 * x[1] + b0 * x[2] + c0 * x[3] - d02),
-    prod(as * x[1] .+ bs * x[2] .+ cs * x[3] .- ds)
+    prod(as[i] * x[1] + bs[i] * x[2] + cs[i] * x[3] - ds[i] for i in 1:m)
 )
 
 # contains all 24 reported roots

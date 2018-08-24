@@ -108,7 +108,7 @@ function gauss_elimination_interval!(x::AbstractArray, a::AbstractMatrix, b::Abs
     end
     n = size(a, 1)
 
-    p = zeros(x)
+    p = zeros(shape(x))
 
     for i in 1:(n-1)
         if 0 ∈ a[i, i] # diagonal matrix is not invertible

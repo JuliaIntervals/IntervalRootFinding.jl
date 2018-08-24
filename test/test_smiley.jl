@@ -14,7 +14,7 @@ end
 const tol = 1e-6
 const method = Newton # NOTE: Bisection method performs badly in all examples
 
-info("testing method $(method)")
+@info("Testing method $(method)")
 
 @testset "$(SmileyExample22.title)" begin
     roots_found = roots(SmileyExample22.f, SmileyExample22.region, method, tol)
