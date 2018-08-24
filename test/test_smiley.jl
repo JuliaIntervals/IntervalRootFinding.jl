@@ -1,6 +1,6 @@
 include("smiley_examples.jl")
 
-using Base.Test
+using Test
 using IntervalArithmetic, IntervalRootFinding
 using SmileyExample22, SmileyExample52, SmileyExample54, SmileyExample55
 

@@ -1,6 +1,6 @@
 
 using IntervalArithmetic, IntervalRootFinding, StaticArrays
-using Base.Test
+using Test
 
 function all_unique(rts)
     all(root_status.(rts) .== :unique)
