@@ -2,7 +2,7 @@ include("smiley_examples.jl")
 
 using Test
 using IntervalArithmetic, IntervalRootFinding
-using SmileyExample22, SmileyExample52, SmileyExample54, SmileyExample55
+using .SmileyExample22, .SmileyExample52, .SmileyExample54, .SmileyExample55
 
 function test_all_unique(xs)
     for x in xs

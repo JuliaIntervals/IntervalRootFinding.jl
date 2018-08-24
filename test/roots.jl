@@ -1,5 +1,5 @@
 
-using IntervalArithmetic, IntervalRootFinding, StaticArrays
+using IntervalArithmetic, IntervalRootFinding, StaticArrays, ForwardDiff
 using Test
 
 function all_unique(rts)

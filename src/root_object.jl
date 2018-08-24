@@ -16,7 +16,7 @@ root_status(x::Root) = x.status
 
 show(io::IO, root::Root) = print(io, "Root($(root.interval), :$(root.status))")
 
-isunique{T}(root::Root{T}) = (root.status == :unique)
+isunique(root::Root{T}) where {T} = (root.status == :unique)
 
 ⊆(a::Interval, b::Root) = a ⊆ b.interval   # the Root object has the interval in the first entry
 ⊆(a::Root, b::Root) = a.interval ⊆ b.interval

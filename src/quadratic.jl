@@ -2,7 +2,7 @@
 Helper function for quadratic_interval that computes roots of a
 real quadratic using interval arithmetic to bound rounding errors.
 """
-function quadratic_helper!{T}(a::Interval{T}, b::Interval{T}, c::Interval{T}, L::Array{Interval{T}})
+function quadratic_helper!(a::Interval{T}, b::Interval{T}, c::Interval{T}, L::Array{Interval{T}}) where {T}
 
     Δ = b^2 - 4*a*c
 
@@ -40,7 +40,7 @@ This algorithm finds the set of points where `F.lo(x) ≥ 0` and the set
 of points where `F.hi(x) ≤ 0` and takes the intersection of these two sets.
 Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 8
 """
-function quadratic_roots{T}(a::Interval{T}, b::Interval{T}, c::Interval{T})
+function quadratic_roots(a::Interval{T}, b::Interval{T}, c::Interval{T}) where {T}
 
     L = Interval{T}[]
     R = Interval{T}[]
