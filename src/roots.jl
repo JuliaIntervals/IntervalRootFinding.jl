@@ -1,9 +1,9 @@
 
 import IntervalArithmetic: diam, isinterior
-import Base: start, next, done, copy, eltype, iteratorsize
+import Base: iterate, eltype, IteratorSize, copy
 
 export branch_and_prune, Bisection, Newton, RootSearch
-export start, next, done, copy, step!, eltype, iteratorsize
+export step!
 
 diam(x::Root) = diam(x.interval)
 
@@ -32,14 +32,22 @@ struct RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
 end
 
 eltype(::Type{T}) where {R, T <: RootSearch{R}} = RootSearchState{R}
-iteratorsize(::Type{T}) where {T <: RootSearch} = Base.SizeUnknown()
+IteratorSize(::Type{T}) where {T <: RootSearch} = Base.SizeUnknown()
 
-function start(iter::RootSearch)
+# function start(iter::RootSearch)
+#     state = RootSearchState(iter.region)
+#     sizehint!(state.outputs, 100)
+#     sizehint!(state.working, 1000)
+#     return state
+# end
+
+function iterate(iter::RootSearch)
     state = RootSearchState(iter.region)
     sizehint!(state.outputs, 100)
     sizehint!(state.working, 1000)
-    return state
+    return state, state
 end
+
 
 """
     step!(state::RootSearchState, contractor, tolerance)
@@ -63,12 +71,21 @@ function step!(state::RootSearchState, contractor, tolerance)
     return nothing
 end
 
-function next(iter::RootSearch, state::RootSearchState)
+# function next(iter::RootSearch, state::RootSearchState)
+#     step!(state, iter.contractor, iter.tolerance)
+#     return state, state
+# end
+
+function iterate(iter::RootSearch, state::RootSearchState)
+
+    isempty(state.working) && return nothing
+
     step!(state, iter.contractor, iter.tolerance)
     return state, state
 end
 
-done(iter::RootSearch, state::RootSearchState) = isempty(state.working)
+
+# done(iter::RootSearch, state::RootSearchState) = isempty(state.working)
 
 """
     branch_and_prune(X, contract, tol=1e-3)
@@ -85,10 +102,12 @@ Inputs:
 """
 function branch_and_prune(X, contractor, tol=1e-3)
     iter = RootSearch(X, contractor, tol)
-    local state
+    local output
     # complete iteration
-    for state in iter end
-    return state.outputs
+    for state in iter
+        output = state.outputs
+    end
+    return output
 end
 
 export recursively_branch_and_prune
