@@ -70,14 +70,15 @@ struct Bisection{F} <: Contractor{F}
     f::F
 end
 
-function (contractor::Bisection)(X, tol)
+function (contractor::Bisection)(r, tol)
+    X = interval(r)
     image = (contractor.f)(X)
 
-    if !(contains_zero(image))
-        return :empty, X
+    if root_status(r) == :empty || !(contains_zero(image))
+        return Root(X, :empty)
     end
 
-    return :unknown, X
+    return Root(X, :unkown)
 end
 
 for (Method, 𝒪) in ((:Newton, 𝒩), (:Krawczyk, 𝒦))
@@ -85,6 +86,35 @@ for (Method, 𝒪) in ((:Newton, 𝒩), (:Krawczyk, 𝒦))
         $Method{F, FP} <: Contractor{F}
 
     Contractor type for the $Method method.
+
+    Currently `Newton` and `Krawczyk` contractors uses this.
+"""
+function newtonlike_contract(op, C, r, tol)
+    X = interval(r)
+    former_status = root_status(r)
+
+    if former_status == :empty || !(contains_zero(C.f(X)))
+        return Root(X, :empty)
+    end
+    # given that have the Jacobian, can also do mean value form
+
+    NX = op(C.f, C.f′, X) ∩ X
+
+    isempty(NX) && return Root(X, :empty)
+    isinf(X) && return Root(X, :unkown)  # force bisection
+
+    if former_status == :unique || NX ⪽ X  # isinterior; know there's a unique root inside
+        NX =  refine(X -> op(C.f, C.f′, X), NX, tol)
+        return Root(NX, :unique)
+    end
+
+    return Root(NX, :unkown)
+end
+
+"""
+    Newton{F, FP} <: Contractor{F}
+
+    Contractor type for the Newton method.
 
     # Fields
         - `f::F`: function whose roots are searched
