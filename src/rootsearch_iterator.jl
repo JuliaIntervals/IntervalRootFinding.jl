@@ -1,137 +1,178 @@
 import Base: start, next, done, copy, eltype, iteratorsize
+import Base: getindex, setindex!, delete!
 
-export RootSearch, SearchStrategy
+export BBSearch, SearchStrategy
 export BreadthFirstSearch, DepthFirstSearch
 export start, next, done, copy, step!, eltype, iteratorsize
 
-"""
-    SearchStrategy{CON}(store!, retrieve!)
+abstract type AbstractWorkingNode end
 
-Type describing the strategy followed to chose the order in which intervals are processed during a `RootSearch`, using a container of type `CON` to store
-intervals.
-
-The container type `CON` must support the syntax `CON{EL}()` to create an empty
-container for elements of type `EL`.
-
-# Fields:
-    - `store!(container, element)`: add `element` to `container`
-    - `retrieve!(container)`: return the next element to be processed and remove
-        it from `container`
-"""
-struct SearchStrategy{CON, SFUNC <: Function, RFUNC <: Function}
-    store!::SFUNC
-    retrieve!::RFUNC
+struct WorkingNode <: AbstractWorkingNode
+    parent::Int
+    children::Vector{Int}
 end
 
-function SearchStrategy(CON::Type, store!::SFUNC, retrieve!::RFUNC) where {SFUNC <: Function, RFUNC <: Function}
-    return SearchStrategy{CON, SFUNC, RFUNC}(store!, retrieve!)
+struct WorkingLeaf{DATA} <: AbstractWorkingNode
+    data::DATA
+    parent::Int
+    status::Symbol
 end
 
-const BreadthFirstSearch = SearchStrategy(Vector, push!, shift!)
-const DepthFirstSearch = SearchStrategy(Vector, push!, pop!)
+function WorkingLeaf(data::DATA, parent::Int) where {DATA}
+    WorkingLeaf{DATA}(data, parent, :working)
+end
+
+function WorkingNode(leaf::WorkingLeaf, child1::Int, child2::Int)
+    WorkingNode(parent_id(leaf), Int[child1, child2])
+end
+
+struct WorkingTree{DATA}
+    nodes::Dict{Int, Union{WorkingNode, WorkingLeaf{DATA}}}
+    working_leafs::Vector{Int}
+end
+
+function WorkingTree(rootdata::DATA) where {DATA}
+    rootleaf = WorkingLeaf(rootdata, 0)
+    WorkingTree{DATA}(Dict{Int, Union{WorkingNode, WorkingLeaf{DATA}}}(1 => rootleaf), Int[1])
+end
+
+parent_id(node::AbstractWorkingNode) = node.parent
+parent_id(wt::WorkingTree, node::AbstractWorkingNode) = parent_id(node)
+parent_id(wt::WorkingTree, id::Int) = parent_id(wt[id])
+parent(wt::WorkingTree, node::AbstractWorkingNode) = wt[parent_id(node)]
+parent(wt::WorkingTree, id::Int) = wt[parent_id(wt, id)]
+child_ids(node::WorkingNode) = node.children
+data(leaf::WorkingLeaf) = leaf.data
+
+nnodes(wt::WorkingTree) = length(wt.nodes)
+newid(wt::WorkingTree) = maximum(keys(wt.nodes)) + 1
+data(wt::WorkingTree) = [data(val) for val in values(wt.nodes) if isa(val, WorkingLeaf)]
+
+# Index operations
+getindex(wt::WorkingTree, id) = wt.nodes[id]
+setindex!(wt::WorkingTree, id, val) = setindex!(wt.nodes, id, val)
+delete!(wt::WorkingTree, id) = delete!(wt.nodes, id)
+
+function discard_leaf!(wt::WorkingTree, id::Int)
+    leaf = wt[id]
+    recursively_delete_child!(wt, parent_id(leaf), id)
+end
+
+function recursively_delete_child!(wt, id_parent, id_child)
+    parent = wt[id_parent]
+    cc = child_ids(parent)
+    filter!(id -> id == id_child, cc)
+    if isempty(cc)
+        delete_child!(wt, parent_id(parent), id_parent)
+    end
+    delete!(wt, id_child)
+end
+
 
 """
-    RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor, CON, T <: Real}
+    SearchStrategy{KEY}
+
+Abstract type for the strategies followed to chose the order in which elements
+are processed during a `BBSearch`.
+"""
+abstract type SearchStrategy{KEY} end
+
+struct BreadthFirstSearch <: SearchStrategy{Void} end
+struct DepthFirstSearch <: SearchStrategy{Void} end
+
+struct KeySearch{KEY <: Function} <: SearchStrategy{KEY}
+    keyfunc::KEY
+end
+
+get_leaf_id!(strat::BreadthFirstSearch, wt::WorkingTree) = shift!(wt.working_leafs)
+get_leaf_id!(strat::DepthFirstSearch, wt::WorkingTree) = pop!(wt.working_leafs)
+get_leaf_id!(strat::KeySearch, wt::WorkingTree) = shift!(wt.working_leafs)
+
+function insert_leaf!(strat::Union{BreadthFirstSearch, DepthFirstSearch},
+                      wt::WorkingTree{DATA}, leaf::WorkingLeaf{DATA}) where {DATA}
+    id = newid(wt)
+    wt[id] = leaf
+    push!(wt.working_leafs, id)
+    return id
+end
+
+function insert_leaf!(strat::KeySearch, wt::WorkingTree{DATA}, leaf::WorkingLeaf{DATA}) where {DATA}
+    id = newid(wt)
+    wt[id] = leaf
+    keys = strat.keyfunc.(wt.working_leafs)
+    current = strat.keyfunc(leaf)
+
+    # Keep the working_leafs sorted
+    insert!(wt.working_leafs, searchsortedfirst(keys, current), id)
+    return id
+end
+
+"""
+    BBSearch{DATA, PFUNC <: Function, BFUNC <: Function, KEY}
 
 Type implementing the `Base.Iterator` interface to the branch and prune routine.
-Returns the `RootSearchState` at each iteration. Note: Each iteration mutates
-the `RootSearchState`. Use `copy(state::RootSearchState)` to create an
-independent instance if necessary.
+Returns the `WorkingTree` at each iteration. Note: Each iteration mutates
+the `WorkingTree`.
 
 # Fields:
-    - `region`: Region in which zeros are searched
-    - `contractor`: Contractor used to determine the status of a region
-    - `strategy`: Strategy determining the order in which regions are processed
-        and the type of container used to store them
-    - `tolerance`: Absolute tolerance of the search
+    - `inital_element`
+    - `process`: Function deciding the status of an element and optionnally
+        refining it. Must return an element and the action to be performed on it.
+        Valid action are `:bisect`, `:discard` and `:store`.
+    - `bisect`: Function bisecting an element.
+    - `strategy`: `SearchStrategy` determining the order in which the elements
+        are processed.
 """
-struct RootSearch{R <: Union{Interval,IntervalBox}, C <: Contractor,
-                  CON, RFUNC <: Function, SFUNC <: Function, T <: Real}
-    region::R
-    contractor::C
-    strategy::SearchStrategy{CON, RFUNC, SFUNC}
-    tolerance::T
+struct BBSearch{DATA, PFUNC <: Function, BFUNC <: Function, KEY}
+    initial_element::DATA
+    process::PFUNC
+    bisect::BFUNC
+    strategy::SearchStrategy{KEY}
 end
 
-eltype(::Type{RS}) where {R, C, T, CON, RS <: RootSearch{R, C, CON, T}} = RootSearchState{CON{R}, CON{Root{R}}}
-iteratorsize(::Type{RS}) where {RS <: RootSearch} = Base.SizeUnknown()
-
-"""
-    RootSearchState{V, VR}
-
-State type for a `RootSearch` iterator.
-
-The type of the containers used is determinde by the `SearchStrategy` used by
-the `RootSearch`.
-"""
-struct RootSearchState{V, VR}
-    working::V  # Should be a container of the form  CON{T}
-    outputs::VR  # Should ba a container of root of the form CON{Root{T}}
+function BBSearch(init, process::Function, bisect::Function, S::Type{STRAT}) where {STRAT <: Union{BreadthFirstSearch, DepthFirstSearch}}
+    return BBSearch(init, process, bisect, S())
 end
 
-function RootSearchState(rs::RootSearch)
-    return RootSearchState(rs.region, rs.strategy)
-end
-
-function RootSearchState(region::R, strat::SearchStrategy{CON}) where {R <: Union{Interval,IntervalBox}, CON}
-    working = CON{R}()
-    outputs = CON{Root{R}}()
-    strat.store!(working, region)
-    return RootSearchState(working, outputs)
-end
-
-# Currently never reached
-function RootSearchState(region::T) where {T<:Union{Interval,IntervalBox}}
-    working = [region]
-    outputs = Root{T}[]
-
-    sizehint!(working, 1000)
-    sizehint!(outputs, 100)
-
-    RootSearchState(working, outputs)
-end
+eltype(::Type{BBS}) where {DATA, PFUNC, BFUNC, KEY, BBS <: BBSearch{DATA, PFUNC, BFUNC, KEY}} = WorkingTree{DATA}
+iteratorsize(::Type{BBS}) where {BBS <: BBSearch} = Base.SizeUnknown()
 
 
-"""
-    copy(state::RootSearchState)
-
-Return an independant copy of `state`. The underlying container type used to
-store regions must support the `deepcopy` function.
-"""
-copy(state::RootSearchState) =
-    RootSearchState(deepcopy(state.working), deepcopy(state.outputs))
-
-
-function start(iter::RootSearch{R, C, CON, T}) where {R, C, CON, T}
-    state = RootSearchState(iter)
-    return state
+function start(iter::BBSearch{DATA, PFUNC, BFUNC, KEY}) where {DATA, PFUNC, BFUNC, KEY}
+    return WorkingTree(iter.initial_element)
 end
 
 """
-    step!(state::RootSearchState, contractor, tolerance)
+    step!(state::WorkingTree, contractor, tolerance)
 
-Progress `state` by treating one of its `working` regions. Note: `state.working`
-is always modified. If a root is found, it is added to `state.outputs`.
+Progress `state` by treating one of its `working` working_leafs. Note: the
+working tree `wt` is always modified.
 """
-function step!(state::RootSearchState, contractor, searchstrat, tolerance)
-    X = searchstrat.retrieve!(state.working)
-    status, output = contractor(X, tolerance)
-    if status == :empty
-        return nothing
-    elseif status == :unique
-        searchstrat.store!(state.outputs, Root(output, :unique))
-    elseif diam(output) < tolerance
-        searchstrat.store!(state.outputs, Root(output, :unknown))
-    else # branch
-        X1, X2 = bisect(X)
-        searchstrat.store!(state.working, X1, X2)
+function step!(wt::WorkingTree, search)
+    strat = search.strategy
+    id = get_leaf_id!(strat, wt)
+    X = wt[id]
+    action, newdata = search.process(data(X))
+    if action == :store
+        wt[id] = WorkingLeaf(newdata, parent_id(X), :final)
+    elseif action == :bisect
+        parent = wt[id]
+        child1, child2 = search.bisect(newdata)
+        leaf1 = WorkingLeaf(child1, id, :working)
+        leaf2 = WorkingLeaf(child2, id, :working)
+        id1 = insert_leaf!(strat, wt, leaf1)
+        id2 = insert_leaf!(strat, wt, leaf2)
+        wt[id] = WorkingNode(parent, id1, id2)
+    elseif action == :discard
+        discard_leaf!(wt, id)
+    else
+        warn("Branch and bound: process function of the search object return unkown action: $action, element $X is ignored. Valid actions are :store, :bisect and :discard.")
     end
-    return nothing
 end
 
-function next(iter::RootSearch, state::RootSearchState)
-    step!(state, iter.contractor, iter.strategy, iter.tolerance)
+function next(iter::BBSearch, state::WorkingTree)
+    step!(state, iter)
     return state, state
 end
 
-done(iter::RootSearch, state::RootSearchState) = isempty(state.working)
+done(iter::BBSearch, state::WorkingTree) = isempty(state.working_leafs)
