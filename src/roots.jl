@@ -143,15 +143,15 @@ end
 
 
 # For `NewtonLike` acting on `IntervalBox`
-function _roots(f, r::Root{IntervalBox{T}}, contractor::NewtonLike,
-               strategy::SearchStrategy, tol::Float64) where {T}
+function _roots(f, r::Root{IntervalBox{N, T}}, contractor::NewtonLike,
+               strategy::SearchStrategy, tol::Float64) where {N, T}
 
     deriv = x -> ForwardDiff.jacobian(f, x)
     _roots(f, deriv, r, contractor, strategy, tol)
 end
 
-function _roots(f, deriv, r::Root{IntervalBox{T}}, contractor::NewtonLike,
-               strategy::SearchStrategy, tol::Float64) where {T}
+function _roots(f, deriv, r::Root{IntervalBox{N, T}}, contractor::NewtonLike,
+               strategy::SearchStrategy, tol::Float64) where {N, T}
 
     branch_and_prune(r, contractor(f, deriv), strategy, tol)
 end

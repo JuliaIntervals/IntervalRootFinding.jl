@@ -62,8 +62,8 @@ function recursively_delete_child!(wt, id_parent, id_child)
     parent = wt[id_parent]
     cc = child_ids(parent)
     filter!(id -> id == id_child, cc)
-    if isempty(cc)
-        delete_child!(wt, parent_id(parent), id_parent)
+    if isempty(cc) && parent_id(parent) != 0
+        recursively_delete_child!(wt, parent_id(parent), id_parent)
     end
     delete!(wt, id_child)
 end
