@@ -1,6 +1,6 @@
 using IntervalArithmetic, IntervalRootFinding
 using ForwardDiff
-using Base.Test
+using Test
 
 struct Slopes{T}
     f::Function

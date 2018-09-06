@@ -8,6 +8,8 @@ using IntervalArithmetic
 using ForwardDiff
 using StaticArrays
 
+using LinearAlgebra: I, Diagonal
+
 
 import Base: ⊆, show, big, \
 
@@ -121,23 +123,6 @@ function find_roots_midpoint(f::Function, a::Real, b::Real, method::Function=new
     (midpoints, radii, root_symbols)
 
 end
-
-function Base.lexcmp(a::Interval{T}, b::Interval{T}) where {T}
-    #@show a, b
-    if a.lo < b.lo
-        return -1
-    elseif a.lo == b.lo
-        if a.hi < b.hi
-            return -1
-        else
-            return 0
-        end
-    end
-    return 1
-
-end
-
-Base.lexcmp(a::Root{T}, b::Root{T}) where {T} = lexcmp(a.interval, b.interval)
 
 
 function clean_roots(f, roots)

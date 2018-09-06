@@ -2,9 +2,7 @@
 
 # Newton method
 
-
-
-doc"""If a root is known to be inside an interval,
+"""If a root is known to be inside an interval,
 `newton_refine` iterates the interval Newton method until that root is found."""
 function newton_refine(f::Function, f_prime::Function, X::Union{Interval{T}, IntervalBox{N,T}};
                           tolerance=eps(T), debug=false) where {N,T}
@@ -30,7 +28,7 @@ end
 
 
 
-doc"""If a root is known to be inside an interval,
+"""If a root is known to be inside an interval,
 `newton_refine` iterates the interval Newton method until that root is found."""
 function newton_refine(f::Function, f_prime::Function, X::Interval{T};
                           tolerance=eps(T), debug=false) where {T}
@@ -60,11 +58,10 @@ end
 
 
 
-doc"""`newton` performs the interval Newton method on the given function `f`
+"""`newton` performs the interval Newton method on the given function `f`
 with its optional derivative `f_prime` and initial interval `x`.
 Optional keyword arguments give the `tolerance`, `maxlevel` at which to stop
 subdividing, and a `debug` boolean argument that prints out diagnostic information."""
-
 function newton(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
                    tolerance=eps(T), debug=false, maxlevel=30) where {T}
 

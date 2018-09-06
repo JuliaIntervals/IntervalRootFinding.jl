@@ -1,5 +1,5 @@
 using ValidatedNumerics, ValidatedNumerics.RootFinding
-using Base.Test
+using Test
 
 @testset "Bisection tests" begin
     @testset "Single variable" begin

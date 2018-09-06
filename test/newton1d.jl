@@ -1,7 +1,7 @@
 
 using IntervalArithmetic, IntervalRootFinding
 using ForwardDiff
-using Base.Test
+using Test
 
 const D = IntervalRootFinding.derivative
 

@@ -1,5 +1,5 @@
 using IntervalRootFinding
-using Base.Test
+using Test
 
 #include("bisect.jl")
 #include("findroots.jl")
