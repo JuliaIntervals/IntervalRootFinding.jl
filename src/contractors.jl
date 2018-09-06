@@ -1,14 +1,14 @@
 export Bisection, Newton, Krawczyk
 
 
-doc"""
+"""
     Contractor{F}
 
     Abstract type for contractors.
 """
 abstract type Contractor{F} end
 
-doc"""
+"""
     Bisection{F} <: Contractor{F}
 
     Contractor type for the bisection method.
@@ -27,7 +27,7 @@ function (contractor::Bisection)(X, tol)
     return :unknown, X
 end
 
-doc"""
+"""
     newtonlike_contract(op, X, tol)
 
     Contraction operation for contractors using the first derivative of the
@@ -57,7 +57,7 @@ function newtonlike_contract(op, C, X, tol)
     return :unknown, NX
 end
 
-doc"""
+"""
     Newton{F, FP} <: Contractor{F}
 
     Contractor type for the Newton method.
@@ -76,7 +76,7 @@ function (C::Newton)(X, tol)
 end
 
 
-doc"""
+"""
 Single-variable Newton operator
 """
 function 𝒩(f, X::Interval{T}) where {T}
@@ -97,7 +97,7 @@ function 𝒩(f, X::Interval{T}, dX::Interval{T}) where {T}
     m - (f(m) / dX)
 end
 
-doc"""
+"""
 Multi-variable Newton operator.
 """
 function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimensional Newton operator
@@ -108,7 +108,7 @@ function 𝒩(f::Function, jacobian::Function, X::IntervalBox)  # multidimension
 end
 
 
-doc"""
+"""
     Krawczyk{F, FP} <: Contractor{F}
 
     Contractor type for the Krawczyk method.
@@ -127,7 +127,7 @@ function (C::Krawczyk)(X, tol)
 end
 
 
-doc"""
+"""
 Single-variable Krawczyk operator
 """
 function 𝒦(f, f′, X::Interval{T}) where {T}
@@ -137,7 +137,7 @@ function 𝒦(f, f′, X::Interval{T}) where {T}
     m - Y*f(m) + (1 - Y*f′(X)) * (X - m)
 end
 
-doc"""
+"""
 Multi-variable Krawczyk operator
 """
 function 𝒦(f, jacobian, X::IntervalBox{T}) where {T}

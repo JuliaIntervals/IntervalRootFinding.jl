@@ -1,9 +1,9 @@
 
 import IntervalArithmetic: diam, isinterior
-import Base: start, next, done, copy, eltype, iteratorsize
+import Base: iterate, eltype, IteratorSize, copy
 
 export branch_and_prune, Bisection, Newton, RootSearch
-export start, next, done, copy, step!, eltype, iteratorsize
+export step!
 
 diam(x::Root) = diam(x.interval)
 
@@ -11,7 +11,7 @@ struct RootSearchState{T <: Union{Interval,IntervalBox}}
     working::Vector{T}
     outputs::Vector{Root{T}}
 end
-RootSearchState{T<:Union{Interval,IntervalBox}}(region::T) =
+RootSearchState(region::T) where {T<:Union{Interval,IntervalBox}} =
     RootSearchState([region], Root{T}[])
 
 copy(state::RootSearchState) =
@@ -31,15 +31,23 @@ struct RootSearch{R <: Union{Interval,IntervalBox}, S <: Contractor, T <: Real}
     tolerance::T
 end
 
-eltype{R, T <: RootSearch{R}}(::Type{T}) = RootSearchState{R}
-iteratorsize{T <: RootSearch}(::Type{T}) = Base.SizeUnknown()
+eltype(::Type{T}) where {R, T <: RootSearch{R}} = RootSearchState{R}
+IteratorSize(::Type{T}) where {T <: RootSearch} = Base.SizeUnknown()
 
-function start(iter::RootSearch)
+# function start(iter::RootSearch)
+#     state = RootSearchState(iter.region)
+#     sizehint!(state.outputs, 100)
+#     sizehint!(state.working, 1000)
+#     return state
+# end
+
+function iterate(iter::RootSearch)
     state = RootSearchState(iter.region)
     sizehint!(state.outputs, 100)
     sizehint!(state.working, 1000)
-    return state
+    return state, state
 end
+
 
 """
     step!(state::RootSearchState, contractor, tolerance)
@@ -63,12 +71,21 @@ function step!(state::RootSearchState, contractor, tolerance)
     return nothing
 end
 
-function next(iter::RootSearch, state::RootSearchState)
+# function next(iter::RootSearch, state::RootSearchState)
+#     step!(state, iter.contractor, iter.tolerance)
+#     return state, state
+# end
+
+function iterate(iter::RootSearch, state::RootSearchState)
+
+    isempty(state.working) && return nothing
+
     step!(state, iter.contractor, iter.tolerance)
     return state, state
 end
 
-done(iter::RootSearch, state::RootSearchState) = isempty(state.working)
+
+# done(iter::RootSearch, state::RootSearchState) = isempty(state.working)
 
 """
     branch_and_prune(X, contract, tol=1e-3)
@@ -85,10 +102,12 @@ Inputs:
 """
 function branch_and_prune(X, contractor, tol=1e-3)
     iter = RootSearch(X, contractor, tol)
-    local state
+    local output
     # complete iteration
-    for state in iter end
-    return state.outputs
+    for state in iter
+        output = state.outputs
+    end
+    return output
 end
 
 export recursively_branch_and_prune
@@ -109,6 +128,7 @@ end
 const IntervalLike{T} = Union{Interval{T}, IntervalBox{T}}
 const NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
 
+
 """
     roots(f, X, contractor, tol=1e-3)
     roots(f, deriv, X, contractor, tol=1e-3)
@@ -123,9 +143,7 @@ Inputs:
     the status of a given box `X`. It returns the new box and a symbol indicating
     the status. Current possible values are `Bisection`, `Newton` and `Krawczyk`
 - `deriv` ; explicit derivative of `f` for `Newton` and `Krawczyk`
-
 """
-# Contractor specific `roots` functions
 function roots(f, X::IntervalLike{T}, ::Type{Bisection}, tol::Float64=1e-3) where {T}
     branch_and_prune(X, Bisection(f), tol)
 end

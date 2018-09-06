@@ -3,9 +3,8 @@ with its derivative `f′` and initial interval `x`.
 Optional keyword arguments give the tolerances `reltol` and `abstol`.
 `reltol` is the tolerance on the relative error whereas `abstol` is the tolerance on |f(X)|,
 and a `debug` boolean argument that prints out diagnostic information."""
-
-function newton1d{T}(f::Function, f′::Function, x::Interval{T};
-                    reltol=eps(T), abstol=eps(T), debug=false, debugroot=false)
+function newton1d(f::Function, f′::Function, x::Interval{T};
+                    reltol=eps(T), abstol=eps(T), debug=false, debugroot=false) where {T}
 
     L = Interval{T}[] # Array to hold the intervals still to be processed
 
@@ -201,6 +200,5 @@ end
 Optional keyword arguments give the tolerances `reltol` and `abstol`.
 `reltol` is the tolerance on the relative error whereas `abstol` is the tolerance on |f(X)|,
 and a `debug` boolean argument that prints out diagnostic information."""
-
-newton1d{T}(f::Function, x::Interval{T};  args...) =
+newton1d(f::Function, x::Interval{T}; args...) where {T} =
     newton1d(f, x->D(f,x), x; args...)
