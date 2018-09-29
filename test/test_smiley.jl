@@ -1,4 +1,4 @@
-include("smiley_examples.jl")
+include("../examples/smiley_examples.jl")
 
 using Test
 using IntervalArithmetic, IntervalRootFinding
