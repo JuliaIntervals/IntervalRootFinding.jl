@@ -134,9 +134,9 @@ abstract type BreadthFirstBBSearch{DATA} <: BBSearch{DATA} end
 abstract type DepthFirstBBSearch{DATA} <: BBSearch{DATA} end
 abstract type KeyBBSearch{DATA} <: BBSearch{DATA} end
 
-get_leaf_id!(::BreadthFirstBBSearch, wt::WorkingTree) = shift!(wt.working_leafs)
+get_leaf_id!(::BreadthFirstBBSearch, wt::WorkingTree) = popfirst!(wt.working_leafs)
 get_leaf_id!(::DepthFirstBBSearch, wt::WorkingTree) = pop!(wt.working_leafs)
-get_leaf_id!(::KeyBBSearch, wt::WorkingTree) = shift!(wt.working_leafs)
+get_leaf_id!(::KeyBBSearch, wt::WorkingTree) = popfirst!(wt.working_leafs)
 
 function insert_leaf!(::Union{BreadthFirstBBSearch{DATA}, DepthFirstBBSearch{DATA}},
                       wt::WorkingTree{DATA}, leaf::WorkingLeaf{DATA}) where {DATA}

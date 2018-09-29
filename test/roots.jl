@@ -155,26 +155,19 @@ end
     end
 end
 
-@testset "RootSearch interface" begin
+@testset "Root search iterator interface" begin
     contractor = Newton(sin, cos)
-    search = RootSearch(-10..10, contractor, BreadthFirstSearch, 1e-3)
-    state = start(search)
-
-    # check that original and copy are independent
-    state_copy = copy(state)
-    pop!(state_copy.working) # mutate copy
-    @test length(state.working) != length(state_copy.working)
+    search = BreadthFirstSearch(-10..10, contractor, 1e-3)
+    elem, state = iterate(search)
 
     # cover optional iterator methods
     @test eltype(search) != Any
     # @test_nowarn iteratorsize(search)
 end
 
+
 @testset "Search strategy" begin
     X = -5..5
     rts = roots(sin, cos, X, Newton, DepthFirstSearch)
     @test Set(rts) == Set(roots(sin, cos, X, Newton, BreadthFirstSearch))
-
-    strat = SearchStrategy(Vector, unshift!, shift!)
-    @test roots(sin, cos, X, Newton, strat) == rts
 end

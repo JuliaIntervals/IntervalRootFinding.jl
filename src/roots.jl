@@ -2,6 +2,7 @@
 import IntervalArithmetic: diam, isinterior, bisect
 
 export branch_and_prune, Bisection, Newton
+export BreadthFirstSearch, DepthFirstSearch
 
 diam(x::Root) = diam(x.interval)
 
@@ -17,6 +18,9 @@ struct DepthFirstSearch{R <: Region, C <: Contractor, T <: Real} <: DepthFirstBB
     contractor::C
     tol::T
 end
+
+BreadthFirstSearch(X::Region, C::Contractor, tol::Real) = BreadthFirstSearch(Root(X, :unknown), C, tol)
+DepthFirstSearch(X::Region, C::Contractor, tol::Real) = BreadthFirstSearch(Root(X, :unknown), C, tol)
 
 root_element(search::BBSearch{Root{R}}) where {R <: Region} = search.initial
 
