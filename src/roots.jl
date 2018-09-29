@@ -5,6 +5,38 @@ export branch_and_prune, Bisection, Newton
 
 diam(x::Root) = diam(x.interval)
 
+# Implement BBSearch interface
+struct BreadthFirstSearch{R <: Region, C <: Contractor, T <: Real} <: BreadthFirstBBSearch{Root{R}}
+    initial::Root{R}
+    contractor::C
+    tol::T
+end
+
+struct DepthFirstSearch{R <: Region, C <: Contractor, T <: Real} <: DepthFirstBBSearch{Root{R}}
+    initial::Root{R}
+    contractor::C
+    tol::T
+end
+
+root_element(search::BBSearch{Root{R}}) where {R <: Region} = search.initial
+
+function bisect(r::Root)
+    Y1, Y2 = bisect(interval(r))
+    return Root(Y1, :unkown), Root(Y2, :unkown)
+end
+
+bisect(::BBSearch, r::Root) = bisect(r::Root)
+
+function process(search::BBSearch, r::Root)
+    contracted_root = search.contractor(r, search.tol)
+    status = root_status(contracted_root)
+
+    status == :unique && return :store, contracted_root
+    status == :empty && return :discard, contracted_root
+    status == :unkown && diam(contracted_root) < search.tol && return :store, contracted_root
+    return :bisect, contracted_root
+end
+
 """
     branch_and_prune(X, contractor, strategy, tol)
 
@@ -16,31 +48,14 @@ a symbol indicating its status.
 See the documentation of the `roots` function for explanation of the other
 arguments.
 """
-function branch_and_prune(r::Root, contractor, strategy, tol)
-    process = root -> process_root(root, contractor, tol)
-    iter = BBSearch(r, process, bisect, strategy)
+function branch_and_prune(r::Root, contractor, search, tol)
+    iter = search(r, contractor, tol)
     local endstate
     # complete iteration
     for state in iter
         endstate = state
     end
     return data(endstate)
-end
-
-function process_root(r, contractor, tol)
-    X = interval(r)
-    contracted_root = contractor(r, tol)
-    status = root_status(contracted_root)
-
-    status == :unique && return :store, contracted_root
-    status == :empty && return :discard, contracted_root
-    status == :unkown && diam(contracted_root) < tol && return :store, contracted_root
-    return :bisect, contracted_root
-end
-
-function bisect(r::Root)
-    Y1, Y2 = bisect(interval(r))
-    return Root(Y1, :unkown), Root(Y2, :unkown)
 end
 
 export recursively_branch_and_prune
@@ -58,7 +73,7 @@ function recursively_branch_and_prune(h, X, contractor=BisectionContractor, fina
 end
 
 const NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
-const default_strategy = DepthFirstSearch()
+const default_strategy = DepthFirstSearch
 const default_tolerance = 1e-15
 const default_contractor = Newton
 
@@ -88,15 +103,15 @@ Inputs:
 
 """
 function roots(f::Function, X, contractor::Type{C}=default_contractor,
-               strategy::SearchStrategy=default_strategy,
-               tol::Float64=default_tolerance) where {C <: Contractor}
+               strategy::Type{S}=default_strategy,
+               tol::Float64=default_tolerance) where {C <: Contractor, S <: BBSearch}
 
     _roots(f, X, contractor, strategy, tol)
 end
 
 function roots(f::Function, deriv::Function, X, contractor::Type{C}=default_contractor,
-               strategy::SearchStrategy=default_strategy,
-               tol::Float64=default_tolerance) where {C <: Contractor}
+               strategy::Type{S}=default_strategy,
+               tol::Float64=default_tolerance) where {C <: Contractor, S <: BBSearch}
 
     _roots(f, deriv, X, contractor, strategy, tol)
 end
@@ -120,7 +135,7 @@ end
 
 # For `Bisection` method
 function _roots(f, r::Root{T}, ::Type{Bisection},
-               strategy::SearchStrategy, tol::Float64) where {T}
+               strategy::Type{S}, tol::Float64) where {T, S <: BBSearch}
 
     branch_and_prune(r, Bisection(f), strategy, tol)
 end
@@ -128,14 +143,14 @@ end
 
 # For `NewtonLike` acting on `Interval`
 function _roots(f, r::Root{Interval{T}}, contractor::NewtonLike,
-               strategy::SearchStrategy, tol::Float64) where {T}
+               strategy::Type{S}, tol::Float64) where {T, S <: BBSearch}
 
     deriv = x -> ForwardDiff.derivative(f, x)
     _roots(f, deriv, r, contractor, strategy, tol)
 end
 
 function _roots(f, deriv, r::Root{Interval{T}}, contractor::NewtonLike,
-               strategy::SearchStrategy, tol::Float64) where {T}
+               strategy::Type{S}, tol::Float64) where {T, S <: BBSearch}
 
     branch_and_prune(r, contractor(f, deriv), strategy, tol)
 end
@@ -143,14 +158,14 @@ end
 
 # For `NewtonLike` acting on `IntervalBox`
 function _roots(f, r::Root{IntervalBox{N, T}}, contractor::NewtonLike,
-               strategy::SearchStrategy, tol::Float64) where {N, T}
+               strategy::Type{S}, tol::Float64) where {N, T, S <: BBSearch}
 
     deriv = x -> ForwardDiff.jacobian(f, x)
     _roots(f, deriv, r, contractor, strategy, tol)
 end
 
 function _roots(f, deriv, r::Root{IntervalBox{N, T}}, contractor::NewtonLike,
-               strategy::SearchStrategy, tol::Float64) where {N, T}
+               strategy::Type{S}, tol::Float64) where {N, T, S <: BBSearch}
 
     branch_and_prune(r, contractor(f, deriv), strategy, tol)
 end
@@ -158,13 +173,13 @@ end
 
 # Acting on `Interval`
 function _roots(f, X::Region, contractor::Type{C},
-               strategy::SearchStrategy, tol::Float64) where {C<:Contractor}
+               strategy::Type{S}, tol::Float64) where {C <: Contractor, S <: BBSearch}
 
     _roots(f, Root(X, :unkown), contractor, strategy, tol)
 end
 
 function _roots(f, deriv, X::Region, contractor::Type{C},
-               strategy::SearchStrategy, tol::Float64) where {C<:Contractor}
+               strategy::Type{S}, tol::Float64) where {C <: Contractor, S <: BBSearch}
 
     _roots(f, deriv, Root(X, :unkown), contractor, strategy, tol)
 end
@@ -172,13 +187,13 @@ end
 
 # Acting on `Vector` of `Root`
 function _roots(f, V::Vector{Root{T}}, contractor::Type{C},
-               strategy::SearchStrategy, tol::Float64) where {T, C<:Contractor}
+               strategy::Type{S}, tol::Float64) where {T, C <: Contractor, S <: BBSearch}
 
     vcat(_roots.(f, V, contractor, strategy, tol)...)
 end
 
 function _roots(f, deriv, V::Vector{Root{T}}, contractor::Type{C},
-               strategy::SearchStrategy, tol::Float64) where {T, C<:Contractor}
+               strategy::Type{S}, tol::Float64) where {T, C <: Contractor, S <: BBSearch}
 
     vcat(_roots.(f, deriv, V, contractor, strategy, tol)...)
 end
@@ -186,7 +201,7 @@ end
 
 # Acting on complex `Interval`
 function _roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
-               strategy::SearchStrategy, tol::Float64) where {T, C<:Contractor}
+               strategy::Type{S}, tol::Float64) where {T, C <: Contractor, S <: BBSearch}
 
     g = realify(f)
     Y = IntervalBox(reim(Xc)...)
@@ -196,7 +211,7 @@ function _roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
 end
 
 function _roots(f, Xc::Complex{Interval{T}}, contractor::NewtonLike,
-               strategy::SearchStrategy, tol::Float64) where {T}
+               strategy::Type{S}, tol::Float64) where {T, S <: BBSearch}
 
     g = realify(f)
     g_prime = x -> ForwardDiff.jacobian(g, x)
@@ -207,7 +222,7 @@ function _roots(f, Xc::Complex{Interval{T}}, contractor::NewtonLike,
 end
 
 function _roots(f, deriv, Xc::Complex{Interval{T}}, contractor::NewtonLike,
-               strategy::SearchStrategy, tol::Float64) where {T}
+               strategy::Type{S}, tol::Float64) where {T, S <: BBSearch}
 
     g = realify(f)
     g_prime = realify_derivative(deriv)
