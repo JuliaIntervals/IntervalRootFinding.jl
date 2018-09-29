@@ -34,7 +34,7 @@ function process(search::BBSearch, r::Root)
     status == :unique && return :store, contracted_root
     status == :empty && return :discard, contracted_root
     status == :unkown && diam(contracted_root) < search.tol && return :store, contracted_root
-    return :bisect, contracted_root
+    return :bisect, r  # Always bisect the original interval to bypass [NaN, NaN]
 end
 
 """
@@ -54,8 +54,6 @@ function branch_and_prune(r::Root, contractor, search, tol)
     # complete iteration
     for state in iter
         endstate = state
-        print(state)
-        println()
     end
     return data(endstate)
 end
