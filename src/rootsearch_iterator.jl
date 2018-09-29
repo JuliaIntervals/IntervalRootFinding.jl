@@ -26,6 +26,7 @@ function WorkingNode(leaf::WorkingLeaf, child1::Int, child2::Int)
     WorkingNode(parent_id(leaf), Int[child1, child2])
 end
 
+
 struct WorkingTree{DATA}
     nodes::Dict{Int, Union{WorkingNode, WorkingLeaf{DATA}}}
     working_leafs::Vector{Int}
@@ -36,13 +37,29 @@ function WorkingTree(rootdata::DATA) where {DATA}
     WorkingTree{DATA}(Dict{Int, Union{WorkingNode, WorkingLeaf{DATA}}}(1 => rootleaf), Int[1])
 end
 
+show(io::IO, wn::WorkingNode) = print(io, "WorkingNode with children $(wn.children)")
+function show(io::IO, wl::WorkingLeaf)
+    print(io, "WorkingLeaf (:$(wl.status)) with data ($(wl.data))")
+end
+
+function show(io::IO, wt::WorkingTree{DATA}) where {DATA}
+    println(io, "Working tree with $(nnodes(wt)) elements of type $DATA")
+    println(io, "Indices: ", keys(wt.nodes) |> collect |> sort)
+    println(io, "Structure:")
+    for (id, lvl) in wt
+        println(io, "  "^lvl * "[$id] $(wt[id])")
+    end
+end
+
 parent_id(node::AbstractWorkingNode) = node.parent
 parent_id(wt::WorkingTree, node::AbstractWorkingNode) = parent_id(node)
 parent_id(wt::WorkingTree, id::Int) = parent_id(wt[id])
 parent(wt::WorkingTree, node::AbstractWorkingNode) = wt[parent_id(node)]
 parent(wt::WorkingTree, id::Int) = wt[parent_id(wt, id)]
-child_ids(node::WorkingNode) = node.children
+children_ids(node::WorkingNode) = node.children
+children_ids(wt::WorkingTree, id::Int) = children_ids(wt[id])
 data(leaf::WorkingLeaf) = leaf.data
+root(wt::WorkingTree) = wt[1]
 
 nnodes(wt::WorkingTree) = length(wt.nodes)
 newid(wt::WorkingTree) = maximum(keys(wt.nodes)) + 1
@@ -60,13 +77,36 @@ end
 
 function recursively_delete_child!(wt, id_parent, id_child)
     parent = wt[id_parent]
-    cc = child_ids(parent)
-    filter!(id -> id == id_child, cc)
+    cc = children_ids(parent)
+    filter!(id -> id != id_child, cc)
     if isempty(cc) && parent_id(parent) != 0
         recursively_delete_child!(wt, parent_id(parent), id_parent)
     end
     delete!(wt, id_child)
 end
+
+function iterate(wt::WorkingTree, (id, lvl)=(0, 0))
+    id, lvl = next_id(wt, id, lvl)
+    lvl == 0 && return nothing
+    return (id, lvl), (id, lvl)
+end
+
+function next_id(wt::WorkingTree, id, lvl)
+    lvl == 0 && return (1, 1)
+    node = wt[id]
+    isa(node, WorkingNode) && return (children_ids(node)[1], lvl + 1)
+    return next_sibling(wt, id, lvl)
+end
+
+function next_sibling(wt::WorkingTree, sibling, lvl)
+    parent = parent_id(wt, sibling)
+    parent == 0 && return (0, 0)
+    children = children_ids(wt, parent)
+    maximum(children) == sibling && return next_sibling(wt, parent, lvl - 1)
+    id = minimum(filter(x -> x > sibling, children))
+    return (id, lvl)
+end
+
 
 """
     BBSearch{DATA}

@@ -54,6 +54,8 @@ function branch_and_prune(r::Root, contractor, search, tol)
     # complete iteration
     for state in iter
         endstate = state
+        print(state)
+        println()
     end
     return data(endstate)
 end
