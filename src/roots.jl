@@ -19,10 +19,12 @@ arguments.
 function branch_and_prune(r::Root, contractor, strategy, tol)
     process = root -> process_root(root, contractor, tol)
     iter = BBSearch(r, process, bisect, strategy)
-    local state
+    local endstate
     # complete iteration
-    for state in iter end
-    return data(state)
+    for state in iter
+        endstate = state
+    end
+    return data(endstate)
 end
 
 function process_root(r, contractor, tol)
@@ -56,8 +58,13 @@ function recursively_branch_and_prune(h, X, contractor=BisectionContractor, fina
 end
 
 const NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
+const default_strategy = DepthFirstSearch()
+const default_tolerance = 1e-15
+const default_contractor = Newton
 
-
+#===
+    Default case when `contractor, `strategy` or `tol` is omitted.
+===#
 """
     roots(f, X, contractor=Newton, strategy=BreadthFirstSearch, tol=1e-15)
     roots(f, deriv, X, contractor=Newton, strategy=BreadthFirstSearch, tol=1e-15)
@@ -80,14 +87,6 @@ Inputs:
     is returned with status `:unkown`.
 
 """
-
-const default_strategy = DepthFirstSearch()
-const default_tolerance = 1e-15
-const default_contractor = Newton
-
-#===
-    Default case when `contractor, `strategy` or `tol` is omitted.
-===#
 function roots(f::Function, X, contractor::Type{C}=default_contractor,
                strategy::SearchStrategy=default_strategy,
                tol::Float64=default_tolerance) where {C <: Contractor}

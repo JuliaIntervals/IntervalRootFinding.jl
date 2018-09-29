@@ -1,9 +1,9 @@
-import Base: start, next, done, copy, eltype, iteratorsize
+import Base: copy, eltype, iterate, IteratorSize
 import Base: getindex, setindex!, delete!
 
 export BBSearch, SearchStrategy
 export BreadthFirstSearch, DepthFirstSearch
-export start, next, done, copy, step!, eltype, iteratorsize
+export copy, eltype, iterate, IteratorSize
 
 abstract type AbstractWorkingNode end
 
@@ -77,8 +77,8 @@ are processed during a `BBSearch`.
 """
 abstract type SearchStrategy{KEY} end
 
-struct BreadthFirstSearch <: SearchStrategy{Void} end
-struct DepthFirstSearch <: SearchStrategy{Void} end
+struct BreadthFirstSearch <: SearchStrategy{Nothing} end
+struct DepthFirstSearch <: SearchStrategy{Nothing} end
 
 struct KeySearch{KEY <: Function} <: SearchStrategy{KEY}
     keyfunc::KEY
@@ -135,12 +135,7 @@ function BBSearch(init, process::Function, bisect::Function, S::Type{STRAT}) whe
 end
 
 eltype(::Type{BBS}) where {DATA, PFUNC, BFUNC, KEY, BBS <: BBSearch{DATA, PFUNC, BFUNC, KEY}} = WorkingTree{DATA}
-iteratorsize(::Type{BBS}) where {BBS <: BBSearch} = Base.SizeUnknown()
-
-
-function start(iter::BBSearch{DATA, PFUNC, BFUNC, KEY}) where {DATA, PFUNC, BFUNC, KEY}
-    return WorkingTree(iter.initial_element)
-end
+IteratorSize(::Type{BBS}) where {BBS <: BBSearch} = Base.SizeUnknown()
 
 """
     step!(state::WorkingTree, contractor, tolerance)
@@ -170,9 +165,9 @@ function step!(wt::WorkingTree, search)
     end
 end
 
-function next(iter::BBSearch, state::WorkingTree)
+function iterate(iter::BBSearch{DATA, PFUNC, BFUNC, KEY},
+                 state::WorkingTree=WorkingTree(iter.initial_element)) where {DATA, PFUNC, BFUNC, KEY}
+    isempty(state.working_leafs) && return nothing
     step!(state, iter)
     return state, state
 end
-
-done(iter::BBSearch, state::WorkingTree) = isempty(state.working_leafs)
