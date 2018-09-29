@@ -5,44 +5,65 @@ export BBSearch, SearchStrategy
 export BreadthFirstBBSearch, DepthFirstBBSearch
 export copy, eltype, iterate, IteratorSize
 
-abstract type AbstractWorkingNode end
+abstract type AbstractBBNode end
 
-struct WorkingNode <: AbstractWorkingNode
+"""
+    BBNode <: AbstractBBNode
+
+Intermediate node of a `BBTree`. Does not contain any data by itself,
+only redirect toward its children.
+"""
+struct BBNode <: AbstractBBNode
     parent::Int
     children::Vector{Int}
 end
 
-struct WorkingLeaf{DATA} <: AbstractWorkingNode
+"""
+    BBLeaf{DATA} <: AbstractBBLeaf
+
+Leaf node of a `BBTree`. Contains both data and a status indicating if it
+will be further processed by the branch and bound search.
+"""
+struct BBLeaf{DATA} <: AbstractBBNode
     data::DATA
     parent::Int
     status::Symbol
 end
 
-function WorkingLeaf(data::DATA, parent::Int) where {DATA}
-    WorkingLeaf{DATA}(data, parent, :working)
+function BBLeaf(data::DATA, parent::Int) where {DATA}
+    BBLeaf{DATA}(data, parent, :working)
 end
 
-function WorkingNode(leaf::WorkingLeaf, child1::Int, child2::Int)
-    WorkingNode(parent_id(leaf), Int[child1, child2])
+function BBNode(leaf::BBLeaf, child1::Int, child2::Int)
+    BBNode(parent_id(leaf), Int[child1, child2])
 end
 
+"""
+    BBTree{DATA}
 
-struct WorkingTree{DATA}
-    nodes::Dict{Int, Union{WorkingNode, WorkingLeaf{DATA}}}
+Tree storing the data used and produced by a branch and bound search in a
+structured way.
+
+Node can be accessed using their index using the bracket syntax `wt[node_id]`.
+Support the iterator interface. The element yielded by the iteration are
+tuples `(node_id, lvl)` where `lvl` is the depth of the node in the tree.
+"""
+struct BBTree{DATA}
+    nodes::Dict{Int, Union{BBNode, BBLeaf{DATA}}}
     working_leafs::Vector{Int}
 end
 
-function WorkingTree(rootdata::DATA) where {DATA}
-    rootleaf = WorkingLeaf(rootdata, 0)
-    WorkingTree{DATA}(Dict{Int, Union{WorkingNode, WorkingLeaf{DATA}}}(1 => rootleaf), Int[1])
+function BBTree(rootdata::DATA) where {DATA}
+    rootleaf = BBLeaf(rootdata, 0)
+    BBTree{DATA}(Dict{Int, Union{BBNode, BBLeaf{DATA}}}(1 => rootleaf), Int[1])
 end
 
-show(io::IO, wn::WorkingNode) = print(io, "WorkingNode with children $(wn.children)")
-function show(io::IO, wl::WorkingLeaf)
-    print(io, "WorkingLeaf (:$(wl.status)) with data ($(wl.data))")
+show(io::IO, wn::BBNode) = print(io, "BBNode with children $(wn.children)")
+function show(io::IO, wl::BBLeaf)
+    print(io, "BBLeaf (:$(wl.status)) with data ($(wl.data))")
 end
 
-function show(io::IO, wt::WorkingTree{DATA}) where {DATA}
+function show(io::IO, wt::BBTree{DATA}) where {DATA}
     println(io, "Working tree with $(nnodes(wt)) elements of type $DATA")
     println(io, "Indices: ", keys(wt.nodes) |> collect |> sort)
     println(io, "Structure:")
@@ -51,26 +72,32 @@ function show(io::IO, wt::WorkingTree{DATA}) where {DATA}
     end
 end
 
-parent_id(node::AbstractWorkingNode) = node.parent
-parent_id(wt::WorkingTree, node::AbstractWorkingNode) = parent_id(node)
-parent_id(wt::WorkingTree, id::Int) = parent_id(wt[id])
-parent(wt::WorkingTree, node::AbstractWorkingNode) = wt[parent_id(node)]
-parent(wt::WorkingTree, id::Int) = wt[parent_id(wt, id)]
-children_ids(node::WorkingNode) = node.children
-children_ids(wt::WorkingTree, id::Int) = children_ids(wt[id])
-data(leaf::WorkingLeaf) = leaf.data
-root(wt::WorkingTree) = wt[1]
+parent_id(node::AbstractBBNode) = node.parent
+parent_id(wt::BBTree, node::AbstractBBNode) = parent_id(node)
+parent_id(wt::BBTree, id::Int) = parent_id(wt[id])
+parent(wt::BBTree, node::AbstractBBNode) = wt[parent_id(node)]
+parent(wt::BBTree, id::Int) = wt[parent_id(wt, id)]
+children_ids(node::BBNode) = node.children
+children_ids(wt::BBTree, id::Int) = children_ids(wt[id])
+data(leaf::BBLeaf) = leaf.data
+root(wt::BBTree) = wt[1]
 
-nnodes(wt::WorkingTree) = length(wt.nodes)
-newid(wt::WorkingTree) = maximum(keys(wt.nodes)) + 1
-data(wt::WorkingTree) = [data(val) for val in values(wt.nodes) if isa(val, WorkingLeaf)]
+nnodes(wt::BBTree) = length(wt.nodes)
+newid(wt::BBTree) = maximum(keys(wt.nodes)) + 1
+data(wt::BBTree) = [data(val) for val in values(wt.nodes) if isa(val, BBLeaf)]
 
 # Index operations
-getindex(wt::WorkingTree, id) = wt.nodes[id]
-setindex!(wt::WorkingTree, id, val) = setindex!(wt.nodes, id, val)
-delete!(wt::WorkingTree, id) = delete!(wt.nodes, id)
+getindex(wt::BBTree, id) = wt.nodes[id]
+setindex!(wt::BBTree, id, val) = setindex!(wt.nodes, id, val)
+delete!(wt::BBTree, id) = delete!(wt.nodes, id)
 
-function discard_leaf!(wt::WorkingTree, id::Int)
+"""
+    discard_leaf!(wt::BBTree, id::Int)
+
+Delete the `BBLeaf` with index `id` and all its ancestors to which it is
+the last descendant.
+"""
+function discard_leaf!(wt::BBTree, id::Int)
     leaf = wt[id]
     recursively_delete_child!(wt, parent_id(leaf), id)
 end
@@ -85,20 +112,20 @@ function recursively_delete_child!(wt, id_parent, id_child)
     delete!(wt, id_child)
 end
 
-function iterate(wt::WorkingTree, (id, lvl)=(0, 0))
+function iterate(wt::BBTree, (id, lvl)=(0, 0))
     id, lvl = next_id(wt, id, lvl)
     lvl == 0 && return nothing
     return (id, lvl), (id, lvl)
 end
 
-function next_id(wt::WorkingTree, id, lvl)
+function next_id(wt::BBTree, id, lvl)
     lvl == 0 && return (1, 1)
     node = wt[id]
-    isa(node, WorkingNode) && return (children_ids(node)[1], lvl + 1)
+    isa(node, BBNode) && return (children_ids(node)[1], lvl + 1)
     return next_sibling(wt, id, lvl)
 end
 
-function next_sibling(wt::WorkingTree, sibling, lvl)
+function next_sibling(wt::BBTree, sibling, lvl)
     parent = parent_id(wt, sibling)
     parent == 0 && return (0, 0)
     children = children_ids(wt, parent)
@@ -132,21 +159,47 @@ abstract type BBSearch{DATA} end
 
 abstract type BreadthFirstBBSearch{DATA} <: BBSearch{DATA} end
 abstract type DepthFirstBBSearch{DATA} <: BBSearch{DATA} end
+
+"""
+    KeyBBSearch{DATA} <: BBSearch{DATA}
+
+Interface to a branch and bound search that use a key function to decide which
+element to process first. The search process first the element with the largest
+key as computed by `keyfunc(ks::KeyBBSearch, elem)`.
+
+!WARNING: Untested.
+"""
 abstract type KeyBBSearch{DATA} <: BBSearch{DATA} end
 
-get_leaf_id!(::BreadthFirstBBSearch, wt::WorkingTree) = popfirst!(wt.working_leafs)
-get_leaf_id!(::DepthFirstBBSearch, wt::WorkingTree) = pop!(wt.working_leafs)
-get_leaf_id!(::KeyBBSearch, wt::WorkingTree) = popfirst!(wt.working_leafs)
+"""
+    get_leaf_id!(::BBSearch, wt::BBTree)
 
+Return the id of the next leaf that will be processed and remove it from the
+list of working leafs.
+
+Must be define for custom searches that are direct subtype of `BBSearch`.
+"""
+get_leaf_id!(::BreadthFirstBBSearch, wt::BBTree) = popfirst!(wt.working_leafs)
+get_leaf_id!(::DepthFirstBBSearch, wt::BBTree) = pop!(wt.working_leafs)
+get_leaf_id!(::KeyBBSearch, wt::BBTree) = popfirst!(wt.working_leafs)
+
+"""
+    insert_leaf!(::BBSearch, wt::BBTree, leaf::BBLeaf)
+
+Insert the id of a new leaf that has been produced by bisecting an older leaf
+into the list of working leafs.
+
+Must be define for custom searches that are direct subtype of `BBSearch`.
+"""
 function insert_leaf!(::Union{BreadthFirstBBSearch{DATA}, DepthFirstBBSearch{DATA}},
-                      wt::WorkingTree{DATA}, leaf::WorkingLeaf{DATA}) where {DATA}
+                      wt::BBTree{DATA}, leaf::BBLeaf{DATA}) where {DATA}
     id = newid(wt)
     wt[id] = leaf
     push!(wt.working_leafs, id)
     return id
 end
 
-function insert_leaf!(::KS, wt::WorkingTree{DATA}, leaf::WorkingLeaf{DATA}) where {DATA, KS <: KeyBBSearch{DATA}}
+function insert_leaf!(::KS, wt::BBTree{DATA}, leaf::BBLeaf{DATA}) where {DATA, KS <: KeyBBSearch{DATA}}
     id = newid(wt)
     wt[id] = leaf
     keys = keyfunc.(KS, wt.working_leafs)
@@ -157,26 +210,26 @@ function insert_leaf!(::KS, wt::WorkingTree{DATA}, leaf::WorkingLeaf{DATA}) wher
     return id
 end
 
-eltype(::Type{BBS}) where {DATA, BBS <: BBSearch{DATA}} = WorkingTree{DATA}
+eltype(::Type{BBS}) where {DATA, BBS <: BBSearch{DATA}} = BBTree{DATA}
 IteratorSize(::Type{BBS}) where {BBS <: BBSearch} = Base.SizeUnknown()
 
 function iterate(search::BBSearch{DATA},
-                 wt::WorkingTree=WorkingTree(root_element(search))) where {DATA}
+                 wt::BBTree=BBTree(root_element(search))) where {DATA}
     isempty(wt.working_leafs) && return nothing
 
     id = get_leaf_id!(search, wt)
     X = wt[id]
     action, newdata = process(search, data(X))
     if action == :store
-        wt[id] = WorkingLeaf(newdata, parent_id(X), :final)
+        wt[id] = BBLeaf(newdata, parent_id(X), :final)
     elseif action == :bisect
         parent = wt[id]
         child1, child2 = bisect(search, newdata)
-        leaf1 = WorkingLeaf(child1, id, :working)
-        leaf2 = WorkingLeaf(child2, id, :working)
+        leaf1 = BBLeaf(child1, id, :working)
+        leaf2 = BBLeaf(child2, id, :working)
         id1 = insert_leaf!(search, wt, leaf1)
         id2 = insert_leaf!(search, wt, leaf2)
-        wt[id] = WorkingNode(parent, id1, id2)
+        wt[id] = BBNode(parent, id1, id2)
     elseif action == :discard
         discard_leaf!(wt, id)
     else
