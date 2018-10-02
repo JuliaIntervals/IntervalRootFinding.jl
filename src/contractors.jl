@@ -1,3 +1,4 @@
+export Contractor
 export Bisection, Newton, Krawczyk
 
 """

@@ -20,7 +20,7 @@ struct DepthFirstSearch{R <: Region, C <: Contractor, T <: Real} <: DepthFirstBB
 end
 
 BreadthFirstSearch(X::Region, C::Contractor, tol::Real) = BreadthFirstSearch(Root(X, :unknown), C, tol)
-DepthFirstSearch(X::Region, C::Contractor, tol::Real) = BreadthFirstSearch(Root(X, :unknown), C, tol)
+DepthFirstSearch(X::Region, C::Contractor, tol::Real) = DepthFirstSearch(Root(X, :unknown), C, tol)
 
 root_element(search::BBSearch{Root{R}}) where {R <: Region} = search.initial
 
@@ -31,7 +31,7 @@ end
 
 bisect(::BBSearch, r::Root) = bisect(r::Root)
 
-function process(search::BBSearch, r::Root)
+function process(search::Union{BreadthFirstSearch, DepthFirstSearch}, r::Root)
     contracted_root = search.contractor(r, search.tol)
     status = root_status(contracted_root)
 

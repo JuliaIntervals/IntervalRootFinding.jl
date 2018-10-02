@@ -1,8 +1,8 @@
 import Base: copy, eltype, iterate, IteratorSize
 import Base: getindex, setindex!, delete!
 
-export BBSearch, SearchStrategy
-export BreadthFirstBBSearch, DepthFirstBBSearch
+export BBSearch, BreadthFirstBBSearch, DepthFirstBBSearch
+export data
 export copy, eltype, iterate, IteratorSize
 
 abstract type AbstractBBNode end
@@ -58,9 +58,9 @@ function BBTree(rootdata::DATA) where {DATA}
     BBTree{DATA}(Dict{Int, Union{BBNode, BBLeaf{DATA}}}(1 => rootleaf), Int[1])
 end
 
-show(io::IO, wn::BBNode) = print(io, "BBNode with children $(wn.children)")
+show(io::IO, wn::BBNode) = print(io, "Node with children $(wn.children)")
 function show(io::IO, wl::BBLeaf)
-    print(io, "BBLeaf (:$(wl.status)) with data ($(wl.data))")
+    print(io, "Leaf (:$(wl.status)) with data $(wl.data)")
 end
 
 function show(io::IO, wt::BBTree{DATA}) where {DATA}
@@ -159,6 +159,10 @@ abstract type BBSearch{DATA} end
 
 abstract type BreadthFirstBBSearch{DATA} <: BBSearch{DATA} end
 abstract type DepthFirstBBSearch{DATA} <: BBSearch{DATA} end
+
+# By default the root element is store by the initial field
+# Define a more specific function to change that
+root_element(search::BBSearch) = search.initial
 
 """
     KeyBBSearch{DATA} <: BBSearch{DATA}
