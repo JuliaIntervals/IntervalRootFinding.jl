@@ -1,10 +1,12 @@
 
-import IntervalArithmetic: diam, isinterior, bisect
+import IntervalArithmetic: diam, isinterior, bisect, isnan
 
 export branch_and_prune, Bisection, Newton
 export BreadthFirstSearch, DepthFirstSearch
 
-diam(x::Root) = diam(x.interval)
+diam(r::Root) = diam(interval(r))
+isnan(X::IntervalBox) = any(isnan.(X))
+isnan(r::Root) = isnan(interval(r))
 
 # Implement BBSearch interface
 struct BreadthFirstSearch{R <: Region, C <: Contractor, T <: Real} <: BreadthFirstBBSearch{Root{R}}
@@ -37,8 +39,13 @@ function process(search::Union{BreadthFirstSearch, DepthFirstSearch}, r::Root)
 
     status == :unique && return :store, contracted_root
     status == :empty && return :discard, contracted_root
-    status == :unkown && diam(contracted_root) < search.tol && return :store, contracted_root
-    return :bisect, r  # Always bisect the original interval to bypass [NaN, NaN]
+
+    if status == :unkown
+        # Avoid infinite division of intervals with singularity
+        isnan(contracted_root) && diam(r) < search.tol && return :store, r
+        diam(contracted_root) < search.tol && return :store, contracted_root
+        return :bisect, r
+    end
 end
 
 """
