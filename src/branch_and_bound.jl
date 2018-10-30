@@ -65,10 +65,13 @@ end
 
 function show(io::IO, wt::BBTree{DATA}) where {DATA}
     println(io, "Working tree with $(nnodes(wt)) elements of type $DATA")
-    println(io, "Indices: ", keys(wt.nodes) |> collect |> sort)
-    println(io, "Structure:")
-    for (id, lvl) in wt
-        println(io, "  "^lvl * "[$id] $(wt[id])")
+
+    if nnodes(wt) > 0
+        println(io, "Indices: ", keys(wt.nodes) |> collect |> sort)
+        println(io, "Structure:")
+        for (id, lvl) in wt
+            println(io, "  "^lvl * "[$id] $(wt[id])")
+        end
     end
 end
 
