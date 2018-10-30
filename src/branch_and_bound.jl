@@ -80,7 +80,10 @@ parent(wt::BBTree, id::Int) = wt[parent_id(wt, id)]
 children_ids(node::BBNode) = node.children
 children_ids(wt::BBTree, id::Int) = children_ids(wt[id])
 data(leaf::BBLeaf) = leaf.data
+
+# Root node has id 1 and parent id 0
 root(wt::BBTree) = wt[1]
+is_root(wt::BBTree, id::Int) = (id == 1)
 
 nnodes(wt::BBTree) = length(wt.nodes)
 newid(wt::BBTree) = maximum(keys(wt.nodes)) + 1
@@ -103,11 +106,13 @@ function discard_leaf!(wt::BBTree, id::Int)
 end
 
 function recursively_delete_child!(wt, id_parent, id_child)
-    parent = wt[id_parent]
-    cc = children_ids(parent)
-    filter!(id -> id != id_child, cc)
-    if isempty(cc) && parent_id(parent) != 0
-        recursively_delete_child!(wt, parent_id(parent), id_parent)
+    if !is_root(wt, id_child)
+        parent = wt[id_parent]
+        cc = children_ids(parent)
+        filter!(id -> id != id_child, cc)
+        if isempty(cc)
+            recursively_delete_child!(wt, parent_id(parent), id_parent)
+        end
     end
     delete!(wt, id_child)
 end
