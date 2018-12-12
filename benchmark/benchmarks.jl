@@ -73,3 +73,35 @@ for (k, dr) in enumerate(dr_functions)
     s["Automatic differentiation"] = @benchmarkable ForwardDiff.derivative($dr, $X)
     s["Slope expansion"] = @benchmarkable slope($dr, $X, $(mid(X)))
 end
+
+
+S = SUITE["Linear equations"] = BenchmarkGroup()
+
+sizes = (2, 5, 10)
+
+for n in sizes
+    s = S["n = $n"] = BenchmarkGroup()
+    A = Interval.(randn(n, n))
+    b = Interval.(randn(n))
+
+    s["Gauss seidel"] = @benchmarkable gauss_seidel_interval($A, $b)
+    s["Gauss seidel contractor"] = @benchmarkable gauss_seidel_contractor($A, $b)
+    s["Gauss elimination"] = @benchmarkable gauss_elimination_interval($A, $b)
+end
+
+
+S = SUITE["Dietmar-Ratz"] = BenchmarkGroup()
+X = Interval(0.75, 1.75)
+
+for (k, dr) in enumerate(dr_functions)
+    s = S["Dietmar-Ratz $k"] = BenchmarkGroup()
+
+    if k != 8  # dr8 is excluded as it has too many roots
+        for method in (Newton, Krawczyk)
+            s[string(method)] = @benchmarkable roots($dr, $X, $method, $tol)
+        end
+    end
+
+    s["Automatic differentiation"] = @benchmarkable ForwardDiff.derivative($dr, $X)
+    s["Slope expansion"] = @benchmarkable slope($dr, $X, $(mid(X)))
+end
