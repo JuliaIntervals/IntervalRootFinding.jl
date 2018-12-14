@@ -45,7 +45,7 @@ function newtonlike_contract(op, C, X, tol)
     contracted_X = op(C.f, C.f′, X)
 
     # Only happens if X is partially out of the domain of f
-    isempty(contracted_X) && return :unkown, X  # force bisection
+    isempty(contracted_X) && return :unknown, X  # force bisection
 
     # given that have the Jacobian, can also do mean value form
     NX = contracted_X ∩ X
