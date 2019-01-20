@@ -91,6 +91,23 @@ end
     end
 end
 
+@testset "Infinite domain" begin
+    for method in newtonlike_methods
+        rts = roots(x -> x^2 - 2, -∞..∞, methods)
+        @test length(filter(isunique, rts)) == 2
+    end
+end
+
+@testset "NaN return value" begin
+    f((x, y)...) = SVector(log(y/x) + 3x, y - 2x)
+    X = IntervalBox(-100..100, 2)
+    for method in newtonlike_methos
+        rts = roots(f, X, method)
+        @test length(filter(isunique, rts)) == 1
+        @test length(filter(x -> contains_zero(x.interval), rts)) == 1
+    end
+end
+
 @testset "Stationary points" begin
     f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
     gradf = ∇(f)
