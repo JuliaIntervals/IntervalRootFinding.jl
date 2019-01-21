@@ -6,11 +6,33 @@ function all_unique(rts)
     all(root_status.(rts) .== :unique)
 end
 
-function test_newtonlike(f, deriv, X, method, nsol, tol=1e-3)
+function roots_dist(rts1::Vector{Root{T}}, rts2::Vector{Root{T}}) where {T <: Interval}
+    d = @. dist(interval(rts1), interval(rts2))
+    return sum(d)
+end
+
+function roots_dist(rts1::Vector{Root{T}}, rts2::Vector{Root{T}}) where {T <: IntervalBox}
+    d = 0.0
+    for (rt1, rt2) in zip(rts1, rts2)
+        x1 = interval(rt1)
+        x2 = interval(rt2)
+        d += sum(dist.(x1, x2))
+    end
+    return d
+end
+
+function roots_dist(rts1::Vector{Root{Complex{T}}}, rts2::Vector{Root{Complex{T}}}) where {T <: Interval}
+    dreal = @. dist(real(interval(rts1)), real(interval(rts2)))
+    dimag = @. dist(imag(interval(rts1)), imag(interval(rts2)))
+
+    return sum(dreal) + sum(dimag)
+end
+
+function test_newtonlike(f, deriv, X, method, nsol, tol=1e-10)
     rts = roots(f, X, method)
     @test length(rts) == nsol
     @test all_unique(rts)
-    @test rts == roots(f, deriv, X, method)
+    @test roots_dist(rts, roots(f, deriv, X, method)) < tol
 end
 
 newtonlike_methods = [Newton, Krawczyk]
@@ -93,15 +115,15 @@ end
 
 @testset "Infinite domain" begin
     for method in newtonlike_methods
-        rts = roots(x -> x^2 - 2, -∞..∞, methods)
+        rts = roots(x -> x^2 - 2, -∞..∞, method)
         @test length(filter(isunique, rts)) == 2
     end
 end
 
 @testset "NaN return value" begin
-    f((x, y)...) = SVector(log(y/x) + 3x, y - 2x)
+    f(xx) = ( (x, y) = xx; SVector(log(y/x) + 3x, y - 2x) )
     X = IntervalBox(-100..100, 2)
-    for method in newtonlike_methos
+    for method in newtonlike_methods
         rts = roots(f, X, method)
         @test length(filter(isunique, rts)) == 1
         @test length(filter(x -> contains_zero(x.interval), rts)) == 1
