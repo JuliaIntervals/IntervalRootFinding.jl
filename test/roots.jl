@@ -6,24 +6,18 @@ function all_unique(rts)
     all(root_status.(rts) .== :unique)
 end
 
-function roots_dist(rts1::Vector{Root{T}}, rts2::Vector{Root{T}}) where {T <: Interval}
-    d = @. dist(interval(rts1), interval(rts2))
+function roots_dist(rt1::Root{T}, rt2::Root{T}) where {T <: Interval}
+    d = dist(interval(rt1), interval(rt2))
     return sum(d)
 end
 
-function roots_dist(rts1::Vector{Root{T}}, rts2::Vector{Root{T}}) where {T <: IntervalBox}
-    d = 0.0
-    for (rt1, rt2) in zip(rts1, rts2)
-        x1 = interval(rt1)
-        x2 = interval(rt2)
-        d += sum(dist.(x1, x2))
-    end
-    return d
+function roots_dist(rt1::Root{T}, rt2::Root{T}) where {T <: IntervalBox}
+    return sum(dist.(interval(rt1), interval(rt2)))
 end
 
-function roots_dist(rts1::Vector{Root{Complex{T}}}, rts2::Vector{Root{Complex{T}}}) where {T <: Interval}
-    dreal = @. dist(real(interval(rts1)), real(interval(rts2)))
-    dimag = @. dist(imag(interval(rts1)), imag(interval(rts2)))
+function roots_dist(rt1::Root{Complex{T}}, rt2::Root{Complex{T}}) where {T <: Interval}
+    dreal = dist(real(interval(rt1)), real(interval(rt2)))
+    dimag = dist(imag(interval(rt1)), imag(interval(rt2)))
 
     return sum(dreal) + sum(dimag)
 end
@@ -32,7 +26,7 @@ function test_newtonlike(f, deriv, X, method, nsol, tol=1e-10)
     rts = roots(f, X, method)
     @test length(rts) == nsol
     @test all_unique(rts)
-    @test roots_dist(rts, roots(f, deriv, X, method)) < tol
+    @test sum(roots_dist.(rts, roots(f, deriv, X, method))) < tol
 end
 
 newtonlike_methods = [Newton, Krawczyk]

@@ -37,14 +37,14 @@ safe_isempty(X) = isempty(IntervalBox(X))
 
 
 """
-    determine_root_status(contract, f, X)
+    determine_region_status(contract, f, X)
 
 Contraction operation for contractors using the first derivative of the
 function.
 
-Currently `Newton` and `Krawczyk` contractors uses this.
+Currently `Newton` and `Krawczyk` contractors use this.
 """
-function determine_root_status(op, f, X)
+function determine_region_status(op, f, X)
     imX = f(X)
 
     !(contains_zero(imX)) && return :empty, X
@@ -94,7 +94,7 @@ interval together with its status.
 """
 function (C::Newton)(X, tol, α=where_bisect)
     op = x -> 𝒩(C.f, C.f′, x, α)
-    rt = determine_root_status(op, C.f, X)
+    rt = determine_region_status(op, C.f, X)
     return refine(op, rt, tol)
 end
 
@@ -102,14 +102,14 @@ end
 """
     𝒩(f, f′, X, α)
 
-Single-variable Krawczyk operator.
+Single-variable Newton operator.
 
-The symbole for the operator is accessed with `\\scrN<tab>`.
+The symbol for the operator is accessed with `\\scrN<tab>`.
 """
 function 𝒩(f, f′, X::Interval{T}, α) where {T}
     m = Interval(mid(X, α))
 
-    m - (f(m) / f′(X))
+    return m - (f(m) / f′(X))
 end
 
 """
@@ -121,7 +121,7 @@ function 𝒩(f::Function, jacobian::Function, X::IntervalBox, α)  # multidimen
     m = IntervalBox(Interval.(mid(X, α)))
     J = jacobian(X)
 
-    IntervalBox(m .- (J \ f(m)))
+    return IntervalBox(m .- (J \ f(m)))
 end
 
 
@@ -152,7 +152,7 @@ interval together with its status.
 """
 function (C::Krawczyk)(X, tol, α=where_bisect)
     op = x -> 𝒦(C.f, C.f′, x, α)
-    rt = determine_root_status(op, C.f, X)
+    rt = determine_region_status(op, C.f, X)
     return refine(op, rt, tol)
 end
 
@@ -162,13 +162,13 @@ end
 
 Single-variable Krawczyk operator.
 
-The symbole for the operator is accessed with `\\scrK<tab>`.
+The symbol for the operator is accessed with `\\scrK<tab>`.
 """
 function 𝒦(f, f′, X::Interval{T}, α) where {T}
     m = Interval(mid(X, α))
     Y = 1 / f′(m)
 
-    m - Y*f(m) + (1 - Y*f′(X)) * (X - m)
+    return m - Y*f(m) + (1 - Y*f′(X)) * (X - m)
 end
 
 """
@@ -182,7 +182,7 @@ function 𝒦(f, jacobian, X::IntervalBox{T}, α) where {T}
     J = jacobian(X)
     Y = mid.(inv(jacobian(mm)))
 
-    m - Y*f(mm) + (I - Y*J) * (X.v - m)
+    return m - Y*f(mm) + (I - Y*J) * (X.v - m)
 end
 
 """
@@ -204,7 +204,7 @@ end
 """
     refine(op, X::Tuple{Symbol, Region}, tol)
 
-Wrap the refine method to let unchanged intervals that are not guaranteed to
+Wrap the refine method to leave unchanged intervals that are not guaranteed to
 contain an unique solution.
 """
 function refine(op, rt::Tuple{Symbol, Region}, tol)
