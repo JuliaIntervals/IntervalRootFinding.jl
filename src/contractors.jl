@@ -1,5 +1,58 @@
 export Bisection, Newton, Krawczyk
 
+"""
+    𝒩(f, f′, X, α)
+
+Single-variable Newton operator.
+
+The symbol for the operator is accessed with `\\scrN<tab>`.
+"""
+function 𝒩(f, f′, X::Interval{T}, α) where {T}
+    m = Interval(mid(X, α))
+
+    return m - (f(m) / f′(X))
+end
+
+"""
+    𝒩(f, jacobian, X, α)
+
+Multi-variable Newton operator.
+"""
+function 𝒩(f::Function, jacobian::Function, X::IntervalBox, α)  # multidimensional Newton operator
+    m = IntervalBox(Interval.(mid(X, α)))
+    J = jacobian(X)
+
+    return IntervalBox(m .- (J \ f(m)))
+end
+
+"""
+    𝒦(f, f′, X, α)
+
+Single-variable Krawczyk operator.
+
+The symbol for the operator is accessed with `\\scrK<tab>`.
+"""
+function 𝒦(f, f′, X::Interval{T}, α) where {T}
+    m = Interval(mid(X, α))
+    Y = 1 / f′(m)
+
+    return m - Y*f(m) + (1 - Y*f′(X)) * (X - m)
+end
+
+"""
+    𝒦(f, jacobian, X, α)
+
+Multi-variable Krawczyk operator.
+"""
+function 𝒦(f, jacobian, X::IntervalBox{T}, α) where {T}
+    m = mid(X, α)
+    mm = IntervalBox(m)
+    J = jacobian(X)
+    Y = mid.(inv(jacobian(mm)))
+
+    return m - Y*f(mm) + (I - Y*J) * (X.v - m)
+end
+
 
 """
     Contractor{F}
@@ -27,6 +80,46 @@ function (contractor::Bisection)(X, tol)
     return :unknown, X
 end
 
+for (Method, 𝒪) in ((:Newton, 𝒩), (:Krawczyk, 𝒦))
+    doc = """
+        $Method{F, FP} <: Contractor{F}
+
+    Contractor type for the $Method method.
+
+    # Fields
+        - `f::F`: function whose roots are searched
+        - `f::FP`: derivative or jacobian of `f`
+
+    -----
+
+        (C::$Method)(X, tol, α=where_bisect)
+
+    Contract an interval `X` using $Method operator and return the
+    contracted interval together with its status.
+
+    # Inputs
+        - `X`: Interval to contract.
+        - `tol`: Precision to which unique solutions are refined.
+        - `α`: Point of bisection of intervals.
+    """
+
+    @eval begin
+        struct $Method{F, FP} <: Contractor{F}
+            f::F
+            f′::FP   # use \prime<TAB> for ′
+        end
+
+        function (C::$Method)(X, tol, α=where_bisect)
+            op = x -> $𝒪(C.f, C.f′, x, α)
+            rt = determine_region_status(op, C.f, X)
+            return refine(op, rt, tol)
+        end
+
+        @doc $doc $Method
+    end
+end
+
+
 """
     safe_isempty(X)
 
@@ -34,7 +127,6 @@ Similar to `isempty` function for `IntervalBox`, but also works for `SVector`
 of `Interval`.
 """
 safe_isempty(X) = isempty(IntervalBox(X))
-
 
 """
     determine_region_status(contract, f, X)
@@ -65,124 +157,6 @@ function determine_region_status(op, f, X)
     NX ⪽ X  && return :unique, NX  # isinterior; know there's a unique root inside
 
     return :unknown, NX
-end
-
-"""
-    Newton{F, FP} <: Contractor{F}
-
-Contractor type for the Newton method.
-
-# Fields
-    - `f::F`: function whose roots are searched
-    - `f::FP`: derivative or jacobian of `f`
-"""
-struct Newton{F,FP} <: Contractor{F}
-    f::F
-    f′::FP   # use \prime<TAB> for ′
-end
-
-"""
-    (C::Newton)(X, tol, α=where_bisect)
-
-Contract an interval `X` using Newton operator and return the contracted
-interval together with its status.
-
-# Inputs
-    - `X`: Interval to contract.
-    - `tol`: Precision to which unique solutions are refined.
-    - `α`: Point of bisection of intervals.
-"""
-function (C::Newton)(X, tol, α=where_bisect)
-    op = x -> 𝒩(C.f, C.f′, x, α)
-    rt = determine_region_status(op, C.f, X)
-    return refine(op, rt, tol)
-end
-
-
-"""
-    𝒩(f, f′, X, α)
-
-Single-variable Newton operator.
-
-The symbol for the operator is accessed with `\\scrN<tab>`.
-"""
-function 𝒩(f, f′, X::Interval{T}, α) where {T}
-    m = Interval(mid(X, α))
-
-    return m - (f(m) / f′(X))
-end
-
-"""
-    𝒩(f, jacobian, X, α)
-
-Multi-variable Newton operator.
-"""
-function 𝒩(f::Function, jacobian::Function, X::IntervalBox, α)  # multidimensional Newton operator
-    m = IntervalBox(Interval.(mid(X, α)))
-    J = jacobian(X)
-
-    return IntervalBox(m .- (J \ f(m)))
-end
-
-
-"""
-    Krawczyk{F, FP} <: Contractor{F}
-
-Contractor type for the Krawczyk method.
-
-# Fields
-    - `f::F`: function whose roots are searched
-    - `f::FP`: derivative or jacobian of `f`
-"""
-struct Krawczyk{F, FP} <: Contractor{F}
-    f::F
-    f′::FP   # use \prime<TAB> for ′
-end
-
-"""
-    (C::Krawczyk)(X, tol, α=where_bisect)
-
-Contract an interval `X` using Krawczyk operator and return the contracted
-interval together with its status.
-
-# Inputs
-    - `X`: Interval to contract.
-    - `tol`: Precision to which unique solutions are refined.
-    - `α`: Point of bisection of intervals.
-"""
-function (C::Krawczyk)(X, tol, α=where_bisect)
-    op = x -> 𝒦(C.f, C.f′, x, α)
-    rt = determine_region_status(op, C.f, X)
-    return refine(op, rt, tol)
-end
-
-
-"""
-    𝒦(f, f′, X, α)
-
-Single-variable Krawczyk operator.
-
-The symbol for the operator is accessed with `\\scrK<tab>`.
-"""
-function 𝒦(f, f′, X::Interval{T}, α) where {T}
-    m = Interval(mid(X, α))
-    Y = 1 / f′(m)
-
-    return m - Y*f(m) + (1 - Y*f′(X)) * (X - m)
-end
-
-"""
-    𝒦(f, jacobian, X, α)
-
-Multi-variable Krawczyk operator.
-"""
-function 𝒦(f, jacobian, X::IntervalBox{T}, α) where {T}
-    m = mid(X, α)
-    mm = IntervalBox(m)
-    J = jacobian(X)
-    Y = mid.(inv(jacobian(mm)))
-
-    return m - Y*f(mm) + (I - Y*J) * (X.v - m)
 end
 
 """
