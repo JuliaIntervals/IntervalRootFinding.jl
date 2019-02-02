@@ -21,3 +21,4 @@ X = IntervalBox( (-L..L+1), 2)
 @time rts = IntervalRootFinding.roots(∇f, rts, Newton, 1e-20)
 
 @test length(rts) == 529
+@test all(isunique(rts))
