@@ -6,11 +6,27 @@ function all_unique(rts)
     all(root_status.(rts) .== :unique)
 end
 
-function test_newtonlike(f, deriv, X, method, nsol, tol=1e-3)
+function roots_dist(rt1::Root{T}, rt2::Root{T}) where {T <: Interval}
+    d = dist(interval(rt1), interval(rt2))
+    return sum(d)
+end
+
+function roots_dist(rt1::Root{T}, rt2::Root{T}) where {T <: IntervalBox}
+    return sum(dist.(interval(rt1), interval(rt2)))
+end
+
+function roots_dist(rt1::Root{Complex{T}}, rt2::Root{Complex{T}}) where {T <: Interval}
+    dreal = dist(real(interval(rt1)), real(interval(rt2)))
+    dimag = dist(imag(interval(rt1)), imag(interval(rt2)))
+
+    return sum(dreal) + sum(dimag)
+end
+
+function test_newtonlike(f, deriv, X, method, nsol, tol=1e-10)
     rts = roots(f, X, method)
     @test length(rts) == nsol
     @test all_unique(rts)
-    @test rts == roots(f, deriv, X, method)
+    @test sum(roots_dist.(rts, roots(f, deriv, X, method))) < tol
 end
 
 newtonlike_methods = [Newton, Krawczyk]
@@ -81,6 +97,30 @@ end
         @test all_unique(rts)
         deriv = xx -> ForwardDiff.jacobian(g, xx)
         @test rts == roots(g, deriv, XX, method)
+    end
+end
+
+@testset "Out of domain" begin
+    for method in newtonlike_methods
+        @test length(roots(log, -100..2, method)) == 1
+        @test length(roots(log, -100..(-1), method)) == 0
+    end
+end
+
+@testset "Infinite domain" begin
+    for method in newtonlike_methods
+        rts = roots(x -> x^2 - 2, -∞..∞, method)
+        @test length(filter(isunique, rts)) == 2
+    end
+end
+
+@testset "NaN return value" begin
+    f(xx) = ( (x, y) = xx; SVector(log(y/x) + 3x, y - 2x) )
+    X = IntervalBox(-100..100, 2)
+    for method in newtonlike_methods
+        rts = roots(f, X, method)
+        @test length(filter(isunique, rts)) == 1
+        @test length(filter(x -> contains_zero(x.interval), rts)) == 1
     end
 end
 
