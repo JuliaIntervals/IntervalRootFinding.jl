@@ -8,7 +8,7 @@ using IntervalArithmetic
 using ForwardDiff
 using StaticArrays
 
-using LinearAlgebra: I, Diagonal
+using LinearAlgebra: I, Diagonal, ⋅
 
 
 import Base: ⊆, show, big, \
@@ -25,7 +25,7 @@ export
     gauss_seidel_contractor, gauss_seidel_contractor!,
     gauss_elimination_interval, gauss_elimination_interval!,
     slope,
-    mean_value_form, third_order_taylor_form
+    mean_value_form_scalar, mean_value_form_vector, third_order_taylor_form_scalar
 
 export isunique, root_status
 
