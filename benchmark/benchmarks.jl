@@ -24,6 +24,25 @@ for example in (SmileyExample22, SmileyExample52, SmileyExample54) #, SmileyExam
 end
 
 
+S = SUITE["Rastigrin stationary points"] = BenchmarkGroup()
+
+# Rastrigin function:
+const A = 10
+
+f(x, y) = 2A + x^2 - A*cos(2π*x) + y^2 - A*cos(2π*y)
+f(X) = f(X...)
+
+ForwardDiff.gradient(f, X::IntervalBox) = ForwardDiff.gradient(f, X.v)
+∇f = X -> ForwardDiff.gradient(f, X)
+
+L = 5.0
+X = IntervalBox(-L..(L+1), 2)
+
+for method in (Newton, Krawczyk)
+    S[string(method)] = @benchmarkable roots($(∇(f)), $X, $method, 1e-5)
+end
+
+
 S = SUITE["Linear equations"] = BenchmarkGroup()
 
 sizes = (2, 5, 10)
