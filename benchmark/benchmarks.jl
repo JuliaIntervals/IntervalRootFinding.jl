@@ -5,6 +5,7 @@ using BenchmarkTools
 using ForwardDiff
 using IntervalArithmetic
 using IntervalRootFinding
+using StaticArrays
 
 import Random
 
@@ -51,6 +52,8 @@ for n in sizes
     s = S["n = $n"] = BenchmarkGroup()
     A = Interval.(randn(n, n))
     b = Interval.(randn(n))
+    A = SMatrix{n, n}(A)
+    b = SVector{n}(b)
 
     s["Gauss seidel"] = @benchmarkable gauss_seidel_interval($A, $b)
     s["Gauss seidel contractor"] = @benchmarkable gauss_seidel_contractor($A, $b)

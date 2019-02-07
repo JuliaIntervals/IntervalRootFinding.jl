@@ -84,63 +84,65 @@ function gauss_seidel_contractor!(x::AbstractArray, A::AbstractMatrix, b::Abstra
     x
 end
 
-function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precondition=true)
+function gauss_elimination_interval(A::SMatrix{N, N, Interval{T}},
+    b::SVector{N, Interval{T}} ;
+    precondition=true) where {N, T}
 
-    x = similar(b)
-    x .= -1e16..1e16
-    x = gauss_elimination_interval!(x, A, b, precondition=precondition)
+    x = MVector{N, Interval{T}}([entireinterval(T) for _ in 1:N])
+    Am = convert(MMatrix{N, N, Interval{T}}, A)
+    bm = convert(MVector{N, Interval{T}}, b)
+
+    gauss_elimination_interval!(x, Am, bm, precondition=precondition)
 
     return x
 end
+
 """
-Solves the system of linear equations using Gaussian Elimination.
+    gauss_elimination_interval!(x::MVector, A::MMatrix, b::MVector, [precondition=true])
+
+Solves the system of linear equations `A*x = b` using Gaussian Elimination.
 Preconditioning is used when the `precondition` keyword argument is `true`.
+
+This is the mutable version of the algorithm, which mutate `x`, `A` and `b`.
+Final upper triangle of `A` and `b` correspond to the triangular system.
 
 REF: Luc Jaulin et al.,
 *Applied Interval Analysis*, pg. 72
 """
-function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true)
+function gauss_elimination_interval!(x::MVector{N, Interval{T}},
+    A::MMatrix{N, N, Interval{T}},
+    b::MVector{N, Interval{T}} ;
+    precondition=true) where {N, T}
 
     if precondition
-        (A, b) = preconditioner(A, b)
-    else
-        A = copy(A)
-        b = copy(b)
+        A, b = preconditioner(A, b)
     end
 
-    n = size(A, 1)
-
-    p = similar(b)
-    p .= 0
-
-    for i in 1:(n-1)
-        if 0 ∈ A[i, i] # diagonal matrix is not invertible
-            p .= entireinterval(b[1])
-            return p .∩ x  # return x?
+    for i in 1:(N-1)
+        if 0 ∈ A[i, i] # Pivot is zero, implying singular matrix
+            x .= entireinterval(T)
+            return
         end
 
-        for j in (i+1):n
+        for j in (i+1):N
             α = A[j, i] / A[i, i]
             b[j] -= α * b[i]
 
-            for k in (i+1):n
+            for k in (i+1):N
                 A[j, k] -= α * A[i, k]
             end
         end
     end
 
-    for i in n:-1:1
+    for i in N:-1:1
+        temp = zero(T)
 
-        temp = zero(b[1])
-
-        for j in (i+1):n
-            temp += A[i, j] * p[j]
+        for j in (i+1):N
+            temp += A[i, j] * x[j]
         end
 
-        p[i] = (b[i] - temp) / A[i, i]
+        x[i] = (b[i] - temp) / A[i, i]
     end
-
-    return p .∩ x
 end
 
 function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precondition=true)
@@ -152,6 +154,7 @@ function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precon
 
     return x
 end
+
 """
 Using `Base.\``
 """
@@ -162,7 +165,5 @@ function gauss_elimination_interval1!(x::AbstractArray, a::AbstractMatrix, b::Ab
     a \ b
 end
 
-\(A::StaticArray{Tuple{M, N}, Interval{T}, 2}, b::StaticArray{Tuple{N}, Interval{T}, 1} ; kwargs...) where {M, N, T} = gauss_elimination_interval(A, b, kwargs...)
-\(A::StaticArray{Tuple{M, N}, Interval{T}, 2}, b::IntervalBox ; kwargs...) where {M, N, T} = gauss_elimination_interval(A, b.v, kwargs...)
-
-\(A::Matrix{Interval{T}}, b::Array{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)
+\(A::SMatrix{N, N, Interval{T}}, b::SVector{N, Interval{T}} ; kwargs...) where {N, T} = gauss_elimination_interval(A, b, kwargs...)
+\(A::SMatrix{N, N, Interval{T}}, b::IntervalBox{N, T} ; kwargs...) where {N, T} = gauss_elimination_interval(A, b.v, kwargs...)

@@ -19,13 +19,13 @@ end
 
 @testset "Linear Equations" begin
 
-    As = [[2..3 0..1; 1..2 2..3], ]
-    bs = [[0..120, 60..240], ]
-    xs = [[-120..90, -60..240], ]
+    As = Any[SMatrix{2}(2..3, 1..2, 0..1, 2..3), ]
+    bs = Any[SVector(0..120, 60..240), ]
+    xs = Any[SVector(-120..90, -60..240), ]
 
-    for i in 1:10
-        rand_A = rand_mat(i)[1]
-        rand_x = rand_vec(i)[1]
+    for i in 2:6
+        rand_A = rand_mat(i)[3]
+        rand_x = rand_vec(i)[3]
         rand_b = rand_A * rand_x
         push!(As, rand_A)
         push!(bs, rand_b)
@@ -35,7 +35,7 @@ end
     n = length(As)
 
 
-    for solver in (gauss_seidel_interval, gauss_seidel_contractor, gauss_elimination_interval, \)
+    for solver in (gauss_seidel_interval, gauss_seidel_contractor, gauss_elimination_interval)
         @testset "Solver $solver" begin
             #for precondition in (false, true)
 
