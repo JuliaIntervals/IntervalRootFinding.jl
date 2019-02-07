@@ -162,5 +162,7 @@ function gauss_elimination_interval1!(x::AbstractArray, a::AbstractMatrix, b::Ab
     a \ b
 end
 
-\(A::StaticMatrix{Interval{T}}, b::StaticArray{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)
+\(A::StaticArray{Tuple{M, N}, Interval{T}, 2}, b::StaticArray{Tuple{N}, Interval{T}, 1} ; kwargs...) where {M, N, T} = gauss_elimination_interval(A, b, kwargs...)
+\(A::StaticArray{Tuple{M, N}, Interval{T}, 2}, b::IntervalBox ; kwargs...) where {M, N, T} = gauss_elimination_interval(A, b.v, kwargs...)
+
 \(A::Matrix{Interval{T}}, b::Array{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)
