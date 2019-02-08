@@ -8,7 +8,7 @@ using IntervalArithmetic
 using ForwardDiff
 using StaticArrays
 
-using LinearAlgebra: I, Diagonal
+using LinearAlgebra: I, diag
 
 
 import Base: ⊆, show, big, \
