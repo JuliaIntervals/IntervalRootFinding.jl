@@ -28,36 +28,6 @@ end
 
 
 
-"""If a root is known to be inside an interval,
-`newton_refine` iterates the interval Newton method until that root is found."""
-function newton_refine(f::Function, f_prime::Function, X::Interval{T};
-                          tolerance=eps(T), debug=false) where {T}
-
-    debug && (print("Entering newton_refine:"); @show X)
-
-    while diam(X) > tolerance  # avoid problem with tiny floating-point numbers if 0 is a root
-        deriv = f_prime(X)
-        NX = 𝒩(f, X, deriv)
-
-        debug && @show(X, NX)
-
-        NX = NX ∩ X
-        NX == X && break
-
-        X = NX
-    end
-
-    debug && @show "Refined root", X
-
-    return [Root(X, :unique)]
-end
-
-
-
-
-
-
-
 """`newton` performs the interval Newton method on the given function `f`
 with its optional derivative `f_prime` and initial interval `x`.
 Optional keyword arguments give the `tolerance`, `maxlevel` at which to stop
