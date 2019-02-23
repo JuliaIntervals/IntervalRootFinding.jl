@@ -79,7 +79,7 @@ function (contractor::Bisection)(r, tol)
         return Root(X, :empty)
     end
 
-    return Root(X, :unkown)
+    return Root(X, :unknown)
 end
 
 for (Method, 𝒪) in ((:Newton, 𝒩), (:Krawczyk, 𝒦))
@@ -87,35 +87,6 @@ for (Method, 𝒪) in ((:Newton, 𝒩), (:Krawczyk, 𝒦))
         $Method{F, FP} <: Contractor{F}
 
     Contractor type for the $Method method.
-
-    Currently `Newton` and `Krawczyk` contractors uses this.
-"""
-function newtonlike_contract(op, C, r, tol)
-    X = interval(r)
-    former_status = root_status(r)
-
-    if former_status == :empty || !(contains_zero(C.f(X)))
-        return Root(X, :empty)
-    end
-    # given that have the Jacobian, can also do mean value form
-
-    NX = op(C.f, C.f′, X) ∩ X
-
-    isempty(NX) && return Root(X, :empty)
-    isinf(X) && return Root(X, :unkown)  # force bisection
-
-    if former_status == :unique || NX ⪽ X  # isinterior; know there's a unique root inside
-        NX =  refine(X -> op(C.f, C.f′, X), NX, tol)
-        return Root(NX, :unique)
-    end
-
-    return Root(NX, :unkown)
-end
-
-"""
-    Newton{F, FP} <: Contractor{F}
-
-    Contractor type for the Newton method.
 
     # Fields
         - `f::F`: function whose roots are searched
@@ -129,7 +100,7 @@ end
     contracted interval together with its status.
 
     # Inputs
-        - `X`: Interval to contract.
+        - `R`: Root object containing the interval to contract.
         - `tol`: Precision to which unique solutions are refined.
         - `α`: Point of bisection of intervals.
     """
@@ -140,9 +111,9 @@ end
             f′::FP   # use \prime<TAB> for ′
         end
 
-        function (C::$Method)(X, tol, α=where_bisect)
+        function (C::$Method)(R, tol, α=where_bisect)
             op = x -> $𝒪(C.f, C.f′, x, α)
-            rt = determine_region_status(op, C.f, X)
+            rt = determine_region_status(op, C.f, R)
             return refine(op, rt, tol)
         end
 
@@ -160,34 +131,41 @@ of `Interval`.
 safe_isempty(X) = isempty(IntervalBox(X))
 
 """
-    determine_region_status(contract, f, X)
+    determine_region_status(contract, f, R)
 
 Contraction operation for contractors using the first derivative of the
 function.
 
 Currently `Newton` and `Krawczyk` contractors use this.
 """
-function determine_region_status(op, f, X)
+function determine_region_status(op, f, R)
+    X = interval(R)
+    former_status = root_status(R)
+
     imX = f(X)
 
-    !(contains_zero(imX)) && return :empty, X
+    if former_status == :empty || !(contains_zero(imX))
+        return Root(X, :empty)
+    end
 
-    safe_isempty(imX) && return :empty, X  # X is fully outside of the domain of f
+    safe_isempty(imX) && return Root(X, :empty)  # X is fully outside of the domain of f
 
     contracted_X = op(X)
 
     # Only happens if X is partially out of the domain of f
-    safe_isempty(contracted_X) && return :unknown, X  # force bisection
+    safe_isempty(contracted_X) && return Root(X, :unknown)  # force bisection
 
     # given that have the Jacobian, can also do mean value form
     NX = contracted_X ∩ X
 
-    isinf(X) && return :unknown, NX  # force bisection
-    safe_isempty(NX) && return :empty, X
+    isinf(X) && return Root(NX, :unknown)  # force bisection
+    safe_isempty(NX) && return Root(X, :empty)
 
-    NX ⪽ X  && return :unique, NX  # isinterior; know there's a unique root inside
+    if former_status == :unique || NX ⪽ X  # isinterior; know there's a unique root inside
+        return Root(NX, :unique)
+    end
 
-    return :unknown, NX
+    return Root(NX, :unknown)
 end
 
 """
@@ -212,7 +190,7 @@ end
 Wrap the refine method to leave unchanged intervals that are not guaranteed to
 contain an unique solution.
 """
-function refine(op, rt::Tuple{Symbol, Region}, tol)
-    rt[1] != :unique && return rt
-    return :unique, refine(op, rt[2], tol)
+function refine(op, R::Root, tol)
+    root_status(R) != :unique && return R
+    return Root(refine(op, interval(R), tol), :unique)
 end

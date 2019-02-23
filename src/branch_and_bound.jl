@@ -245,7 +245,7 @@ function iterate(search::BBSearch{DATA},
     elseif action == :discard
         discard_leaf!(wt, id)
     else
-        warn("Branch and bound: process function of the search object return unkown action: $action, element $X is ignored. Valid actions are :store, :bisect and :discard.")
+        error("Branch and bound: process function of the search object return unknown action: $action, element $X is ignored. Valid actions are :store, :bisect and :discard.")
     end
     return wt, wt
 end

@@ -28,7 +28,7 @@ root_element(search::BBSearch{Root{R}}) where {R <: Region} = search.initial
 
 function bisect(r::Root)
     Y1, Y2 = bisect(interval(r))
-    return Root(Y1, :unkown), Root(Y2, :unkown)
+    return Root(Y1, :unknown), Root(Y2, :unknown)
 end
 
 bisect(::BBSearch, r::Root) = bisect(r::Root)
@@ -40,11 +40,14 @@ function process(search::Union{BreadthFirstSearch, DepthFirstSearch}, r::Root)
     status == :unique && return :store, contracted_root
     status == :empty && return :discard, contracted_root
 
-    if status == :unkown
+    if status == :unknown
         # Avoid infinite division of intervals with singularity
         isnan(contracted_root) && diam(r) < search.tol && return :store, r
         diam(contracted_root) < search.tol && return :store, contracted_root
+
         return :bisect, r
+    else
+        error("Unrecognized root status: $status")
     end
 end
 
@@ -110,7 +113,7 @@ Inputs:
 - `strategy`: `SearchStrategy` determining the order in which regions are
     processed.
 - `tol`: Absolute tolerance. If a region has a diameter smaller than `tol`, it
-    is returned with status `:unkown`.
+    is returned with status `:unknown`.
 
 """
 function roots(f::Function, X, contractor::Type{C}=default_contractor,
@@ -186,13 +189,13 @@ end
 function _roots(f, X::Region, contractor::Type{C},
                strategy::Type{S}, tol::Float64) where {C <: Contractor, S <: BBSearch}
 
-    _roots(f, Root(X, :unkown), contractor, strategy, tol)
+    _roots(f, Root(X, :unknown), contractor, strategy, tol)
 end
 
 function _roots(f, deriv, X::Region, contractor::Type{C},
                strategy::Type{S}, tol::Float64) where {C <: Contractor, S <: BBSearch}
 
-    _roots(f, deriv, Root(X, :unkown), contractor, strategy, tol)
+    _roots(f, deriv, Root(X, :unknown), contractor, strategy, tol)
 end
 
 
@@ -216,7 +219,7 @@ function _roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
 
     g = realify(f)
     Y = IntervalBox(reim(Xc)...)
-    rts = _roots(g, Root(Y, :unkown), contractor, strategy, tol)
+    rts = _roots(g, Root(Y, :unknown), contractor, strategy, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end
@@ -227,7 +230,7 @@ function _roots(f, Xc::Complex{Interval{T}}, contractor::NewtonLike,
     g = realify(f)
     g_prime = x -> ForwardDiff.jacobian(g, x)
     Y = IntervalBox(reim(Xc)...)
-    rts = _roots(g, g_prime, Root(Y, :unkown), contractor, strategy, tol)
+    rts = _roots(g, g_prime, Root(Y, :unknown), contractor, strategy, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end
@@ -238,7 +241,7 @@ function _roots(f, deriv, Xc::Complex{Interval{T}}, contractor::NewtonLike,
     g = realify(f)
     g_prime = realify_derivative(deriv)
     Y = IntervalBox(reim(Xc)...)
-    rts = _roots(g, g_prime, Root(Y, :unkown), contractor, strategy, tol)
+    rts = _roots(g, g_prime, Root(Y, :unknown), contractor, strategy, tol)
 
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end

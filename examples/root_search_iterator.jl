@@ -60,11 +60,11 @@ function IntervalRootFinding.process(search::MySearch, r::Root)
     unrefined_root = Root(r.interval, status)
     status == :unique && return :store, unrefined_root
     status == :empty && return :store, unrefined_root # Store largest known empty intervals
-    status == :unkown && diam(contracted_root) < search.tol && return :store, unrefined_root
+    status == :unknown && diam(contracted_root) < search.tol && return :store, unrefined_root
     return :bisect, unrefined_root  # Always bisect the original interval to bypass [NaN, NaN]
 end
 
-search = MySearch(Root(-10..10, :unkown), contractor, 1e-10)
+search = MySearch(Root(-10..10, :unknown), contractor, 1e-10)
 for tree in search
     global endtree = tree
 end  # Go to the end of the iteration
