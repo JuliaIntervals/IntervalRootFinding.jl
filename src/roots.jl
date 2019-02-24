@@ -72,20 +72,6 @@ function branch_and_prune(r::Root, contractor, search, tol)
     return data(endstate)
 end
 
-export recursively_branch_and_prune
-
-function recursively_branch_and_prune(h, X, contractor=BisectionContractor, final_tol=1e-14)
-    tol = 2
-    roots = branch_and_prune(h, X, IntervalRootFinding.BisectionContractor, tol)
-
-    while tol > 1e-14
-       tol /= 2
-       roots = branch_and_prune(h, roots, IntervalRootFinding.BisectionContractor, tol)
-    end
-
-    return roots
-end
-
 const NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
 const default_strategy = DepthFirstSearch
 const default_tolerance = 1e-15

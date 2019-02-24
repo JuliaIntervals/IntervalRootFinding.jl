@@ -20,7 +20,7 @@ for (k, tree) in enumerate(search)
     global endtree = tree
 end
 
-rts = data(endtree)  # Use `data` to only get the leafs marked as `:final`
+rts = data(endtree)  # Use `data` to only get the leaves marked as `:final`
 println("Final $(length(rts)) roots: $rts")
 
 # The second available type of root search is depth first
