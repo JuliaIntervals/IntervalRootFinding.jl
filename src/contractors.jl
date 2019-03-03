@@ -47,11 +47,11 @@ Multi-variable Krawczyk operator.
 """
 function 𝒦(f, jacobian, X::IntervalBox{T}, α) where {T}
     m = mid(X, α)
-    mm = IntervalBox(m)
     J = jacobian(X)
-    Y = mid.(inv(jacobian(mm)))
+    Y = inv(jacobian(m))
+    mm = IntervalBox(m)
 
-    return m - Y*f(mm) + (I - Y*J) * (X.v - m)
+    return mm - Y*f(mm) + (I - Y*J) * (X - mm)
 end
 
 
