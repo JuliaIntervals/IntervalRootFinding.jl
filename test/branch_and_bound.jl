@@ -86,6 +86,12 @@ import IntervalRootFinding: process, bisect
 end
 
 
+# Implement the interface for breadth first in a dummy way
+struct DummySearch <: BreadthFirstBBSearch{Symbol} end
+
+process(::DummySearch, s::Symbol) = s, s
+bisect(::DummySearch, s::Symbol) = :store, :store
+
 @testset "Interface functions" begin
     #= Build the following tree for testing
                     (1)
@@ -104,13 +110,7 @@ end
                   Dict(3 => to_store, 4 => to_discard, 5 => to_bisect),
                   [3, 4, 5])
 
-    # Implement the interface for breadth first in a dummy way
-    struct DummySearch <: BreadthFirstBBSearch{Symbol} end
-
     search = DummySearch()
-
-    IntervalRootFinding.process(::DummySearch, s::Symbol) = s, s
-    IntervalRootFinding.bisect(::DummySearch, s::Symbol) = :store, :store
 
     # First iteration processes the to_store leaf
     tree, _ = iterate(search, tree)
