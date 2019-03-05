@@ -8,13 +8,32 @@ diam(r::Root) = diam(interval(r))
 isnan(X::IntervalBox) = any(isnan.(X))
 isnan(r::Root) = isnan(interval(r))
 
-# Implement BBSearch interface
+"""
+    BreadthFirstSearch <: BreadthFirstBBSearch
+
+Type implementing  the `BreadthFirstBBSearch` interface for interval roots finding.
+
+# Fields:
+    - `initial`: region (as a `Root` object) in which roots are searched.
+    - `contractor`: contractor to use (`Bisection`, `Newton` or `Krawczyk`)
+    - `tol`: tolerance of the search
+"""
 struct BreadthFirstSearch{R <: Region, C <: Contractor, T <: Real} <: BreadthFirstBBSearch{Root{R}}
     initial::Root{R}
     contractor::C
     tol::T
 end
 
+"""
+    DepthFirstSearch <: DepthFirstBBSearch
+
+Type implementing the `DepthFirstBBSearch` interface for interval roots finding.
+
+# Fields:
+    - `initial`: region (as a `Root` object) in which roots are searched.
+    - `contractor`: contractor to use (`Bisection`, `Newton` or `Krawczyk`)
+    - `tol`: tolerance of the search
+"""
 struct DepthFirstSearch{R <: Region, C <: Contractor, T <: Real} <: DepthFirstBBSearch{Root{R}}
     initial::Root{R}
     contractor::C
@@ -54,10 +73,8 @@ end
 """
     branch_and_prune(X, contractor, strategy, tol)
 
-Generic branch and prune routine for finding isolated roots using the `contract`
-function as the contractor. The argument `contractor` is function that
-determines the status of a given box `X`. It returns a new contracted box and
-a symbol indicating its status.
+Generic branch and prune routine for finding isolated roots using the given
+contractor to determine the status of a given box `X`.
 
 See the documentation of the `roots` function for explanation of the other
 arguments.
@@ -77,9 +94,6 @@ const default_strategy = DepthFirstSearch
 const default_tolerance = 1e-15
 const default_contractor = Newton
 
-#===
-    Default case when `contractor, `strategy` or `tol` is omitted.
-===#
 """
     roots(f, X, contractor=Newton, strategy=BreadthFirstSearch, tol=1e-15)
     roots(f, deriv, X, contractor=Newton, strategy=BreadthFirstSearch, tol=1e-15)
@@ -102,6 +116,9 @@ Inputs:
     is returned with status `:unknown`.
 
 """
+#===
+    Default case when `contractor, `strategy` or `tol` is omitted.
+===#
 function roots(f::Function, X, contractor::Type{C}=default_contractor,
                strategy::Type{S}=default_strategy,
                tol::Float64=default_tolerance) where {C <: Contractor, S <: BBSearch}

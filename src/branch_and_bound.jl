@@ -21,8 +21,9 @@ end
 """
     BBLeaf{DATA} <: AbstractBBLeaf
 
-Leaf node of a `BBTree`. Contains both data and a status indicating if it
-will be further processed by the branch and bound search.
+Leaf node of a `BBTree` that contains some data. Its status is either
+    - `:working`: the leaf will be further processed.
+    - `:final`: the leaf won't be touched anymore.
 """
 struct BBLeaf{DATA} <: AbstractBBNode
     data::DATA
@@ -44,7 +45,9 @@ end
 Tree storing the data used and produced by a branch and bound search in a
 structured way.
 
-Node can be accessed using their index using the bracket syntax `wt[node_id]`.
+Nodes and leaves can be accessed using their index using the bracket syntax
+`wt[node_id]`. However this is slow, as nodes and leaves are stored separately.
+
 Support the iterator interface. The element yielded by the iteration are
 tuples `(node_id, lvl)` where `lvl` is the depth of the node in the tree.
 """
@@ -60,6 +63,7 @@ function BBTree(rootdata::DATA) where {DATA}
 end
 
 show(io::IO, wn::BBNode) = print(io, "Node with children $(wn.children)")
+
 function show(io::IO, wl::BBLeaf)
     print(io, "Leaf (:$(wl.status)) with data $(wl.data)")
 end
@@ -76,13 +80,30 @@ function show(io::IO, wt::BBTree{DATA}) where {DATA}
     end
 end
 
-data(leaf::BBLeaf) = leaf.data
-
 # Root node has id 1 and parent id 0
 root(wt::BBTree) = wt[1]
 is_root(wt::BBTree, id::Int) = (id == 1)
 
+"""
+    nnodes(wt::BBTree)
+
+Number of nodes (including leaves) in a `BBTree`.
+"""
 nnodes(wt::BBTree) = length(wt.nodes) + length(wt.leaves)
+
+"""
+    data(leaf::BBLeaf)
+
+Return the data stored in the leaf.
+"""
+data(leaf::BBLeaf) = leaf.data
+
+"""
+    data(wt::BBTree)
+
+Return all the data stored in a `BBTree` as a list. The ordering of the elements
+is arbitrary.
+"""
 data(wt::BBTree) = data.(values(wt.leaves))
 
 function newid(wt::BBTree)
@@ -104,7 +125,8 @@ function newid(wt::BBTree)
     return max(m1, m2) + 1
 end
 
-# Index operations (probably slow)
+# Index operations (slower than manipulating the node directly in the correct
+# dictionary)
 function getindex(wt::BBTree, id)
     haskey(wt.nodes, id) && return wt.nodes[id]
     haskey(wt.leaves, id) && return wt.leaves[id]
@@ -179,27 +201,37 @@ Branch and bound search interface in element of type DATA.
 
 This interface provide an iterable that perform the search.
 
-# Methods to implement:
-    - `root_element(::BBSearch)`: return the element with which the searc is started
+There is currently three types of search supported `BreadFirstBBSearch`,
+`DepthFirstBBSearch` and `KeyBBSearch`, each one processing the element of the
+tree in a different order. When subtyping one of these, the following methods
+must be implemented:
+    - `root_element(::BBSearch)`: return the element with which the search is started
     - `process(::BBSearch, elem::DATA)`: return a symbol representing the action
-        to perform with the element `elem` and a `elem` itself (possibly refined)
-    - `bisect(::BBSearch, elem::DATA)`: return two elements build by bisecting `elem`
+        to perform with the element `elem` and an object of type `DATA` reprensenting
+        the state of the element after processing (may return `elem` unchanged).
+    - `bisect(::BBSearch, elem::DATA)`: return two elements of type `DATA` build
+        by bisecting `elem`
 
-# Actions returned by the process function
+Subtyping `BBSearch` directly allows to have control over the order in which
+the elements are process. To do this the following methods must be implemented:
+    - `root_element(::BBSearch)`: return the first element to be processed. Use
+        to build the initial tree.
+    - `get_leaf_id!(::BBSearch, wt::BBTree)`: return the id of the next leaf that
+        will be processed and remove it from the list of working leaves of `wt`.
+    - `insert_leaf!(::BBSearch, wt::BBTree, leaf::BBLeaf)`: insert a leaf in the
+        list of working leaves.
+
+# Valid symbols returned by the process function
     - `:store`: the element is considered as final and is stored, it will not be
         further processed
     - `:bisect`: the element is bisected and each of the two resulting part will
-        be further processed
+        be processed
     - `:discard`: the element is discarded from the tree, allowing to free memory
 """
 abstract type BBSearch{DATA} end
 
 abstract type BreadthFirstBBSearch{DATA} <: BBSearch{DATA} end
 abstract type DepthFirstBBSearch{DATA} <: BBSearch{DATA} end
-
-# By default the root element is store by the initial field
-# Define a more specific function to change that
-root_element(search::BBSearch) = search.initial
 
 """
     KeyBBSearch{DATA} <: BBSearch{DATA}
@@ -208,9 +240,19 @@ Interface to a branch and bound search that use a key function to decide which
 element to process first. The search process first the element with the largest
 key as computed by `keyfunc(ks::KeyBBSearch, elem)`.
 
-!WARNING: Untested.
+!!WARNING: Untested.
 """
 abstract type KeyBBSearch{DATA} <: BBSearch{DATA} end
+
+"""
+    root_element(search::BBSearch)
+
+Return the initial element of the search. The `BBTree` will be build around it.
+
+Can be define for custom searches that are direct subtype of `BBSearch`, default
+behavior is to fetch the field `initial` of the search.
+"""
+root_element(search::BBSearch) = search.initial
 
 """
     get_leaf_id!(::BBSearch, wt::BBTree)
@@ -275,7 +317,9 @@ function iterate(search::BBSearch{DATA},
     elseif action == :discard
         discard_leaf!(wt, id)
     else
-        error("Branch and bound: process function of the search object return unknown action: $action for element $X. Valid actions are :store, :bisect and :discard.")
+        error("Branch and bound: process function of the search object return " *
+              "unknown action: $action for element $X. Valid actions are " *
+              ":store, :bisect and :discard.")
     end
     return wt, wt
 end
