@@ -1,8 +1,8 @@
 using IntervalRootFinding
 using Test
 
-#include("bisect.jl")
-#include("findroots.jl")
+include("branch_and_bound.jl")
+include("search_interface.jl")
 include("roots.jl")
 include("test_smiley.jl")
 include("newton1d.jl")

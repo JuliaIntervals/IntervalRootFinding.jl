@@ -154,20 +154,3 @@ end
         test_newtonlike(f, deriv, Xc, method, 3, 1e-10)
     end
 end
-
-@testset "Root search iterator interface" begin
-    contractor = Newton(sin, cos)
-    search = BreadthFirstSearch(-10..10, contractor, 1e-3)
-    elem, state = iterate(search)
-
-    # cover optional iterator methods
-    @test eltype(search) != Any
-    # @test_nowarn iteratorsize(search)
-end
-
-
-@testset "Search strategy" begin
-    X = -5..5
-    rts = roots(sin, cos, X, Newton, DepthFirstSearch)
-    @test Set(rts) == Set(roots(sin, cos, X, Newton, BreadthFirstSearch))
-end
