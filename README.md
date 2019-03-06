@@ -4,6 +4,9 @@
 
 [![codecov.io](http://codecov.io/github/JuliaIntervals/IntervalRootFinding/coverage.svg?branch=master)](http://codecov.io/github/JuliaIntervals/IntervalRootFinding.jl?branch=master)
 
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaIntervals.github.io/IntervalRootFinding.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://JuliaIntervals.github.io/IntervalRootFinding.jl/latest)
+
 This package provides guaranteed methods for finding **roots** of functions $f: \mathbb{R}^n \to \mathbb{R}^n$ with $n \ge 1$, i.e. vectors (or scalars, for $n=1$) $\mathbb{x}$ for which $f(\mathbb{x}) = \mathbb{0}$. It guarantees to find *all* roots inside a given box in $\mathbb{R}^n$, or report subboxes for which it is unable to provide guarantees.
 
 To do so, it uses methods from interval analysis, using interval arithmetic from the [`IntervalArithmetic.jl`](https://github.com/JuliaIntervals/IntervalArithmetic.jl) package by the same authors.

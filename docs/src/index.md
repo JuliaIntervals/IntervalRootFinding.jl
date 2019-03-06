@@ -1,170 +1,118 @@
 # `IntervalRootFinding.jl`
 
-This Julia package implements guaranteed root-finding methods using interval arithmetic.
+This package provides guaranteed methods for finding **roots** of functions $f: \mathbb{R}^n \to \mathbb{R}^n$ with $n \ge 1$, i.e. vectors (or scalars, for $n=1$) $\mathbb{x}$ for which $f(\mathbb{x}) = \mathbb{0}$. It guarantees to find *all* roots inside a given box in $\mathbb{R}^n$, or report subboxes for which it is unable to provide guarantees.
 
-# Root finding
+To do so, it uses methods from interval analysis, using interval arithmetic from the [`IntervalArithmetic.jl`](https://github.com/JuliaIntervals/IntervalArithmetic.jl) package by the same authors.
 
-Interval arithmetic not only provides guaranteed numerical calculations; it also
-makes possible fundamentally new algorithms.
+!!! warning
 
-## Interval Newton method
-One such algorithm is the **interval Newton method**. This is a version of the
-standard Newton (or Newton-Raphson) algorithm, an iterative method for finding
-roots (zeros) of functions.
-The interval version, however, is fundamentally different from its standard
-counterpart, in that it can (under the best circumstances) provide rigorous
-*guarantees* about the presence or absence and uniqueness of roots of a given
-function in a given interval, and tells us explicitly when it is unable to
-provide such a guarantee.
+    While this package aimed at providing *guaranteed results* and despite our best efforts and test suite, some bugs may remain and there are several known issues with corner cases. Please have a look at the [issues tracker](https://github.com/JuliaIntervals/IntervalRootFinding.jl/issues) and report there any odd behavior.
 
-The idea of the Newton method is to calculate a root $x^\ast$ of a function
-$f$ [i.e., a value such that $f(x^*) = 0$] from an initial guess $x$ using
+## Basic 1D example
 
-$$x^* = x - \frac{f(x)}{f'(\xi)},$$
+To begin, we need a standard Julia function and an interval in which to search roots of that function. Intervals use the `Interval` type provided by the `IntervalArithmetic.jl` package and are generally constructed using the `..` syntax, `a..b` representing the closed interval $[a, b]$.
 
-for some $\xi$ between $x$ and $x^*$. Since $\xi$ is unknown, we can bound it as
+Providing these information to the `roots` function it will return an arrays of the roots.
 
-$$f'(\xi) \in F'(X),$$
-
-where $X$ is a containing interval and $F'(X)$ denotes the **interval extension**
-of the function $f$, consisting of applying the same operations as the function
-$f$ to the interval $X$.
-
-We define an *interval Newton operator* $\mathcal{N}$ as follows:
-
-$$\mathcal{N}(X) := m(X) - \frac{F(m(X))}{F'(X)},$$
-
-where $m(X)$  is the midpoint of $X$ converted into an interval.
-
-It turns out that $\mathcal{N}$ tells us precisely whether there is a root of $f$ in
-the interval $X$: there is no root if $\mathcal{N}(X) \cap X = \emptyset$, and there is
-a unique root if $\mathcal{N}(X) \subseteq X$.
-There is also an extension to intervals in which the derivative $F'(X)$ contains $0$,
-in which case the Newton operator returns a union of two intervals.
-
-Iterating the Newton operator on the resulting sets gives a rigorous algorithm
-that is *guaranteed to find all roots* of a
-real function in a given interval (or to inform us if it is unable to do so,
-for example at a multiple root); see Tucker's book for more details.
-
-## Usage of the interval Newton method
-
-Root-finding routines are in a separate `RootFinding` submodule of `IntervalArithmetic.jl`,
-which must be loaded with
-```julia
+```jl
 julia> using IntervalArithmetic, IntervalRootFinding
+
+julia> rts = roots(x -> x^2 - 2x, 0..10)
+2-element Array{Root{Interval{Float64}},1}:
+ Root([1.99999, 2.00001], :unique)
+ Root([0, 4.4724e-16], :unknown)
 ```
 
-The interval Newton method is implemented for real functions of a single
-variable as the function `newton`. For example, we can calculate rigorously the square roots of 2:
+The roots are specified as `Root` objects, containing an interval and the status of that interval, represented as a `Symbol`. There are two possible status, as shown in the example:
+  - `:unique`: the interval contains *exactly one* root of the function,
+  - `:unkown`: the interval may or may not contain a solution, the algorithm used was unable to conclude.
 
-```julia
-julia> using ValidatedNumerics
+The second one is still informative because all regions of the original search interval not contained in *any* roots is guaranteed to *not* contain any root of the function. In our example we know that the function does not have any root in the interval $[2.1, 10]$ for example.
 
-julia> f(x) = x^2 - 2
+There are several known situations where the unicity (and existence) of a solution can not be determine
+  - If the solution is on the boundary of the interval (as in the previous example),
+  - If the derivative of the solution is zero at the solution.
+
+In particular, the second condition means that multiple roots can not be proven to be unique.
+
+```jl
+julia> g(x) = (x^2-2)^2 * (x^2 - 3)
+g (generic function with 1 method)
+
+julia> roots(g, -10..10)
+4-element Array{IntervalRootFinding.Root{IntervalArithmetic.Interval{Float64}},1}:
+ Root([1.73205, 1.73206], :unique)
+ Root([1.41418, 1.4148], :unknown)
+ Root([-1.4148, -1.41418], :unknown)
+ Root([-1.73206, -1.73205], :unique)
+```
+
+Here we see that the two double roots are reported as being possible roots without guarantee and the simple roots have been proved to be unique.
+
+
+## Basic multi dimensional example
+
+For dimensions $n > 1$, functions must return an `SVector` from the `StaticArrays.jl` package.
+
+Here we give a 3D example:
+
+```jl
+julia> function g(x)
+           (x1, x2, x3) = x
+           SVector(    x1^2 + x2^2 + x3^2 - 1,
+                       x1^2 + x3^2 - 0.25,
+                       x1^2 + x2^2 - 4x3
+                   )
+       end
+g (generic function with 1 method)
+
+julia> X = (-5..5)
+[-5, 5]
+
+julia> rts = roots(g, X × X × X)
+4-element Array{Root{IntervalBox{3,Float64}},1}:
+ Root([0.440762, 0.440763] × [0.866025, 0.866026] × [0.236067, 0.236068], :unique)
+ Root([0.440762, 0.440763] × [-0.866026, -0.866025] × [0.236067, 0.236068], :unique)
+ Root([-0.440763, -0.440762] × [0.866025, 0.866026] × [0.236067, 0.236068], :unique)
+ Root([-0.440763, -0.440762] × [-0.866026, -0.866025] × [0.236067, 0.236068], :unique)
+```
+
+Thus the system admits four unique roots in the box $[-5, 5]^3$. We have used the unicode character `×` (typed as `\times<tab>`) to compose several intervals into a multidimensional box.
+
+## Stationary points
+
+Stationary points of a function $f:\mathbb{R}^n \to \mathbb{R}$ may be found as zeros of the gradient.
+The package exports the `∇` operator to calculate gradients using `ForwardDiff.jl`:
+
+```jl
+julia> f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
 f (generic function with 1 method)
 
-julia> newton(f, @interval(-5, 5))
-2-element Array{ValidatedNumerics.Root{Float64},1}:
- Root([-1.4142135623730951, -1.414213562373095], :unique)
- Root([1.414213562373095, 1.4142135623730951], :unique)
-```
-The function `newton`  is passed the function and the interval in which to search for roots;
-it returns an array of `Root` objects, that contain the interval where a root is found,
-together with a symbol `:unique` if there is guaranteed to be a unique root in that
-interval, or `:unknown` if the Newton method is unable to make a guarantee, for example,
-when there is a double root:
+julia> ∇f = ∇(f)  # gradient operator from the package
+(::#53) (generic function with 1 method)
 
-```julia
-julia> newton(f, @interval(-5,5))
-6-element Array{ValidatedNumerics.Root{Float64},1}:
- Root([0.9999999968789343, 0.999999997726216], :unknown)
- Root([0.9999999977262161, 0.9999999985734976], :unknown)
- Root([0.9999999987089422, 0.9999999993384274], :unknown)
- Root([0.9999999993384275, 0.9999999999679127], :unknown)
- Root([0.9999999999687099, 1.0000000004524654], :unknown)
- Root([2.0, 2.0], :unique)
+julia> rts = roots(∇f, IntervalBox(-5..6, 2), Newton, 1e-5)
+25-element Array{IntervalRootFinding.Root{IntervalArithmetic.IntervalBox{2,Float64}},1}:
+ Root([4.71238, 4.71239] × [4.71238, 4.71239], :unique)
+ Root([4.71238, 4.71239] × [1.57079, 1.5708], :unique)
+ ⋮
+ [output snipped for brevity]
 ```
 
-The Newton method may be applied directly to a vector of known roots,
-for example to refine them with higher precision:
-```julia
-julia> f(x) = x^2 - 2
-f (generic function with 1 method)
+Now let's find the midpoints and plot them:
 
-julia> roots = newton(f, @interval(-5, 5))
-2-element Array{ValidatedNumerics.Root{Float64},1}:
- Root([-1.4142135623730951, -1.414213562373095], :unique)
- Root([1.414213562373095, 1.4142135623730951], :unique)
+```jl
+midpoints = mid.([root.interval for root in rts])
 
-julia> setprecision(Interval, 256)
-256
+xs = first.(midpoints)
+ys = last.(midpoints)
 
-julia> newton(f, roots)
-2-element Array{ValidatedNumerics.Root{Base.MPFR.BigFloat},1}:
- Root([-1.414213562373095048801688724209698078569671875376948073176679737990732478462119, -1.414213562373095048801688724209698078569671875376948073176679737990732478462102]₂₅₆, :unique)
- Root([1.414213562373095048801688724209698078569671875376948073176679737990732478462102, 1.414213562373095048801688724209698078569671875376948073176679737990732478462119]₂₅₆, :unique)
+using Plots; plotlyjs()
 
-julia> abs(roots2[2].interval.lo - sqrt(big(2)))
-0.000000000000000000000000000000000000000000000000000000000000000000000000000000
-
+surface(-5:0.1:6, -6:0.1:6, (x,y)->f([x,y]))
+scatter!(xs, ys, f.(midpoints))
 ```
 
-## Krawczyk method
+The result is the following:
 
-An alternative method is the *Krawczyk method*, implemented in the function
-`krawczyk`, with the same interface as the Newton method:
-```julia
-julia> f(x) = x^2 - 2
-f (generic function with 1 method)
-
-julia> krawczyk(f, @interval(-5, 5))
-2-element Array{Root{Float64},1}:
- Root([-1.4142135623730954, -1.4142135623730947], :unique)
- Root([1.4142135623730947, 1.4142135623730954], :unique)
-
-julia> newton(f, @interval(-5, 5))
-2-element Array{Root{Float64},1}:
- Root([-1.4142135623730951, -1.414213562373095], :unique)
- Root([1.414213562373095, 1.4142135623730951], :unique)
-```
-
-The Krawczyk method really comes into its own for higher-dimensional functions;
-this is planned to be implemented in the future.
-
-
-## `find_roots` interface
-Automatic differentiation is used to calculate the derivative used in the Newton method
-if the derivative function is not given explicitly as the second argument to `newton`.
-
-An interface `find_roots` is provided, which does not require an interval to be passed:
-```
-julia> find_roots(f, -5, 5)
-6-element Array{ValidatedNumerics.Root{Float64},1}:
- Root([0.9999999968789343, 0.999999997726216], :unknown)
- Root([0.9999999977262161, 0.9999999985734976], :unknown)
- Root([0.9999999987089422, 0.9999999993384274], :unknown)
- Root([0.9999999993384275, 0.9999999999679127], :unknown)
- Root([0.9999999999687099, 1.0000000004524654], :unknown)
- Root([1.9999999999999998, 2.0000000000000004], :unique)
-```
-
-
-There is also a version `find_roots_midpoint` that returns three vectors:
-the midpoint of each interval; the radius of the interval; and the symbol.
-This may be useful for someone who just wishes to find roots of a function,
-without wanting to understand how to manipulate interval objects:
-```julia
-julia> find_roots_midpoint(f, -5, 5)
-([-1.4142135623730951,1.414213562373095],[2.220446049250313e-16,4.440892098500626e-16],[:unique,:unique])
-```
-
-This uses the function `midpoint_radius`, that returns the midpoint and radius
-of a given interval:
-```julia
-julia> a = @interval(0.1, 0.2)
-[0.09999999999999999, 0.2]
-
-julia> midpoint_radius(a)
-(0.15,0.05000000000000002)
-```
+![stationary points](stationary_points.png)
