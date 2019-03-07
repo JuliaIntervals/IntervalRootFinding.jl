@@ -11,6 +11,7 @@ makedocs(
         "Home" => "index.md",
         "`roots` interface" => "roots.md",
         "Internals" => "internals.md",
+        "Bibliography" => "biblio.md",
         "API" => "api.md"
         ]
     )
