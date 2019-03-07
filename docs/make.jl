@@ -16,11 +16,11 @@ makedocs(
         ]
     )
 
-# deploydocs(
-#     repo = "github.com/JuliaIntervals/IntervalRootFinding.jl.git",
-#     target = "build",
-#     deps = nothing,
-#     make = nothing,
-#     julia = "release",
-#     osname = "linux"
-# )
+deploydocs(
+    repo = "github.com/JuliaIntervals/IntervalRootFinding.jl.git",
+    target = "build",
+    deps = nothing,
+    make = nothing,
+    julia = "release",
+    osname = "linux"
+)
