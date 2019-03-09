@@ -8,7 +8,7 @@ using IntervalRootFinding
 f(x) = sin(x)
 contractor = Newton(f, cos)
 
-@info "Bread first search."
+@info "Breadth first search."
 # A search takes a starting region, a contractor and a tolerance as argument
 search = BreadthFirstSearch(-10..10, contractor, 1e-10)
 
