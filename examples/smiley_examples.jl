@@ -154,7 +154,7 @@ g(x) = SVector(C1 * (x[3] - α * sin(x[1]) * cos(x[2])) + x[1],
                D1 * (x[3] - α * sin(x[1]) * cos(x[2])),
                D2 * (x[4] - α * cos(x[1]) * sin(x[2])))
 
-f(x) = (g ∘ g)(x) .- x
+f(x) = (g ∘ g)(x) .- SVector(x...)
 
 # contains all 41 reported roots of f
 const region =
