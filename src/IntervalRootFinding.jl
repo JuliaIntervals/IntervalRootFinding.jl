@@ -1,7 +1,5 @@
 # This file is part of the ValidatedNumerics.jl package; MIT licensed
 
-__precompile__(true)
-
 module IntervalRootFinding
 
 using IntervalArithmetic
