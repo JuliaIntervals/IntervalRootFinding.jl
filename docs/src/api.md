@@ -21,7 +21,7 @@ Modules = [IntervalRootFinding]
 Pages   = ["contractors.jl"]
 ```
 
-## Branch and bound search interface
+## Branch-and-bound search interface
 
 ```@autodocs
 Modules = [IntervalRootFinding]

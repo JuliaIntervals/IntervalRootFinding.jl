@@ -8,7 +8,6 @@
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://JuliaIntervals.github.io/IntervalRootFinding.jl/latest)
 
 This package provides guaranteed methods for finding **roots** of functions, i.e. solutions to the equation `f(x) == 0` for a function `f`.
-
 To do so, it uses methods from interval analysis, using interval arithmetic from the [`IntervalArithmetic.jl`](https://github.com/JuliaIntervals/IntervalArithmetic.jl) package by the same authors.
 
 ## Basic usage examples
@@ -27,9 +26,9 @@ julia> roots(f, -10..10)
  Root([-3.10682, -3.10681], :unique)
 ```
 
-The `:unique` status tell us, in addition, that each of the region contains exactly one root. The other possible status is `:unknown` for intervals that may contains one or more roots, without guarantee.
+The `:unique` status tell us, in addition, that each listed region contains exactly one root. The other possible status is `:unknown`, which corresponds to intervals that may contain zero, one, or more roots - no guarantee is provided for these intervals.
 
-These results are represented in the following plot, the region containing roots being in green. The inset show a close-up of one of the root.
+These results are represented in the following plot, the region containing roots being in green. The inset show a close-up of one of the roots:
 
 ![basic usage](docs/src/basic_usage.png)
 
