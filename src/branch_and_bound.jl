@@ -22,8 +22,8 @@ end
     BBLeaf{DATA} <: AbstractBBLeaf
 
 Leaf node of a `BBTree` that contains some data. Its status is either
-    - `:working`: the leaf will be further processed.
-    - `:final`: the leaf won't be touched anymore.
+  - `:working`: the leaf will be further processed.
+  - `:final`: the leaf won't be touched anymore.
 """
 struct BBLeaf{DATA} <: AbstractBBNode
     data::DATA
@@ -205,28 +205,28 @@ There is currently three types of search supported `BreadFirstBBSearch`,
 `DepthFirstBBSearch` and `KeyBBSearch`, each one processing the element of the
 tree in a different order. When subtyping one of these, the following methods
 must be implemented:
-    - `root_element(::BBSearch)`: return the element with which the search is started
-    - `process(::BBSearch, elem::DATA)`: return a symbol representing the action
+  - `root_element(::BBSearch)`: return the element with which the search is started
+  - `process(::BBSearch, elem::DATA)`: return a symbol representing the action
         to perform with the element `elem` and an object of type `DATA` reprensenting
         the state of the element after processing (may return `elem` unchanged).
-    - `bisect(::BBSearch, elem::DATA)`: return two elements of type `DATA` build
+  - `bisect(::BBSearch, elem::DATA)`: return two elements of type `DATA` build
         by bisecting `elem`
 
 Subtyping `BBSearch` directly allows to have control over the order in which
 the elements are process. To do this the following methods must be implemented:
-    - `root_element(::BBSearch)`: return the first element to be processed. Use
+  - `root_element(::BBSearch)`: return the first element to be processed. Use
         to build the initial tree.
-    - `get_leaf_id!(::BBSearch, wt::BBTree)`: return the id of the next leaf that
+  - `get_leaf_id!(::BBSearch, wt::BBTree)`: return the id of the next leaf that
         will be processed and remove it from the list of working leaves of `wt`.
-    - `insert_leaf!(::BBSearch, wt::BBTree, leaf::BBLeaf)`: insert a leaf in the
+  - `insert_leaf!(::BBSearch, wt::BBTree, leaf::BBLeaf)`: insert a leaf in the
         list of working leaves.
 
 # Valid symbols returned by the process function
-    - `:store`: the element is considered as final and is stored, it will not be
+  - `:store`: the element is considered as final and is stored, it will not be
         further processed
-    - `:bisect`: the element is bisected and each of the two resulting part will
+  - `:bisect`: the element is bisected and each of the two resulting part will
         be processed
-    - `:discard`: the element is discarded from the tree, allowing to free memory
+  - `:discard`: the element is discarded from the tree, allowing to free memory
 """
 abstract type BBSearch{DATA} end
 
@@ -240,7 +240,8 @@ Interface to a branch and bound search that use a key function to decide which
 element to process first. The search process first the element with the largest
 key as computed by `keyfunc(ks::KeyBBSearch, elem)`.
 
-!!WARNING: Untested.
+!!! warning
+    Untested.
 """
 abstract type KeyBBSearch{DATA} <: BBSearch{DATA} end
 

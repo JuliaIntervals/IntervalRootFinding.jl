@@ -14,9 +14,9 @@ isnan(r::Root) = isnan(interval(r))
 Type implementing  the `BreadthFirstBBSearch` interface for interval roots finding.
 
 # Fields:
-    - `initial`: region (as a `Root` object) in which roots are searched.
-    - `contractor`: contractor to use (`Bisection`, `Newton` or `Krawczyk`)
-    - `tol`: tolerance of the search
+  - `initial`: region (as a `Root` object) in which roots are searched.
+  - `contractor`: contractor to use (`Bisection`, `Newton` or `Krawczyk`)
+  - `tol`: tolerance of the search
 """
 struct BreadthFirstSearch{R <: Region, C <: Contractor, T <: Real} <: BreadthFirstBBSearch{Root{R}}
     initial::Root{R}
@@ -30,9 +30,9 @@ end
 Type implementing the `DepthFirstBBSearch` interface for interval roots finding.
 
 # Fields:
-    - `initial`: region (as a `Root` object) in which roots are searched.
-    - `contractor`: contractor to use (`Bisection`, `Newton` or `Krawczyk`)
-    - `tol`: tolerance of the search
+  - `initial`: region (as a `Root` object) in which roots are searched.
+  - `contractor`: contractor to use (`Bisection`, `Newton` or `Krawczyk`)
+  - `tol`: tolerance of the search
 """
 struct DepthFirstSearch{R <: Region, C <: Contractor, T <: Real} <: DepthFirstBBSearch{Root{R}}
     initial::Root{R}
@@ -104,21 +104,18 @@ Uses a generic branch and prune routine to find in principle all isolated roots
 of a function `f:R^n → R^n` in a region `X`, if the number of roots is finite.
 
 Inputs:
-- `f`: function whose roots will be found
-- `X`: `Interval` or `IntervalBox` in which roots are searched
-- `contractor`: function that, when applied to the function `f`, determines
+  - `f`: function whose roots will be found
+  - `X`: `Interval` or `IntervalBox` in which roots are searched
+  - `contractor`: function that, when applied to the function `f`, determines
     the status of a given box `X`. It returns the new box and a symbol indicating
     the status. Current possible values are `Bisection`, `Newton` and `Krawczyk`
-- `deriv`: explicit derivative of `f` for `Newton` and `Krawczyk`
-- `strategy`: `SearchStrategy` determining the order in which regions are
+  - `deriv`: explicit derivative of `f` for `Newton` and `Krawczyk`
+  - `strategy`: `SearchStrategy` determining the order in which regions are
     processed.
-- `tol`: Absolute tolerance. If a region has a diameter smaller than `tol`, it
+  - `tol`: Absolute tolerance. If a region has a diameter smaller than `tol`, it
     is returned with status `:unknown`.
 
 """
-#===
-    Default case when `contractor, `strategy` or `tol` is omitted.
-===#
 function roots(f::Function, X, contractor::Type{C}=default_contractor,
                strategy::Type{S}=default_strategy,
                tol::Float64=default_tolerance) where {C <: Contractor, S <: BBSearch}

@@ -58,7 +58,7 @@ end
 """
     Contractor{F}
 
-    Abstract type for contractors.
+Abstract type for contractors.
 """
 abstract type Contractor{F} end
 
@@ -89,8 +89,8 @@ for (Method, 𝒪) in ((:Newton, 𝒩), (:Krawczyk, 𝒦))
     Contractor type for the $Method method.
 
     # Fields
-        - `f::F`: function whose roots are searched
-        - `f::FP`: derivative or jacobian of `f`
+      - `f::F`: function whose roots are searched
+      - `f::FP`: derivative or jacobian of `f`
 
     -----
 
@@ -100,9 +100,9 @@ for (Method, 𝒪) in ((:Newton, 𝒩), (:Krawczyk, 𝒦))
     contracted interval together with its status.
 
     # Inputs
-        - `R`: Root object containing the interval to contract.
-        - `tol`: Precision to which unique solutions are refined.
-        - `α`: Point of bisection of intervals.
+      - `R`: Root object containing the interval to contract.
+      - `tol`: Precision to which unique solutions are refined.
+      - `α`: Point of bisection of intervals.
     """
 
     @eval begin
