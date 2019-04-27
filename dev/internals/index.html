@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Internals · IntervalRootFinding.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link href="../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>IntervalRootFinding.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../">Home</a></li><li><a class="toctext" href="../roots/"><code>roots</code> interface</a></li><li class="current"><a class="toctext" href>Internals</a><ul class="internal"><li><a class="toctext" href="#Branch-and-bound-1">Branch and bound</a></li><li><a class="toctext" href="#Tree-representation-1">Tree representation</a></li><li><a class="toctext" href="#Search-strategy-1">Search strategy</a></li><li><a class="toctext" href="#Contractors-1">Contractors</a></li><li><a class="toctext" href="#Search-object-1">Search object</a></li></ul></li><li><a class="toctext" href="../biblio/">Bibliography</a></li><li><a class="toctext" href="../api/">API</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href>Internals</a></li></ul><a class="edit-page" href="https://github.com/JuliaIntervals/IntervalRootFinding.jl/blob/master/docs/src/internals.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Internals</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Internals-1" href="#Internals-1">Internals</a></h1><p>This section describes some of the internal mechanism of the package and several ways to use them to customize a search.</p><h2><a class="nav-anchor" id="Branch-and-bound-1" href="#Branch-and-bound-1">Branch and bound</a></h2><p>When <code>roots</code> is called, it performs a <strong>branch-and-bound</strong> search, that is, it iteratively looks at a region <span>$X$</span> and for each region tries to determine if it contains a root. It then does the following:</p><ul><li>If <span>$X$</span> is proven to contain <em>no</em> root, it discards it.</li><li>If <span>$X$</span> is proven to contain <em>exactly one root</em>, it tries to get the best possible bounds for the root and store the resulting region in the list of <code>Root</code>s to output with a <code>:unique</code> status.</li><li>If the test is inconclusive and the size of <span>$X$</span> is smaller than the tolerance, it stores it in the list of <code>Root</code>s to output with <code>:unknown</code> status.</li><li>If the test is inconclusive and the size of <span>$X$</span> is larger than the tolerance, it bisects <span>$X$</span> and then processes each resulting half.</li></ul><p>At some point all regions will either have a determined status or be smaller than the tolerance, and the algorithm will halt and return all stored roots.</p><h2><a class="nav-anchor" id="Tree-representation-1" href="#Tree-representation-1">Tree representation</a></h2><p>A branch-and-bound search can be naturally represented as a binary tree: each leaf contains a region and its status and each node represents a bisection. If the tree is known, the topology of the whole search can be reconstructed. There is however a point not determined by the tree.</p><p>The branch and bound algorithm used by the <code>roots</code> function builds this tree and at the end collect all leaves containing a region with status either <code>:unknown</code> or <code>:unique</code>. We see below how to access the tree.</p><h2><a class="nav-anchor" id="Search-strategy-1" href="#Search-strategy-1">Search strategy</a></h2><p>While the tree representation is sufficient to know the topology of the search, it does not determine the order in which leaves are processed during the search. This has an influence on how the tree is created and the amount of memory used, but will not change the resulting tree, unless some limitations on the number of iterations or leaves are enforced.</p><div class="admonition note"><div class="admonition-title">Note</div><div class="admonition-text"><p>No such limitations are currently implemented, but they are planned. They will allow to deal, for example, with functions admitting an infinite amount of roots.</p></div></div><p>Two strategies are currently available: a breadth-first strategy (leaves closer to the root of the tree are processed first); and a depth-first strategy (leaves further away from the root are processed first).</p><h2><a class="nav-anchor" id="Contractors-1" href="#Contractors-1">Contractors</a></h2><p>To determine the status of a region, the algorithm uses so-called <em>contractors</em>. A <code>Contractor</code> is a callable object built from a function (in the case of <code>Bisection</code>) and possibly its derivative as well (for <code>Newton</code> and <code>Krawczyk</code>). When called with a region (wrapped in a <code>Root</code> object) and a tolerance, it returns the status of the root and the region (refined if the region contained a unique root).</p><pre><code class="language-jl">julia&gt; C = Newton(sin, cos)
+Newton{typeof(sin),typeof(cos)}(sin, cos)
+
+julia&gt; C(Root(pi ± 0.001, :unknown), 1e-10)
+Root([3.14159, 3.1416], :unique)
+
+julia&gt; C(Root(2 ± 0.001, :unkown), 1e-10)
+Root([1.99899, 2.00101], :empty)</code></pre><p>Contractors play a central role in the algorithm: they are the only part of it that varies for different methods.</p><h2><a class="nav-anchor" id="Search-object-1" href="#Search-object-1">Search object</a></h2><p>Now that we have presented the foundation of the internal algorithm, we can discuss the representation of the search. Each search strategy has a type associated, the defined types being <code>BreadthFirstSearch</code> and <code>DepthFirstSearch</code>.</p><p>A search must be given three pieces of information:</p><ol><li>The region to search;</li><li>A contractor;</li><li>A tolerance.</li></ol><pre><code class="language-jl">julia&gt; f(x) = exp(x) - sin(x)
+f (generic function with 1 method)
+
+julia&gt; df(x) = exp(x) - cos(x)
+df (generic function with 1 method)
+
+julia&gt; C = Newton(f, df)
+Newton{typeof(f),typeof(df)}(f, df)
+
+julia&gt; search = DepthFirstSearch(-10..10, C, 1e-10)
+DepthFirstSearch{Interval{Float64},Newton{typeof(f),typeof(df)},
+Float64}(Root([-10, 10], :unknown), Newton{typeof(f),typeof(df)}(f, df),
+1.0e-10)</code></pre><p>Then the search is performed using the iterator interface, i.e. a <code>for</code> loop.</p><pre><code class="language-jl">julia&gt; current_tree = nothing   # stores current version of tree
+
+julia&gt; for tree in search
+           global current_tree = tree
+       end
+
+julia&gt; current_tree
+Working tree with 9 elements of type Root{Interval{Float64}}
+Indices: [1, 2, 3, 4, 5, 7, 8, 9, 10]
+Structure:
+  [1] Node with children [2]
+    [2] Node with children [3, 4]
+      [3] Node with children [8, 9]
+        [8] Node with children [10]
+          [10] Leaf (:final) with data Root([-9.42486, -9.42485], :unique)
+        [9] Leaf (:final) with data Root([-6.28132, -6.28131], :unique)
+      [4] Node with children [5]
+        [5] Node with children [7]
+          [7] Leaf (:final) with data Root([-3.18307, -3.18306], :unique)</code></pre><p>The elements of the iteration are the trees (of type <code>BBTree</code>) that get constructed during the search. In the above example we simply get the final iteration of the tree and show it. The list of final roots can be retrieved using the <code>data</code> function:</p><pre><code class="language-jl">julia&gt; data(endtree)
+3-element Array{Root{Interval{Float64}},1}:
+ Root([-3.18307, -3.18306], :unique)
+ Root([-6.28132, -6.28131], :unique)
+ Root([-9.42486, -9.42485], :unique)</code></pre><p>We can use this interface to do some analysis at each iteration.</p><pre><code class="language-jl">julia&gt; for (k, tree) in enumerate(search)
+           println(&quot;The tree at iteration $k has $(IntervalRootFinding.nnodes(tree)) nodes&quot;)
+       end
+The tree at iteration 1 has 3 nodes
+The tree at iteration 2 has 5 nodes
+The tree at iteration 3 has 4 nodes
+                ⋮   # several lines omitted for brevity
+The tree at iteration 17 has 10 nodes
+The tree at iteration 18 has 9 nodes
+The tree at iteration 19 has 9 nodes</code></pre><footer><hr/><a class="previous" href="../roots/"><span class="direction">Previous</span><span class="title"><code>roots</code> interface</span></a><a class="next" href="../biblio/"><span class="direction">Next</span><span class="title">Bibliography</span></a></footer></article></body></html>

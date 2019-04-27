@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · IntervalRootFinding.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>IntervalRootFinding.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li class="current"><a class="toctext" href>Home</a><ul class="internal"><li><a class="toctext" href="#Basic-1D-example-1">Basic 1D example</a></li><li><a class="toctext" href="#Basic-multi-dimensional-example-1">Basic multi-dimensional example</a></li><li><a class="toctext" href="#Stationary-points-1">Stationary points</a></li></ul></li><li><a class="toctext" href="roots/"><code>roots</code> interface</a></li><li><a class="toctext" href="internals/">Internals</a></li><li><a class="toctext" href="biblio/">Bibliography</a></li><li><a class="toctext" href="api/">API</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href>Home</a></li></ul><a class="edit-page" href="https://github.com/JuliaIntervals/IntervalRootFinding.jl/blob/master/docs/src/index.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Home</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="IntervalRootFinding.jl-1" href="#IntervalRootFinding.jl-1"><code>IntervalRootFinding.jl</code></a></h1><p>This package provides guaranteed methods for finding <strong>roots</strong> of functions <span>$f: \mathbb{R}^n \to \mathbb{R}^n$</span> with <span>$n \ge 1$</span>, i.e. vectors (or scalars, for <span>$n=1$</span>) <span>$\mathbb{x}$</span> for which <span>$f(\mathbb{x}) = \mathbb{0}$</span>. In principle, it guarantees to find <em>all</em> roots inside a given box in <span>$\mathbb{R}^n$</span>, or report subboxes for which it is unable to provide guarantees.</p><p>To do so, it uses methods from interval analysis, using interval arithmetic from the <a href="https://github.com/JuliaIntervals/IntervalArithmetic.jl"><code>IntervalArithmetic.jl</code></a> package by the same authors.</p><div class="admonition warning"><div class="admonition-title">Warning</div><div class="admonition-text"><p>While this package aimed at providing <em>guaranteed results</em> and despite our best efforts and test suite, some bugs may remain and there are several known issues with corner cases. Please look at the <a href="https://github.com/JuliaIntervals/IntervalRootFinding.jl/issues">issue tracker</a> and report there any odd and/or incorrect behavior.</p></div></div><h2><a class="nav-anchor" id="Basic-1D-example-1" href="#Basic-1D-example-1">Basic 1D example</a></h2><p>To begin, we need a standard Julia function and an interval in which to search roots of that function. Intervals use the <code>Interval</code> type provided by the <code>IntervalArithmetic.jl</code> package and are generally constructed using the <code>..</code> syntax, <code>a..b</code> representing the closed interval <span>$[a, b]$</span>.</p><p>When provided with this information, the <code>roots</code> function will return a vector of all roots of the function in the given interval.</p><p>Example:</p><pre><code class="language-jl">julia&gt; using IntervalArithmetic, IntervalRootFinding
+
+julia&gt; rts = roots(x -&gt; x^2 - 2x, 0..10)
+2-element Array{Root{Interval{Float64}},1}:
+ Root([1.99999, 2.00001], :unique)
+ Root([0, 4.4724e-16], :unknown)</code></pre><p>The roots are returned as <code>Root</code> objects, containing an interval and the status of that interval, represented as a <code>Symbol</code>. There are two possible types of root status, as shown in the example:</p><ul><li><code>:unique</code>: the given interval contains <em>exactly one</em> root of the function,</li><li><code>:unknown</code>: the given interval may or may not contain one or more roots; the algorithm used was unable to come to a conclusion.</li></ul><p>The second status is still informative, since all regions of the original search interval <em>not</em> contained in <em>any</em> of the returned root intervals is guaranteed <em>not</em> to contain any root of the function. In the above example, we know that the function has no root in the interval <span>$[2.1, 10]$</span>, for example.</p><p>There are several known situations where the uniqueness (and existence) of a solution cannot be determined by the interval algorithms used in the package:</p><ul><li>If the solution is on the boundary of the interval (as in the previous example);</li><li>If the derivative of the solution is zero at the solution.</li></ul><p>In particular, the second condition means that multiple roots cannot be proven to be unique. For example:</p><pre><code class="language-jl">julia&gt; g(x) = (x^2 - 2)^2 * (x^2 - 3)
+g (generic function with 1 method)
+
+julia&gt; roots(g, -10..10)
+4-element Array{IntervalRootFinding.Root{IntervalArithmetic.Interval{Float64}},1}:
+ Root([1.73205, 1.73206], :unique)
+ Root([1.41418, 1.4148], :unknown)
+ Root([-1.4148, -1.41418], :unknown)
+ Root([-1.73206, -1.73205], :unique)</code></pre><p>Here we see that the two double roots are reported as being possible roots without guarantee and the simple roots have been proved to be unique.</p><h2><a class="nav-anchor" id="Basic-multi-dimensional-example-1" href="#Basic-multi-dimensional-example-1">Basic multi-dimensional example</a></h2><p>For dimensions <span>$n &gt; 1$</span>, the function passed to <code>roots</code> must currently return an <code>SVector</code> from the <code>StaticArrays.jl</code> package.</p><p>Here we give a 3D example:</p><pre><code class="language-jl">julia&gt; function g( (x1, x2, x3) )
+           return SVector(x1^2 + x2^2 + x3^2 - 1,
+                          x1^2 + x3^2 - 0.25,
+                          x1^2 + x2^2 - 4x3
+                         )
+       end
+g (generic function with 1 method)
+
+julia&gt; X = -5..5
+[-5, 5]
+
+julia&gt; rts = roots(g, X × X × X)
+4-element Array{Root{IntervalBox{3,Float64}},1}:
+ Root([0.440762, 0.440763] × [0.866025, 0.866026] × [0.236067, 0.236068], :unique)
+ Root([0.440762, 0.440763] × [-0.866026, -0.866025] × [0.236067, 0.236068], :unique)
+ Root([-0.440763, -0.440762] × [0.866025, 0.866026] × [0.236067, 0.236068], :unique)
+ Root([-0.440763, -0.440762] × [-0.866026, -0.866025] × [0.236067, 0.236068], :unique)</code></pre><p>Thus the system admits four unique roots in the box <span>$[-5, 5]^3$</span>. We have used the unicode character <code>×</code> (typed as <code>\times&lt;tab&gt;</code>) to compose several intervals into a multidimensional box.</p><h2><a class="nav-anchor" id="Stationary-points-1" href="#Stationary-points-1">Stationary points</a></h2><p>Stationary points of a function <span>$f:\mathbb{R}^n \to \mathbb{R}$</span> may be found as zeros of the gradient of <span>$f$</span>. The package exports the <code>∇</code> operator to calculate gradients using <code>ForwardDiff.jl</code>:</p><pre><code class="language-jl">julia&gt; f( (x, y) ) = sin(x) * sin(y)
+f (generic function with 1 method)
+
+julia&gt; ∇f = ∇(f)  # gradient operator from the package
+(::#53) (generic function with 1 method)
+
+julia&gt; rts = roots(∇f, IntervalBox(-5..6, 2), Newton, 1e-5)
+25-element Array{IntervalRootFinding.Root{IntervalArithmetic.IntervalBox{2,Float64}},1}:
+ Root([4.71238, 4.71239] × [4.71238, 4.71239], :unique)
+ Root([4.71238, 4.71239] × [1.57079, 1.5708], :unique)
+ ⋮
+ [output snipped for brevity]</code></pre><p>Now let&#39;s find the midpoints and plot them:</p><pre><code class="language-jl">midpoints = mid.(interval.(rts))
+
+xs = first.(midpoints)
+ys = last.(midpoints)
+
+using Plots; plotlyjs()
+
+surface(-5:0.1:6, -6:0.1:6, (x,y) -&gt; f([x, y]))
+scatter!(xs, ys, f.(midpoints))</code></pre><p>The result is the following:</p><p><img src="stationary_points.png" alt="stationary points"/></p><footer><hr/><a class="next" href="roots/"><span class="direction">Next</span><span class="title"><code>roots</code> interface</span></a></footer></article></body></html>
