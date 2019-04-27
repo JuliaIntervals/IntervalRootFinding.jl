@@ -27,7 +27,7 @@ julia> rts = roots(x -> x^2 - 2x, 0..10)
 
 The roots are returned as `Root` objects, containing an interval and the status of that interval, represented as a `Symbol`. There are two possible types of root status, as shown in the example:
   - `:unique`: the given interval contains *exactly one* root of the function,
-  - `:unkown`: the given interval may or may not contain one or more roots; the algorithm used was unable to come to a conclusion.
+  - `:unknown`: the given interval may or may not contain one or more roots; the algorithm used was unable to come to a conclusion.
 
 The second status is still informative, since all regions of the original search interval *not* contained in *any* of the returned root intervals is guaranteed *not* to contain any root of the function. In the above example, we know that the function has no root in the interval $[2.1, 10]$, for example.
 
