@@ -91,7 +91,7 @@ end
 
 const NewtonLike = Union{Type{Newton}, Type{Krawczyk}}
 const default_strategy = DepthFirstSearch
-const default_tolerance = 1e-15
+const default_tolerance = 1e-7
 const default_contractor = Newton
 
 """
