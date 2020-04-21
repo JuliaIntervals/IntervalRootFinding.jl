@@ -15,6 +15,8 @@ To do so, it uses methods from interval analysis, using interval arithmetic from
 The basic function is `roots`. A standard Julia function and an interval is provided and the `roots` function return a list of intervals containing *all* roots of the function located in the starting interval.
 
 ```jl
+julia> using IntervalArithmetic, IntervalRootFinding
+
 julia> f(x) = sin(x) - 0.1*x^2 + 1
 f (generic function with 1 method)
 
