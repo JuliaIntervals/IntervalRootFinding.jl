@@ -1,6 +1,6 @@
 name = "IntervalRootFinding"
 uuid = "d2bf35a9-74e0-55ec-b149-d360ff49b807"
-version = "0.5.2"
+version = "0.5.3"
 
 [deps]
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -11,8 +11,8 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 ForwardDiff = "0.10"
-IntervalArithmetic = "0.15, 0.16"
-Polynomials = "0.5, 0.6"
+IntervalArithmetic = "0.15, 0.16, 0.17"
+Polynomials = "0.5, 0.6, 0.7"
 StaticArrays = "0.11, 0.12"
 julia = "1"
 
