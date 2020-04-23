@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>roots interface · IntervalRootFinding.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">IntervalRootFinding.jl</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href><code>roots</code> interface</a><ul class="internal"><li><a class="tocitem" href="#Methods-1"><span>Methods</span></a></li><li><a class="tocitem" href="#Explicit-derivatives-1"><span>Explicit derivatives</span></a></li><li><a class="tocitem" href="#Tolerance-1"><span>Tolerance</span></a></li></ul></li><li><a class="tocitem" href="../internals/">Internals</a></li><li><a class="tocitem" href="../biblio/">Bibliography</a></li><li><a class="tocitem" href="../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href><code>roots</code> interface</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href><code>roots</code> interface</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaIntervals/IntervalRootFinding.jl/blob/master/docs/src/roots.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="roots-interface-1"><a class="docs-heading-anchor" href="#roots-interface-1"><code>roots</code> interface</a><a class="docs-heading-anchor-permalink" href="#roots-interface-1" title="Permalink"></a></h1><h2 id="Methods-1"><a class="docs-heading-anchor" href="#Methods-1">Methods</a><a class="docs-heading-anchor-permalink" href="#Methods-1" title="Permalink"></a></h2><p>Three root-finding methods currently available through the <code>roots</code> interface are the following:</p><ul><li><code>Newton</code> (default);</li><li><code>Krawczyk</code>;</li><li><code>Bisection</code></li></ul><p>Both the Newton and Krawczyk methods can determine if a root is unique in an interval, at the cost of requiring that the function is differentiable. The bisection method has no such requirement, but can never guarantee the existence or uniqueness of a root.</p><p>The method used is given as the third (optional) argument of the <code>roots</code> function:</p><pre><code class="language-jl">julia&gt; roots(log, -2..2, Newton)
+1-element Array{Root{Interval{Float64}},1}:
+ Root([0.999996, 1.00001], :unique)
+
+julia&gt; roots(log, -2..2, Krawczyk)
+1-element Array{Root{Interval{Float64}},1}:
+ Root([0.999984, 1.00002], :unique)
+
+julia&gt; roots(log, -2..2, Bisection)
+1-element Array{Root{Interval{Float64}},1}:
+ Root([0.999454, 1.00039], :unknown)</code></pre><p>Note that as shown in the example, the <code>log</code> function does not complain about being given an interval going outside of its domain. While this may be surprising, this is the expected behavior and no root will ever be found outside the domain of a function.</p><h2 id="Explicit-derivatives-1"><a class="docs-heading-anchor" href="#Explicit-derivatives-1">Explicit derivatives</a><a class="docs-heading-anchor-permalink" href="#Explicit-derivatives-1" title="Permalink"></a></h2><p>Newton and Krawczyk methods require the function to be differentiable, but the derivative is usually computed automatically using forward-mode automatic differentiation, provided by the <code>ForwardDiff.jl</code> package. It is however possible to provide the derivative explicitly for these methods as the second argument of the <code>roots</code> function:</p><pre><code class="language-jl">julia&gt; roots(log, x -&gt; 1/x, -2..2, Newton)
+1-element Array{Root{Interval{Float64}},1}:
+ Root([0.999996, 1.00001], :unique)
+
+julia&gt; roots(log, x -&gt; 1/x, -2..2, Krawczyk)
+1-element Array{Root{Interval{Float64}},1}:
+ Root([0.999984, 1.00002], :unique)</code></pre><p>When providing the derivative explicitly, the computation is expected to be slightly faster, but the precision of the result is unlikely to be affected.</p><pre><code class="language-jl">julia&gt; using BenchmarkTools
+
+julia&gt; @btime roots(log, x -&gt; 1/x, -2..2, Newton)
+  38.600 μs (371 allocations: 27.01 KiB)
+1-element Array{Root{Interval{Float64}},1}:
+ Root([0.999996, 1.00001], :unique)
+
+julia&gt; @btime roots(log, -2..2, Newton)
+  51.799 μs (373 allocations: 27.20 KiB)
+1-element Array{Root{Interval{Float64}},1}:
+ Root([0.999996, 1.00001], :unique)</code></pre><p>This may be useful in some special cases where <code>ForwardDiff.jl</code> is unable to compute the derivative of a function. Examples are complex functions and functions whose interval extension must be manually defined (e.g. special functions like <code>zeta</code>).</p><p>In dimension greater than one, the function of interest must return a <code>SVector</code>, a type provided by the <code>StaticArrays</code> package, but otherwise works in the same way as in the 1D case.</p><pre><code class="language-jl">julia&gt; function f( (x, y) )
+           return SVector(sin(x), cos(y))
+       end
+f (generic function with 1 method)
+
+julia&gt; roots(f, IntervalBox(-3..3, 2))
+2-element Array{Root{IntervalBox{2,Float64}},1}:
+ Root([-1.13556e-19, 2.3664e-20] × [1.57079, 1.5708], :unique)
+ Root([-7.92188e-19, 3.20973e-19] × [-1.5708, -1.57079], :unique)</code></pre><p>When providing the derivative for a multi-dimensional function, this must be given as a function returning the Jacobi matrix of the function as an <code>SMatrix</code>:</p><pre><code class="language-jl">julia&gt; function df( (x, y) )
+           return SMatrix{2, 2}(cos(x), 0, 0, -sin(y))
+       end
+df (generic function with 1 method)
+
+julia&gt; roots(f, df, IntervalBox(-3..3, 2), Newton)
+2-element Array{Root{IntervalBox{2,Float64}},1}:
+ Root([-2.35877e-07, 8.22858e-07] × [1.57079, 1.5708], :unique)
+ Root([-7.19393e-07, 1.55473e-06] × [-1.5708, -1.57079], :unique)</code></pre><h2 id="Tolerance-1"><a class="docs-heading-anchor" href="#Tolerance-1">Tolerance</a><a class="docs-heading-anchor-permalink" href="#Tolerance-1" title="Permalink"></a></h2><p>An absolute tolerance for the search may be specified as the last argument of the <code>roots</code> function, the default being <code>1e-15</code>. Currently a method must first be provided in order to be able to choose the tolerance.</p><pre><code class="language-jl">julia&gt; g(x) = sin(exp(x))
+g (generic function with 1 method)
+
+julia&gt; roots(g, 0..2, Newton)
+2-element Array{Root{Interval{Float64}},1}:
+ Root([1.83787, 1.83788], :unique)
+ Root([1.14472, 1.14473], :unique)
+
+julia&gt; roots(g, 0..2, Newton, 1e-2)
+2-element Array{Root{Interval{Float64}},1}:
+ Root([1.83745, 1.83974], :unique)
+ Root([1.14471, 1.14475], :unique)</code></pre><p>A lower tolerance may greatly reduce the computation time, at the cost of an increased number of returned roots having <code>:unknown</code> status:</p><pre><code class="language-jl">julia&gt; h(x) = cos(x) * sin(1 / x)
+h (generic function with 1 method)
+
+julia&gt; @btime roots(h, 0.05..1, Newton)
+  1.316 ms (9676 allocations: 202.21 KiB)
+6-element Array{Root{Interval{Float64}},1}:
+ Root([0.106103, 0.106104], :unique)
+ Root([0.318309, 0.31831], :unique)
+ Root([0.0795774, 0.0795775], :unique)
+ Root([0.0636619, 0.063662], :unique)
+ Root([0.0530516, 0.0530517], :unique)
+ Root([0.159154, 0.159155], :unique)             
+
+julia&gt; @btime roots(h, 0.05..1, Newton, 1e-2)
+   475.500 μs (4171 allocations: 94.00 KiB)
+ 6-element Array{Root{Interval{Float64}},1}:
+  Root([0.317179, 0.319299], :unique)
+  Root([0.157209, 0.165989], :unknown)
+  Root([0.104739, 0.107542], :unknown)
+  Root([0.0515382, 0.0531049], :unique)
+  Root([0.0785458, 0.0797755], :unknown)
+  Root([0.0570253, 0.0641614], :unknown)
+
+julia&gt; @btime roots(h, 0.05..1, Newton, 1e-1)
+  151.101 μs (1382 allocations: 32.86 KiB)
+3-element Array{Root{Interval{Float64}},1}:
+ Root([0.107541, 0.165989], :unknown)
+ Root([0.283803, 0.3555], :unknown)
+ Root([0.0499999, 0.107542], :unknown)     </code></pre><p>The last example shows a case where the tolerance was too large to be able to isolate the roots in distinct regions.</p><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>For a root <code>x</code> of some function, if the absolute tolerance is smaller than <code>eps(x)</code> i.e. if <code>tol + x == x</code>, <code>roots</code> may never be able to converge to the required tolerance and the function may get stuck in an infinite loop.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../internals/">Internals »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 23 April 2020 19:09">Thursday 23 April 2020</span>. Using Julia version 1.4.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
