@@ -6,7 +6,7 @@ using IntervalArithmetic
 using ForwardDiff
 using StaticArrays
 
-using LinearAlgebra: I, Diagonal
+using LinearAlgebra: I, diag
 
 
 import Base: ⊆, show, big, \
@@ -36,20 +36,21 @@ const D = derivative
 
 const where_bisect = IntervalArithmetic.where_bisect ## 127//256
 
+include("complex.jl")
+include("slopes.jl")
+include("linear_eq.jl")
+include("quadratic.jl")
 
 include("root_object.jl")
 
-include("newton.jl")
-include("krawczyk.jl")
-
-include("complex.jl")
 include("contractors.jl")
 include("branch_and_bound.jl")
 include("roots.jl")
+
+# Old stuff
+include("newton.jl")
+include("krawczyk.jl")
 include("newton1d.jl")
-include("quadratic.jl")
-include("linear_eq.jl")
-include("slopes.jl")
 
 
 gradient(f) = X -> ForwardDiff.gradient(f, X[:])

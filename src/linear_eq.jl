@@ -2,12 +2,10 @@
 Preconditions the matrix A and b with the inverse of mid(A)
 """
 function preconditioner(A::AbstractMatrix, b::AbstractArray)
-
     Aᶜ = mid.(A)
     B = inv(Aᶜ)
 
     return B*A, B*b
-
 end
 
 function gauss_seidel_interval(A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
@@ -48,119 +46,103 @@ function gauss_seidel_interval!(x::AbstractArray, A::AbstractMatrix, b::Abstract
     x
 end
 
-function gauss_seidel_contractor(A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
+function gauss_seidel_contractor(A::SMatrix{N, N, Interval{T}},
+        b::SVector{N, Interval{T}} ;
+        precondition=true, maxiter=100) where {N, T}
 
-    n = size(A, 1)
-    x = similar(b)
-    x .= -1e16..1e16
-    x = gauss_seidel_contractor!(x, A, b, precondition=precondition, maxiter=maxiter)
+    x = MVector{N, Interval{T}}([entireinterval(T) for _ in 1:N])
+    Am = convert(MMatrix{N, N, Interval{T}}, A)
+    bm = convert(MVector{N, Interval{T}}, b)
+
+    gauss_seidel_contractor!(x, Am, bm, precondition=precondition, maxiter=maxiter)
+
     return x
 end
 
-function gauss_seidel_contractor!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
+function gauss_seidel_contractor!(x::MVector{N, Interval{T}},
+        A::MMatrix{N, N, Interval{T}},
+        b::MVector{N, Interval{T}} ;
+        precondition=true, maxiter=100) where {N, T}
 
     precondition && ((A, b) = preconditioner(A, b))
 
-    n = size(A, 1)
-
-    diagA = Diagonal(A)
+    diagA = diag(A)
     extdiagA = copy(A)
-    for i in 1:n
-        if (typeof(b) <: SArray)
-            extdiagA = setindex(extdiagA, Interval(0), i, i)
-        else
-            extdiagA[i, i] = Interval(0)
-        end
+    for i in 1:N
+        extdiagA[i, i] = Interval(zero(T))
     end
-    inv_diagA = inv(diagA)
+    inv_diagA = 1 ./ diagA
 
     for iter in 1:maxiter
         x¹ = copy(x)
-        x = x .∩ (inv_diagA * (b - extdiagA * x))
-        if all(x .== x¹)
-            break
-        end
+        x = x .∩ (inv_diagA .* (b - extdiagA * x))
+        all(x .== x¹) && return
     end
-    x
 end
 
-function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precondition=true)
+"""
+    gauss_elimination_interval(A::SMatrix, b::SVector, [precondition=true])
+"""
+function gauss_elimination_interval(A::SMatrix{N, N, Interval{T}},
+        b::SVector{N, Interval{T}} ;
+        precondition=true) where {N, T}
 
-    x = similar(b)
-    x .= -1e16..1e16
-    x = gauss_elimination_interval!(x, A, b, precondition=precondition)
+    x = MVector{N, Interval{T}}([entireinterval(T) for _ in 1:N])
+    Am = convert(MMatrix{N, N, Interval{T}}, A)
+    bm = convert(MVector{N, Interval{T}}, b)
+
+    gauss_elimination_interval!(x, Am, bm, precondition=precondition)
 
     return x
 end
+
 """
-Solves the system of linear equations using Gaussian Elimination.
+    gauss_elimination_interval!(x::MVector, A::MMatrix, b::MVector, [precondition=true])
+
+Solves the system of linear equations `A*x = b` using Gaussian Elimination.
 Preconditioning is used when the `precondition` keyword argument is `true`.
+
+This is the mutable version of the algorithm, which mutate `x`, `A` and `b`.
+Final upper triangle of `A` and `b` correspond to the triangular system.
 
 REF: Luc Jaulin et al.,
 *Applied Interval Analysis*, pg. 72
 """
-function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true)
+function gauss_elimination_interval!(x::MVector{N, Interval{T}},
+        A::MMatrix{N, N, Interval{T}},
+        b::MVector{N, Interval{T}} ;
+        precondition=true) where {N, T}
 
     if precondition
-        (A, b) = preconditioner(A, b)
-    else
-        A = copy(A)
-        b = copy(b)
+        A, b = preconditioner(A, b)
     end
 
-    n = size(A, 1)
-
-    p = similar(b)
-    p .= 0
-
-    for i in 1:(n-1)
-        if 0 ∈ A[i, i] # diagonal matrix is not invertible
-            p .= entireinterval(b[1])
-            return p .∩ x  # return x?
+    for i in 1:(N-1)
+        if 0 ∈ A[i, i] # Pivot is zero, implying singular matrix
+            x .= entireinterval(T)
+            return
         end
 
-        for j in (i+1):n
+        for j in (i+1):N
             α = A[j, i] / A[i, i]
             b[j] -= α * b[i]
 
-            for k in (i+1):n
+            for k in (i+1):N
                 A[j, k] -= α * A[i, k]
             end
         end
     end
 
-    for i in n:-1:1
+    for i in N:-1:1
+        temp = zero(T)
 
-        temp = zero(b[1])
-
-        for j in (i+1):n
-            temp += A[i, j] * p[j]
+        for j in (i+1):N
+            temp += A[i, j] * x[j]
         end
 
-        p[i] = (b[i] - temp) / A[i, i]
+        x[i] = (b[i] - temp) / A[i, i]
     end
-
-    return p .∩ x
 end
 
-function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precondition=true)
-
-    n = size(A, 1)
-    x = fill(-1e16..1e16, n)
-
-    x = gauss_elimination_interval1!(x, A, b, precondition=precondition)
-
-    return x
-end
-"""
-Using `Base.\``
-"""
-function gauss_elimination_interval1!(x::AbstractArray, a::AbstractMatrix, b::AbstractArray; precondition=true)
-
-    precondition && ((a, b) = preconditioner(a, b))
-
-    a \ b
-end
-
-\(A::StaticMatrix{Interval{T}}, b::StaticArray{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)
-\(A::Matrix{Interval{T}}, b::Array{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)
+\(A::SMatrix{N, N, Interval{T}}, b::SVector{N, Interval{T}} ; kwargs...) where {N, T} = gauss_elimination_interval(A, b, kwargs...)
+\(A::SMatrix{N, N, Interval{T}}, b::IntervalBox{N, T} ; kwargs...) where {N, T} = gauss_elimination_interval(A, b.v, kwargs...)
