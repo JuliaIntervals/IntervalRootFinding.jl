@@ -20,6 +20,10 @@ env:
   global:
     - DOCUMENTER_DEBUG=true
 
+script:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - travis_wait 20 julia --project -e 'using Pkg; Pkg.instantiate(); Pkg.build(; verbose = true); Pkg.test(; coverage=true)';
+
 jobs:
   allow_failures:
     - julia: nightly
