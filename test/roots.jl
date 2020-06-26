@@ -55,6 +55,9 @@ newtonlike_methods = [Newton, Krawczyk]
 end
 
 
+in_solution_set(point, solution_intervals) =
+    any(interval -> point in interval, solution_intervals)
+
 @testset "2D roots" begin
     f(x, y) = SVector(x^2 + y^2 - 1, y - 2x)
     f(X) = f(X...)
@@ -62,7 +65,9 @@ end
 
     # Bisection
     rts = roots(f, X, Bisection, 1e-3)
-    @test length(rts) == 4
+    exact_sol = [sqrt(1/5), 2sqrt(1/5)]
+    @test in_solution_set(exact_sol, interval.(rts))
+    @test in_solution_set(-exact_sol, interval.(rts))
 
     for method in newtonlike_methods
         deriv = xx -> ForwardDiff.jacobian(f, xx)
