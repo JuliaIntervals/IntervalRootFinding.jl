@@ -87,7 +87,7 @@ end
 function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precondition=true)
 
     x = similar(b)
-    x .= -1e16..1e16
+    x .= -Inf..Inf
     x = gauss_elimination_interval!(x, A, b, precondition=precondition)
 
     return x
@@ -103,10 +103,13 @@ function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::Abs
 
     if precondition
         (A, b) = preconditioner(A, b)
-    else
-        A = copy(A)
-        b = copy(b)
     end
+    _A = A
+    _b = b
+    A = similar(A)
+    b = similar(b)
+    A .= _A
+    b .= _b
 
     n = size(A, 1)
 
@@ -162,5 +165,5 @@ function gauss_elimination_interval1!(x::AbstractArray, a::AbstractMatrix, b::Ab
     a \ b
 end
 
-\(A::StaticMatrix{Interval{T}}, b::StaticArray{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)
-\(A::Matrix{Interval{T}}, b::Array{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)
+\(A::SMatrix{S, S, Interval{T}}, b::SVector{S, Interval{T}}; kwargs...) where {S, T} = gauss_elimination_interval(A, b, kwargs...)
+\(A::Matrix{Interval{T}}, b::Vector{Interval{T}}; kwargs...) where T = gauss_elimination_interval(A, b, kwargs...)

@@ -1,6 +1,6 @@
 name = "IntervalRootFinding"
 uuid = "d2bf35a9-74e0-55ec-b149-d360ff49b807"
-version = "0.5.3"
+version = "0.5.4"
 
 [deps]
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
