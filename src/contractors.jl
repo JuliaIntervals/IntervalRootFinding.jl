@@ -34,16 +34,17 @@ Single-variable Krawczyk operator.
 The symbol for the operator is accessed with `\\scrK<tab>`.
 """
 function 𝒦(f, f′, X::Interval{T}, α) where {T}
-    m = mid(X, α)
-    mm = Interval(m)
+    m = Interval(mid(X, α))
 
-    if isempty(f(mm))  # outside domain of f
+    if isempty(f(m))  # outside domain of f
         return emptyinterval(X)
     end
 
-    Y = 1 / f′(m)
+    J = f′(X)  # derivative
 
-    return m - Y*f(m) + (1 - Y*f′(X)) * (X - m)
+    Y = 1 / mid(J)
+
+    return m - Y*f(m) + (1 - Y*J) * (X - m)
 end
 
 """
@@ -52,17 +53,16 @@ end
 Multi-variable Krawczyk operator.
 """
 function 𝒦(f, jacobian, X::IntervalBox{T}, α) where {T}
-    m = mid(X, α)
-    mm = IntervalBox(m)
+    m = IntervalBox(Interval.(mid(X, α)))
 
-    if isempty(f(mm))  # outside domain of f
+    if isempty(f(m))  # outside domain of f
         return emptyinterval(X)
     end
 
     J = jacobian(X)
-    Y = inv(jacobian(m))
+    Y = inv(mid.(J))
 
-    return mm - Y*f(mm) + (I - Y*J) * (X - mm)
+    return m - Y*f(m) + (I - Y*J) * (X - m)
 end
 
 
