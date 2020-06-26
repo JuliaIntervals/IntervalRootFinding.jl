@@ -56,7 +56,7 @@ end
 
 
 in_solution_set(point, solution_intervals) =
-    any(map(interval -> point in interval, solution_intervals))
+    any(interval -> point in interval, solution_intervals)
 
 @testset "2D roots" begin
     f(x, y) = SVector(x^2 + y^2 - 1, y - 2x)
