@@ -1,11 +1,10 @@
 # IntervalRootFinding.jl
 
-[![Build Status](https://travis-ci.org/JuliaIntervals/IntervalRootFinding.jl.svg?branch=master)](https://travis-ci.org/JuliaIntervals/IntervalRootFinding.jl)
+[![Build Status](https://github.com/JuliaIntervals/IntervalRootFinding.jl/workflows/CI/badge.svg)](https://github.com/JuliaIntervals/IntervalRootFinding.jl/actions/workflows/CI.yml)
 
-[![codecov.io](http://codecov.io/github/JuliaIntervals/IntervalRootFinding/coverage.svg?branch=master)](http://codecov.io/github/JuliaIntervals/IntervalRootFinding.jl?branch=master)
+[![coverage](https://codecov.io/gh/JuliaIntervals/IntervalRootFinding.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaIntervals/IntervalRootFinding.jl)
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaIntervals.github.io/IntervalRootFinding.jl/stable)
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://JuliaIntervals.github.io/IntervalRootFinding.jl/latest)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaintervals.github.io/pages/packages/intervalrootfinding/)
 
 This package provides guaranteed methods for finding **roots** of functions, i.e. solutions to the equation `f(x) == 0` for a function `f`.
 To do so, it uses methods from interval analysis, using interval arithmetic from the [`IntervalArithmetic.jl`](https://github.com/JuliaIntervals/IntervalArithmetic.jl) package by the same authors.
