@@ -24,8 +24,11 @@ export
     gauss_elimination_interval, gauss_elimination_interval!,
     slope
 
-export isunique, root_status
 
+
+export isunique, root_status
+using Reexport
+@reexport using IntervalArithmetic
 
 import IntervalArithmetic: interval, wideinterval
 
