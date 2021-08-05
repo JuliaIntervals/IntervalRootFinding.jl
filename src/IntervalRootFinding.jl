@@ -28,7 +28,7 @@ export
 
 export isunique, root_status
 using Reexport
-@reexport IntervalArithmetic
+@reexport using IntervalArithmetic
 
 import IntervalArithmetic: interval, wideinterval
 
