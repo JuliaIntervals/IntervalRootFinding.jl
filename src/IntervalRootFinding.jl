@@ -22,11 +22,13 @@ export
     gauss_seidel_interval, gauss_seidel_interval!,
     gauss_seidel_contractor, gauss_seidel_contractor!,
     gauss_elimination_interval, gauss_elimination_interval!,
-    slope,
-    .. # export interval definition for convenience
+    slope
+
+
 
 export isunique, root_status
-
+using Reexport
+@reexport IntervalArithmetic
 
 import IntervalArithmetic: interval, wideinterval
 
