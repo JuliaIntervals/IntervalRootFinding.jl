@@ -3,6 +3,7 @@ uuid = "d2bf35a9-74e0-55ec-b149-d360ff49b807"
 version = "0.5.11"
 
 [deps]
+BranchAndPrune = "d3bc4f2e-91e6-11e9-365e-cd067da536ce"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 IntervalArithmetic = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

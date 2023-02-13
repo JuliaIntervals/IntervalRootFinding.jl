@@ -47,7 +47,7 @@ Contractors play a central role in the algorithm: they are the only part of it t
 
 ## Search object
 
-Now that we have presented the foundation of the internal algorithm, we can discuss the representation of the search. Each search strategy has a type associated, the defined types being `BreadthFirstSearch` and `DepthFirstSearch`.
+Now that we have presented the foundation of the internal algorithm, we can discuss the representation of the search. Each search strategy has a type associated, the defined types being `BreadthFirst` and `DepthFirst`.
 
 A search must be given three pieces of information:
   1. The region to search;
@@ -64,8 +64,8 @@ df (generic function with 1 method)
 julia> C = Newton(f, df)
 Newton{typeof(f),typeof(df)}(f, df)
 
-julia> search = DepthFirstSearch(-10..10, C, 1e-10)
-DepthFirstSearch{Interval{Float64},Newton{typeof(f),typeof(df)},
+julia> search = DepthFirst(-10..10, C, 1e-10)
+DepthFirst{Interval{Float64},Newton{typeof(f),typeof(df)},
 Float64}(Root([-10, 10], :unknown), Newton{typeof(f),typeof(df)}(f, df),
 1.0e-10)
 ```

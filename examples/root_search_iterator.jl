@@ -10,7 +10,7 @@ contractor = Newton(f, cos)
 
 @info "Breadth first search."
 # A search takes a starting region, a contractor and a tolerance as argument
-search = BreadthFirstSearch(-10..10, contractor, 1e-10)
+search = BreadthFirst(-10..10, contractor, 1e-10)
 
 # This is needed to avoid the data being discarded at the end of the loop use
 # `local tree` instead inside a function.
@@ -27,7 +27,7 @@ println()
 
 @info "Depth first search."
 # The second available type of root search is depth first
-search = DepthFirstSearch(-10..10, contractor, 1e-10)
+search = DepthFirst(-10..10, contractor, 1e-10)
 for tree in search
     global endtree = tree
 end  # Go to the end of the iteration
