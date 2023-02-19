@@ -2,60 +2,6 @@ export Contractor
 export Bisection, Newton, Krawczyk
 
 """
-    𝒩(f, f′, X, α)
-
-Single-variable Newton operator.
-
-The symbol for the operator is accessed with `\\scrN<tab>`.
-"""
-function 𝒩(f, f′, X::Interval{T}, α) where {T}
-    m = Interval(mid(X, α))
-
-    return m - (f(m) / f′(X))
-end
-
-"""
-    𝒩(f, jacobian, X, α)
-
-Multi-variable Newton operator.
-"""
-function 𝒩(f::Function, jacobian::Function, X::IntervalBox, α)  # multidimensional Newton operator
-    m = Interval.(mid(X, α))
-    J = jacobian(X)
-    y = gauss_elimination_interval(J, f(m)) # J \ f(m)
-    return IntervalBox(m .- y)
-end
-
-"""
-    𝒦(f, f′, X, α)
-
-Single-variable Krawczyk operator.
-
-The symbol for the operator is accessed with `\\scrK<tab>`.
-"""
-function 𝒦(f, f′, X::Interval{T}, α) where {T}
-    m = Interval(mid(X, α))
-    Y = 1 / f′(m)
-
-    return m - Y*f(m) + (1 - Y*f′(X)) * (X - m)
-end
-
-"""
-    𝒦(f, jacobian, X, α)
-
-Multi-variable Krawczyk operator.
-"""
-function 𝒦(f, jacobian, X::IntervalBox{T}, α) where {T}
-    m = mid(X, α)
-    mm = IntervalBox(m)
-    J = jacobian(X)
-    Y = mid.(inv(jacobian(mm)))
-
-    return m - Y*f(mm) + (I - Y*J) * (X.v - m)
-end
-
-
-"""
     Contractor{F}
 
 Abstract type for contractors.
@@ -71,56 +17,84 @@ struct Bisection{F} <: Contractor{F}
     f::F
 end
 
-function (contractor::Bisection)(r, tol)
-    X = interval(r)
-    image = (contractor.f)(X)
+"""
+    Newton{F, FP} <: Contractor{F}
 
-    if root_status(r) == :empty || !(contains_zero(image))
-        return Root(X, :empty)
-    end
+Contractor type for the interval Newton method.
 
-    return Root(X, :unknown)
+# Fields
+    - `f::F`: function whose roots are searched
+    - `f::FP`: derivative or jacobian of `f`
+
+-----
+
+    (N::Newton)(X, α=where_bisect)
+
+Contract an interval `X` using Newton operator and return the
+contracted interval together with its status.
+
+# Inputs
+    - `R`: Root object containing the interval to contract.
+    - `α`: Point of bisection of intervals.
+"""
+struct Newton{F, FP} <: Contractor{F}
+    f::F
+    f′::FP   # use \prime<TAB> for ′
 end
 
-for (Method, 𝒪) in ((:Newton, 𝒩), (:Krawczyk, 𝒦))
-    doc = """
-        $Method{F, FP} <: Contractor{F}
-
-    Contractor type for the $Method method.
-
-    # Fields
-      - `f::F`: function whose roots are searched
-      - `f::FP`: derivative or jacobian of `f`
-
-    -----
-
-        (C::$Method)(X, tol, α=where_bisect)
-
-    Contract an interval `X` using $Method operator and return the
-    contracted interval together with its status.
-
-    # Inputs
-      - `R`: Root object containing the interval to contract.
-      - `tol`: Precision to which unique solutions are refined.
-      - `α`: Point of bisection of intervals.
-    """
-
-    @eval begin
-        struct $Method{F, FP} <: Contractor{F}
-            f::F
-            f′::FP   # use \prime<TAB> for ′
-        end
-
-        function (C::$Method)(R, tol, α=where_bisect)
-            op = x -> $𝒪(C.f, C.f′, x, α)
-            rt = determine_region_status(op, C.f, R)
-            return refine(op, rt, tol)
-        end
-
-        @doc $doc $Method
-    end
+function (N::Newton)(X::Interval ; α=where_bisect)
+    m = Interval(mid(X, α))
+    return m - (N.f(m) / N.f′(X))
 end
 
+function (N::Newton)(X::IntervalBox ; α=where_bisect)
+    m = Interval.(mid(X, α))
+    J = N.f′(X)
+    y = gauss_elimination_interval(J, N.f(m))  # J \ f(m)
+    return IntervalBox(m .- y)
+end
+
+"""
+    Krawczyk{F, FP} <: Contractor{F}
+
+Contractor type for the interval Krawczyk method.
+
+# Fields
+    - `f::F`: function whose roots are searched
+    - `f::FP`: derivative or jacobian of `f`
+
+-----
+
+    (K::Krawczyk)(X ; α=where_bisect)
+
+Contract an interval `X` using Krawczyk operator and return the
+contracted interval together with its status.
+
+# Inputs
+    - `R`: Root object containing the interval to contract.
+    - `α`: Point of bisection of intervals.
+"""
+struct Krawczyk{F, FP} <: Contractor{F}
+    f::F
+    f′::FP   # use \prime<TAB> for ′
+end
+
+function (K::Krawczyk)(X::Interval ; α=where_bisect)
+    m = Interval(mid(X, α))
+    Y = 1 / K.f′(m)
+
+    return m - Y*K.f(m) + (1 - Y*K.f′(X)) * (X - m)
+end
+
+function (K::Krawczyk)(X::IntervalBox ; α=where_bisect)
+    jacobian = K.f′
+    m = mid(X, α)
+    mm = IntervalBox(m)
+    J = jacobian(X)
+    Y = mid.(inv(jacobian(mm)))
+
+    return m - Y*K.f(mm) + (I - Y*J) * (X.v - m)
+end
 
 """
     safe_isempty(X)
@@ -131,37 +105,42 @@ of `Interval`.
 safe_isempty(X) = isempty(IntervalBox(X))
 
 """
-    determine_region_status(contract, f, R)
+    contract(contractor, R)
 
 Contraction operation for contractors using the first derivative of the
 function.
-
-Currently `Newton` and `Krawczyk` contractors use this.
 """
-function determine_region_status(op, f, R)
+function contract(B::Bisection, R::Root)
     X = interval(R)
-    former_status = root_status(R)
+    R.status == :empty && return Root(X, :empty)
 
-    imX = f(X)
+    imX = B.f(X)
 
-    if former_status == :empty || !(contains_zero(imX))
+    if !(contains_zero(imX)) || safe_isempty(imX)
         return Root(X, :empty)
     end
 
-    safe_isempty(imX) && return Root(X, :empty)  # X is fully outside of the domain of f
+    return Root(X, :unknown)
+end
 
-    contracted_X = op(X)
+function contract(C::Union{Newton, Krawczyk}, R::Root)
+    # We first check with the simple bisection method
+    # If we can prove it is empty at this point, we don't go further
+    R2 = contract(Bisection(C.f), R)
+    R2.status == :empty && return R2
+
+    X = interval(R)
+    contracted_X = C(X)
 
     # Only happens if X is partially out of the domain of f
     safe_isempty(contracted_X) && return Root(X, :unknown)  # force bisection
 
-    # given that have the Jacobian, can also do mean value form
     NX = contracted_X ∩ X
 
     isinf(X) && return Root(NX, :unknown)  # force bisection
     safe_isempty(NX) && return Root(X, :empty)
 
-    if former_status == :unique || NX ⪽ X  # isinterior; know there's a unique root inside
+    if R.status == :unique || NX ⪽ X  # isinterior, we know there's a unique root inside
         return Root(NX, :unique)
     end
 
@@ -169,14 +148,15 @@ function determine_region_status(op, f, R)
 end
 
 """
-    refine(op, X::Region, tol)
+    refine(C, X::Region, tol)
 
-Generic refine operation for Krawczyk and Newton.
+Refine a interval known to contain a solution.
+
 This function assumes that it is already known that `X` contains a unique root.
 """
-function refine(op, X::Region, tol)
-    while diam(X) > tol  # avoid problem with tiny floating-point numbers if 0 is a root
-        NX = op(X) ∩ X
+function refine(C::Union{Newton, Krawczyk}, X::Region, root_problem)
+    while diam(X) > root_problem.abstol
+        NX = C(X) ∩ X
         NX == X && break  # reached limit of precision
         X = NX
     end
@@ -190,7 +170,7 @@ end
 Wrap the refine method to leave unchanged intervals that are not guaranteed to
 contain an unique solution.
 """
-function refine(op, R::Root, tol)
+function refine(C::Contractor, R::Root, root_problem)
     root_status(R) != :unique && return R
-    return Root(refine(op, interval(R), tol), :unique)
+    return Root(refine(C, interval(R), root_problem), :unique)
 end
