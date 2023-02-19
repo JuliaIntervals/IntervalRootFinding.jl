@@ -2,6 +2,7 @@
 
 module IntervalRootFinding
 
+using BranchAndPrune
 using IntervalArithmetic
 using ForwardDiff
 using StaticArrays
@@ -47,7 +48,6 @@ include("krawczyk.jl")
 
 include("complex.jl")
 include("contractors.jl")
-include("branch_and_bound.jl")
 include("roots.jl")
 include("newton1d.jl")
 include("quadratic.jl")
