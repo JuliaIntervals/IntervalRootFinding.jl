@@ -12,7 +12,7 @@ by the `roots` function.
 # Fields
   - `interval`: a region (either `Interval` of `IntervalBox`) searched for
         roots.
-  - `status`: the status of the region, valid values are `:empty`, `unkown` and
+  - `status`: the status of the region, valid values are `:empty`, `unknown` and
         `:unique`.
 """
 struct Root{T}

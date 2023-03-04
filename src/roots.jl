@@ -10,23 +10,25 @@ isnan(r::Root) = isnan(interval(r))
 struct RootProblem{T}
     abstol::T
 end
-
+   
 function bisect(r::Root)
     Y1, Y2 = bisect(interval(r))
     return Root(Y1, :unknown), Root(Y2, :unknown)
 end
 
 function process(contractor, root_problem, r::Root)
-    contracted_root = contractor(r, root_problem.abstol)
-    status = root_status(contracted_root)
+    contracted_root = contract(contractor, r)
+    refined_root = refine(contractor, contracted_root, root_problem)
 
-    status == :unique && return :store, contracted_root
-    status == :empty && return :prune, contracted_root
+    status = root_status(refined_root)
+
+    status == :unique && return :store, refined_root
+    status == :empty && return :prune, refined_root
 
     if status == :unknown
         # Avoid infinite division of intervals with singularity
-        isnan(contracted_root) && diam(r) < root_problem.abstol && return :store, r
-        diam(contracted_root) < root_problem.abstol && return :store, contracted_root
+        isnan(refined_root) && diam(r) < root_problem.abstol && return :store, r
+        diam(refined_root) < root_problem.abstol && return :store, refined_root
 
         return :branch, r
     else
@@ -84,26 +86,26 @@ Inputs:
 """
 function roots(f::Function, X, contractor::Type{C}=default_contractor,
                search_order::Type{S}=default_search_order,
-               tol::Float64=default_tolerance) where {C <: Contractor, S <: SearchOrder}
+               tol::Float64=default_tolerance) where {C <: AbstractContractor, S <: SearchOrder}
 
     _roots(f, X, contractor, search_order, tol)
 end
 
 function roots(f::Function, deriv::Function, X, contractor::Type{C}=default_contractor,
                search_order::Type{S}=default_search_order,
-               tol::Float64=default_tolerance) where {C <: Contractor, S <: SearchOrder}
+               tol::Float64=default_tolerance) where {C <: AbstractContractor, S <: SearchOrder}
 
     _roots(f, deriv, X, contractor, search_order, tol)
 end
 
 function roots(f::Function, X, contractor::Type{C},
-               tol::Float64) where {C <: Contractor}
+               tol::Float64) where {C <: AbstractContractor}
 
     _roots(f, X, contractor, default_search_order, tol)
 end
 
 function roots(f::Function, deriv::Function, X, contractor::Type{C},
-               tol::Float64) where {C <: Contractor}
+               tol::Float64) where {C <: AbstractContractor}
 
     _roots(f, deriv, X, contractor, default_search_order, tol)
 end
@@ -153,13 +155,13 @@ end
 
 # Acting on `Interval`
 function _roots(f, X::Region, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {C <: AbstractContractor, S <: SearchOrder}
 
     _roots(f, Root(X, :unknown), contractor, search_order, tol)
 end
 
 function _roots(f, deriv, X::Region, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {C <: AbstractContractor, S <: SearchOrder}
 
     _roots(f, deriv, Root(X, :unknown), contractor, search_order, tol)
 end
@@ -167,13 +169,13 @@ end
 
 # Acting on `Vector` of `Root`
 function _roots(f, V::Vector{Root{T}}, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {T, C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {T, C <: AbstractContractor, S <: SearchOrder}
 
     vcat(_roots.(f, V, contractor, search_order, tol)...)
 end
 
 function _roots(f, deriv, V::Vector{Root{T}}, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {T, C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {T, C <: AbstractContractor, S <: SearchOrder}
 
     vcat(_roots.(f, deriv, V, contractor, search_order, tol)...)
 end
@@ -181,7 +183,7 @@ end
 
 # Acting on complex `Interval`
 function _roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {T, C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {T, C <: AbstractContractor, S <: SearchOrder}
 
     g = realify(f)
     Y = IntervalBox(reim(Xc)...)

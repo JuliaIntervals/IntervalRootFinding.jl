@@ -39,7 +39,7 @@ Newton{typeof(sin),typeof(cos)}(sin, cos)
 julia> C(Root(pi ± 0.001, :unknown), 1e-10)
 Root([3.14159, 3.1416], :unique)
 
-julia> C(Root(2 ± 0.001, :unkown), 1e-10)
+julia> C(Root(2 ± 0.001, :unknown), 1e-10)
 Root([1.99899, 2.00101], :empty)
 ```
 
