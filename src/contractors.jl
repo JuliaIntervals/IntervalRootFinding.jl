@@ -107,8 +107,7 @@ safe_isempty(X) = isempty(IntervalBox(X))
 """
     contract(contractor, R)
 
-Contraction operation for contractors using the first derivative of the
-function.
+Contract the region R using the given contractor.
 """
 function contract(B::Bisection, R::Root)
     X = interval(R)

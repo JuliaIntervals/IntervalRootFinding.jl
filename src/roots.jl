@@ -7,53 +7,10 @@ diam(r::Root) = diam(interval(r))
 isnan(X::IntervalBox) = any(isnan.(X))
 isnan(r::Root) = isnan(interval(r))
 
-struct RootProblem{I, F, DF, C, S, T, ICB, RCB}
-    X::I
-    f::F
-    df::DF
-    contractor::Type{C}
-    search_order::Type{S}
+struct RootProblem{T}
     abstol::T
-    reltol::T
-    maxiter::Int
-    maxdepth::Int
-    iteration_callback::ICB
-    root_callback::RCB
-end
-
-function RootProblem(
-        X,
-        f,
-        df = get_derivative(f, I) ;
-        contractor = Newton,
-        search_order = BreadthFirst,
-        abstol = 1e-7,
-        reltol = 1e-7,
-        maxiter = 1_000,
-        maxdepth = 1_000,
-        iteration_callback = tree -> false,
-        root_callback = (status, root) -> false)
-    
-    RootProblem(
-        X,
-        f,
-        df,
-        contractor,
-        search_order,
-        abstol,
-        reltol,
-        maxiter,
-        maxdepth,
-        iteration_callback,
-        root_callback
-    )
 end
    
-get_derivative(::Interval, f) = (x -> ForwardDiff.derivative(f, x))
-function get_derivative(::Union{IntervalBox, Vector{<:Interval}}, f)
-    return x -> ForwardDiff.jacobian(f, x)
-end
-
 function bisect(r::Root)
     Y1, Y2 = bisect(interval(r))
     return Root(Y1, :unknown), Root(Y2, :unknown)
@@ -88,14 +45,8 @@ contractor to determine the status of a given box `X`.
 See the documentation of the `roots` function for explanation of the other
 arguments.
 """
-function branch_and_prune(r::Root, contractor::C, search_order, tol) where C
-    root_problem = RootProblem(
-        r,
-        contractor.f,
-        nothing ;
-        contractor = C,
-        abstol = tol
-    )
+function branch_and_prune(r::Root, contractor, search_order, tol)
+    root_problem = RootProblem(tol)
     search = BranchAndPruneSearch(
         search_order,
         X -> process(contractor, root_problem, X),
