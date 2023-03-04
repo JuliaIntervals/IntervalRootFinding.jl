@@ -86,26 +86,26 @@ Inputs:
 """
 function roots(f::Function, X, contractor::Type{C}=default_contractor,
                search_order::Type{S}=default_search_order,
-               tol::Float64=default_tolerance) where {C <: Contractor, S <: SearchOrder}
+               tol::Float64=default_tolerance) where {C <: AbstractContractor, S <: SearchOrder}
 
     _roots(f, X, contractor, search_order, tol)
 end
 
 function roots(f::Function, deriv::Function, X, contractor::Type{C}=default_contractor,
                search_order::Type{S}=default_search_order,
-               tol::Float64=default_tolerance) where {C <: Contractor, S <: SearchOrder}
+               tol::Float64=default_tolerance) where {C <: AbstractContractor, S <: SearchOrder}
 
     _roots(f, deriv, X, contractor, search_order, tol)
 end
 
 function roots(f::Function, X, contractor::Type{C},
-               tol::Float64) where {C <: Contractor}
+               tol::Float64) where {C <: AbstractContractor}
 
     _roots(f, X, contractor, default_search_order, tol)
 end
 
 function roots(f::Function, deriv::Function, X, contractor::Type{C},
-               tol::Float64) where {C <: Contractor}
+               tol::Float64) where {C <: AbstractContractor}
 
     _roots(f, deriv, X, contractor, default_search_order, tol)
 end
@@ -155,13 +155,13 @@ end
 
 # Acting on `Interval`
 function _roots(f, X::Region, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {C <: AbstractContractor, S <: SearchOrder}
 
     _roots(f, Root(X, :unknown), contractor, search_order, tol)
 end
 
 function _roots(f, deriv, X::Region, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {C <: AbstractContractor, S <: SearchOrder}
 
     _roots(f, deriv, Root(X, :unknown), contractor, search_order, tol)
 end
@@ -169,13 +169,13 @@ end
 
 # Acting on `Vector` of `Root`
 function _roots(f, V::Vector{Root{T}}, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {T, C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {T, C <: AbstractContractor, S <: SearchOrder}
 
     vcat(_roots.(f, V, contractor, search_order, tol)...)
 end
 
 function _roots(f, deriv, V::Vector{Root{T}}, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {T, C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {T, C <: AbstractContractor, S <: SearchOrder}
 
     vcat(_roots.(f, deriv, V, contractor, search_order, tol)...)
 end
@@ -183,7 +183,7 @@ end
 
 # Acting on complex `Interval`
 function _roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {T, C <: Contractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {T, C <: AbstractContractor, S <: SearchOrder}
 
     g = realify(f)
     Y = IntervalBox(reim(Xc)...)

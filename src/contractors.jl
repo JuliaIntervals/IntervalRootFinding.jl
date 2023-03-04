@@ -1,26 +1,25 @@
-export Contractor
 export Bisection, Newton, Krawczyk
 
 """
-    Contractor{F}
+    AbstractContractor{F}
 
 Abstract type for contractors.
 """
-abstract type Contractor{F} end
+abstract type AbstractContractor{F} end
 
 """
-    Bisection{F} <: Contractor{F}
+    Bisection{F} <: AbstractContractor{F}
 
-Contractor type for the bisection method.
+AbstractContractor type for the bisection method.
 """
-struct Bisection{F} <: Contractor{F}
+struct Bisection{F} <: AbstractContractor{F}
     f::F
 end
 
 """
-    Newton{F, FP} <: Contractor{F}
+    Newton{F, FP} <: AbstractContractor{F}
 
-Contractor type for the interval Newton method.
+AbstractContractor type for the interval Newton method.
 
 # Fields
     - `f::F`: function whose roots are searched
@@ -37,7 +36,7 @@ contracted interval together with its status.
     - `R`: Root object containing the interval to contract.
     - `α`: Point of bisection of intervals.
 """
-struct Newton{F, FP} <: Contractor{F}
+struct Newton{F, FP} <: AbstractContractor{F}
     f::F
     f′::FP   # use \prime<TAB> for ′
 end
@@ -55,9 +54,9 @@ function (N::Newton)(X::IntervalBox ; α=where_bisect)
 end
 
 """
-    Krawczyk{F, FP} <: Contractor{F}
+    Krawczyk{F, FP} <: AbstractContractor{F}
 
-Contractor type for the interval Krawczyk method.
+AbstractContractor type for the interval Krawczyk method.
 
 # Fields
     - `f::F`: function whose roots are searched
@@ -74,7 +73,7 @@ contracted interval together with its status.
     - `R`: Root object containing the interval to contract.
     - `α`: Point of bisection of intervals.
 """
-struct Krawczyk{F, FP} <: Contractor{F}
+struct Krawczyk{F, FP} <: AbstractContractor{F}
     f::F
     f′::FP   # use \prime<TAB> for ′
 end
@@ -169,7 +168,7 @@ end
 Wrap the refine method to leave unchanged intervals that are not guaranteed to
 contain an unique solution.
 """
-function refine(C::Contractor, R::Root, root_problem)
+function refine(C::AbstractContractor, R::Root, root_problem)
     root_status(R) != :unique && return R
     return Root(refine(C, interval(R), root_problem), :unique)
 end
