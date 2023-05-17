@@ -7,7 +7,7 @@ using IntervalArithmetic
 using ForwardDiff
 using StaticArrays
 
-using LinearAlgebra: I, Diagonal
+using LinearAlgebra: I, Diagonal, ⋅
 
 
 import Base: ⊆, show, big, \
@@ -23,7 +23,8 @@ export
     gauss_seidel_interval, gauss_seidel_interval!,
     gauss_seidel_contractor, gauss_seidel_contractor!,
     gauss_elimination_interval, gauss_elimination_interval!,
-    slope
+    slope,
+    mean_value_form_scalar, mean_value_form_vector, third_order_taylor_form_scalar
 
 
 
@@ -53,6 +54,7 @@ include("newton1d.jl")
 include("quadratic.jl")
 include("linear_eq.jl")
 include("slopes.jl")
+include("centered_forms.jl")
 
 
 gradient(f) = X -> ForwardDiff.gradient(f, X[:])
