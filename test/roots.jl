@@ -1,4 +1,3 @@
-
 using IntervalArithmetic, IntervalRootFinding, StaticArrays, ForwardDiff
 using Test
 

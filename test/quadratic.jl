@@ -15,7 +15,7 @@ end
     push!(rts, Quad(interval(1, 2), interval(1, 3), interval(2, 6), [interval(-2, -1)]))
     push!(rts, Quad(interval(1, 1), interval(2, 2), interval(1, 1), [interval(-1, -1), interval(-1, -1)]))
 
-    for i in 1:length(rts)
-            @test quadratic_roots(rts[i].a, rts[i].b, rts[i].c) == rts[i].x
+    for i in eachindex(rts)
+        @test quadratic_roots(rts[i].a, rts[i].b, rts[i].c) == rts[i].x
     end
 end

@@ -16,15 +16,13 @@ function benchmark_results()
     df = DataFrame()
 
     df[:Method] = ["Automatic Differentiation", "Slope Expansion"]
-    for n in 1:length(f)
-
-        t1 = ForwardDiff.derivative(f[n], s)
-        t2 = slope(f[n], s, mid(s))
-        df[Symbol("f" * "$n")] = [t1, t2]
-    end
     a = []
-    for i in 1:length(f)
-        push!(a, Symbol("f" * "$i"))
+    for i in eachindex(f)
+        t1 = ForwardDiff.derivative(f[i], s)
+        t2 = slope(f[i], s, mid(s))
+        sym = Symbol("f" * "$i")
+        df[sym] = [t1, t2]
+        push!(a, sym)
     end
     df1 = stack(df, a)
     dfnew = unstack(df1, :variable, :Method, :value)

@@ -14,7 +14,7 @@ struct Slope{T}
 end
 
 Slope(c) = Slope(c, c, 0)
-Slope(a, b, c) = Slope(promote(convert(Interval, a), b, c)...)
+Slope(a, b, c) = Slope(promote(interval(a), b, c)...)
 
 function slope_var(v::Number)
     Slope(v, v, 1)

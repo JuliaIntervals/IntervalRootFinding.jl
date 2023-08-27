@@ -23,7 +23,7 @@ end
         push!(example, Slopes(x->(atan(cos(tan(x)))), s, mid(s), interval(T(1), T(2))))
         push!(example, Slopes(x->(asin(cos(acos(sin(x))))), s, mid(s), interval(T(1.36), T(∞))))
 
-        for i in 1:length(example)
+        for i in eachindex(example)
             @test slope(example[i].f, example[i].x, example[i].c) ⊆ example[i].sol
         end
     end

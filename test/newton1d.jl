@@ -1,4 +1,3 @@
-
 using IntervalArithmetic, IntervalRootFinding
 using ForwardDiff
 using Test
@@ -52,7 +51,7 @@ three_halves_pi = 3*big_pi/2
 
         @test length(rts1) == 3
         L = [-pi, 0, pi]
-        for i = 1:length(rts1)
+        for i = eachindex(rts1)
             @test L[i] in rts1[i].interval && :unique == rts1[i].status
         end
 
@@ -61,7 +60,7 @@ three_halves_pi = 3*big_pi/2
 
         @test length(rts3) == 4
         L = [1, 2, 3, 4]
-        for i = 1:length(rts3)
+        for i = eachindex(rts3)
             @test L[i] in rts3[i].interval && :unique == rts3[i].status
         end
 
@@ -69,7 +68,7 @@ three_halves_pi = 3*big_pi/2
         @test 1 in rts4[1].interval && :unknown == rts4[1].status
 
         L1 = [-sqrt(2), sqrt(2)]
-        for i = 1:length(rts5)
+        for i = eachindex(rts5)
             @test L1[i] in rts5[i].interval && :unknown == rts5[i].status
         end
 
@@ -78,7 +77,7 @@ three_halves_pi = 3*big_pi/2
 
         @test length(rts7) == 4
         L = [-sqrt(2), -1, 1, sqrt(2)]
-        for i = 1:length(rts7)
+        for i = eachindex(rts7)
             @test L[i] in rts7[i].interval && :unknown == rts7[i].status
         end
 

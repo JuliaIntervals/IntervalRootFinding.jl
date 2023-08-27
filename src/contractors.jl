@@ -42,12 +42,12 @@ struct Newton{F, FP} <: AbstractContractor{F}
 end
 
 function (N::Newton)(X::Interval ; α=where_bisect)
-    m = Interval(mid(X, α))
+    m = interval(mid(X, α))
     return m - (N.f(m) / N.f′(X))
 end
 
 function (N::Newton)(X::IntervalBox ; α=where_bisect)
-    m = Interval.(mid(X, α))
+    m = interval.(mid(X, α))
     J = N.f′(X)
     y = gauss_elimination_interval(J, N.f(m))  # J \ f(m)
     return IntervalBox(m .- y)
@@ -79,7 +79,7 @@ struct Krawczyk{F, FP} <: AbstractContractor{F}
 end
 
 function (K::Krawczyk)(X::Interval ; α=where_bisect)
-    m = Interval(mid(X, α))
+    m = interval(mid(X, α))
     Y = 1 / K.f′(m)
 
     return m - Y*K.f(m) + (1 - Y*K.f′(X)) * (X - m)
