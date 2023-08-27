@@ -31,7 +31,10 @@ export isunique, root_status
 using Reexport
 @reexport using IntervalArithmetic
 
-import IntervalArithmetic: interval, wideinterval
+import IntervalArithmetic: interval
+
+wideinterval(x) = interval(prevfloat(x), nextfloat(x))
+IntervalArithmetic.mid(a, α) = scaled_mid(a, α)
 
 
 
@@ -83,13 +86,13 @@ function find_roots(f::Function, a::Real, b::Real, method::Function=newton;
 
     if precision >= 0
         setprecision(Interval, precision) do
-            find_roots(f, @interval(a, b), method; tolerance=tolerance, debug=debug, maxlevel=maxlevel)
+            find_roots(f, interval(a, b), method; tolerance=tolerance, debug=debug, maxlevel=maxlevel)
         end
 
 
     else  # use current precision
 
-        find_roots(f, @interval(a, b), method; tolerance=tolerance, debug=debug, maxlevel=maxlevel)
+        find_roots(f, interval(a, b), method; tolerance=tolerance, debug=debug, maxlevel=maxlevel)
 
     end
 end

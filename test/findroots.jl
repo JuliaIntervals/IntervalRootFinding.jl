@@ -141,8 +141,8 @@ end
 
         @test length(rts) == 4
         @test rts[1].status == :unknown
-        @test rts[1].interval == Interval(-1.4142135623730954, -1.414213562373095)
-        @test rts[3].interval == Interval(1.259921049894873, 1.2599210498948734)
+        @test rts[1].interval == interval(-1.4142135623730954, -1.414213562373095)
+        @test rts[3].interval == interval(1.259921049894873, 1.2599210498948734)
 
     end
 end

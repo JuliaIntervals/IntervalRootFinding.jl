@@ -10,7 +10,7 @@ isnan(r::Root) = isnan(interval(r))
 struct RootProblem{T}
     abstol::T
 end
-   
+
 function bisect(r::Root)
     Y1, Y2 = bisect(interval(r))
     return Root(Y1, :unknown), Root(Y2, :unknown)

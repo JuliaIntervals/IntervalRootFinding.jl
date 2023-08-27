@@ -11,14 +11,14 @@ function guarded_derivative_midpoint(f::Function, f_prime::Function, x::Interval
 
     α = convert(T, 0.46875)   # close to 0.5, but exactly representable as a floating point
 
-    m = Interval(mid(x))
+    m = interval(mid(x))
 
     C = inv(f_prime(m))
 
     # Check that 0 is not in C; if so, consider another point rather than m
     i = 0
     while zero(T) ∈ C || isempty(C)
-        m = Interval( α*x.lo + (one(T)-α)*x.hi )
+        m = interval( α*x.lo + (one(T)-α)*x.hi )
         C = inv(f_prime(m))
 
         i += 1
@@ -84,9 +84,9 @@ function krawczyk(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
 
     # bisecting
     roots = vcat(
-        krawczyk(f, f_prime, Interval(x.lo, m), level+1,
+        krawczyk(f, f_prime, interval(x.lo, m), level+1,
                  tolerance=tolerance, debug=debug, maxlevel=maxlevel),
-        krawczyk(f, f_prime, Interval(m, x.hi), level+1,
+        krawczyk(f, f_prime, interval(m, x.hi), level+1,
                  tolerance=tolerance, debug=debug, maxlevel=maxlevel)
         )
 
@@ -103,7 +103,7 @@ krawczyk(f::Function,x::Interval{T}; args...) where {T} =
 
 # krawczyk for vector of intervals:
 krawczyk(f::Function, f_prime::Function, xx::Vector{Interval{T}}; args...) where {T} =
-    vcat([krawczyk(f, f_prime, @interval(x); args...) for x in xx]...)
+    vcat([krawczyk(f, f_prime, x; args...) for x in xx]...)
 
 krawczyk(f::Function,  xx::Vector{Interval{T}}, level; args...) where {T} =
     krawczyk(f, x->D(f,x), xx; args...)

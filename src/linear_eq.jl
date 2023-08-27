@@ -67,9 +67,9 @@ function gauss_seidel_contractor!(x::AbstractArray, A::AbstractMatrix, b::Abstra
     extdiagA = copy(A)
     for i in 1:n
         if (typeof(b) <: SArray)
-            extdiagA = setindex(extdiagA, Interval(0), i, i)
+            extdiagA = setindex(extdiagA, interval(0), i, i)
         else
-            extdiagA[i, i] = Interval(0)
+            extdiagA[i, i] = interval(0)
         end
     end
     inv_diagA = inv(diagA)
