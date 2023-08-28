@@ -7,7 +7,9 @@ struct Compl{T} <: Number
 end
 
 Base.promote_rule(::Type{Compl{T}}, ::Type{S}) where {T, S<:Real} = Compl{T}
-Base.convert(::Type{Compl{T}}, x::Real) where {T} = Compl{T}(x, 0)
+Base.convert(::Type{Compl{T}}, x::Real) where {T} = Compl{T}(x, zero(T))
+Base.convert(::Type{Compl{T}}, x::Real) where {S,T<:Interval{S}} = Compl{T}(interval(S, x), zero(T))
+
 
 Base.show(io::IO, c::Compl) = println(io, c.re, " + ", c.im, "im")
 
