@@ -45,27 +45,27 @@ function quadratic_roots(a::Interval{T}, b::Interval{T}, c::Interval{T}) where {
     L = Interval{T}[]
     R = Interval{T}[]
 
-    quadratic_helper!(Interval(a.lo), Interval(b.lo), Interval(c.lo), L)
-    quadratic_helper!(Interval(a.hi), Interval(b.hi), Interval(c.hi), L)
-    quadratic_helper!(Interval(a.lo), Interval(b.hi), Interval(c.lo), L)
-    quadratic_helper!(Interval(a.hi), Interval(b.lo), Interval(c.hi), L)
+    quadratic_helper!(interval(a.lo), interval(b.lo), interval(c.lo), L)
+    quadratic_helper!(interval(a.hi), interval(b.hi), interval(c.hi), L)
+    quadratic_helper!(interval(a.lo), interval(b.hi), interval(c.lo), L)
+    quadratic_helper!(interval(a.hi), interval(b.lo), interval(c.hi), L)
 
     if (length(L) == 8)
         resize!(L, 4)
     end
 
     if (a.lo < 0 || (a.lo == 0 && b.hi == 0) || (a.lo == 0 && b.hi == 0 && c.lo ≤ 0))
-        push!(L, Interval(-∞))
+        push!(L, -∞..nextfloat(-∞))
     end
 
     if (a.lo < 0 || (a.lo == 0 && b.lo == 0) || (a.lo == 0 && b.lo == 0 && c.lo ≤ 0))
-        push!(L, Interval(∞))
+        push!(L, prevfloat(∞)..∞)
     end
 
     sort!(L, by = x -> x.lo)
 
     for i in 1:2:length(L)
-        push!(R, Interval(L[i].lo, L[i+1].hi))
+        push!(R, interval(L[i].lo, L[i+1].hi))
     end
 
     R

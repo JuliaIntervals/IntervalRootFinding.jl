@@ -1,4 +1,3 @@
-
 using IntervalArithmetic, IntervalRootFinding
 using ForwardDiff
 using Test

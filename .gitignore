@@ -2,3 +2,4 @@ docs/build/
 docs/site/
 benchmark/tune.json
 Manifest.toml
+.vscode

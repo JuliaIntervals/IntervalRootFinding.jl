@@ -65,9 +65,9 @@ function newton(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
 
         # bisect:
         roots = vcat(
-            newton(f, f_prime, Interval(x.lo, m), level+1,
+            newton(f, f_prime, interval(x.lo, m), level+1,
                    tolerance=tolerance, debug=debug, maxlevel=maxlevel),
-            newton(f, f_prime, Interval(m, x.hi), level+1,
+            newton(f, f_prime, interval(m, x.hi), level+1,
                    tolerance=tolerance, debug=debug, maxlevel=maxlevel)
             # note the nextfloat here to prevent repetition
             )
@@ -76,8 +76,8 @@ function newton(f::Function, f_prime::Function, x::Interval{T}, level::Int=0;
 
     else  # 0 in deriv; this does extended interval division by hand
 
-        y1 = Interval(deriv.lo, -z)
-        y2 = Interval(z, deriv.hi)
+        y1 = interval(deriv.lo, -z)
+        y2 = interval(z, deriv.hi)
 
         if debug
             @show (y1, y2)
@@ -114,7 +114,7 @@ newton(f::Function, x::Interval{T};  args...) where {T} =
 
 # newton for vector of intervals:
 newton(f::Function, f_prime::Function, xx::Vector{Interval{T}}; args...) where {T} =
-    vcat([newton(f, f_prime, @interval(x); args...) for x in xx]...)
+    vcat([newton(f, f_prime, x; args...) for x in xx]...)
 
 newton(f::Function,  xx::Vector{Interval{T}}, level; args...) where {T} =
     newton(f, x->D(f,x), xx, 0, args...)
