@@ -4,7 +4,7 @@
 
 [![coverage](https://codecov.io/gh/JuliaIntervals/IntervalRootFinding.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaIntervals/IntervalRootFinding.jl)
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaintervals.github.io/pages/packages/intervalrootfinding/)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaintervals.github.io/IntervalRootFinding.jl/latest/)
 
 This package provides guaranteed methods for finding **roots** of functions, i.e. solutions to the equation `f(x) == 0` for a function `f`.
 To do so, it uses methods from interval analysis, using interval arithmetic from the [`IntervalArithmetic.jl`](https://github.com/JuliaIntervals/IntervalArithmetic.jl) package by the same authors.
