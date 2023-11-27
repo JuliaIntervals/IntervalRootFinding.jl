@@ -7,17 +7,15 @@ BranchAndPrune = "d3bc4f2e-91e6-11e9-365e-cd067da536ce"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 IntervalArithmetic = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 BranchAndPrune = "0.2.1"
 ForwardDiff = "0.10"
-IntervalArithmetic = "0.15, 0.16, 0.17, 0.18, 0.19, 0.20"
-Polynomials = "0.5, 0.6, 0.7, 0.8, 1, 2, 3"
+IntervalArithmetic = "0.21"
 Reexport = "1"
-StaticArrays = "0.11, 0.12, 1.0"
+StaticArrays = "1"
 julia = "1"
 
 [extras]

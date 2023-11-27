@@ -1,10 +1,9 @@
 
-import IntervalArithmetic: diam, isinterior, bisect, isnan
+import IntervalArithmetic: diam, bisect, isnan
 
 export branch_and_prune, Bisection, Newton
 
 diam(r::Root) = diam(interval(r))
-isnan(X::IntervalBox) = any(isnan.(X))
 isnan(r::Root) = isnan(interval(r))
 
 struct RootProblem{T}
@@ -73,15 +72,16 @@ of a function `f:R^n → R^n` in a region `X`, if the number of roots is finite.
 
 Inputs:
   - `f`: function whose roots will be found
-  - `X`: `Interval` or `IntervalBox` in which roots are searched
+  - `X`: `Interval` or `SVector` of `Interval` in which roots are searched
   - `contractor`: function that, when applied to the function `f`, determines
-    the status of a given box `X`. It returns the new box and a symbol indicating
-    the status. Current possible values are `Bisection`, `Newton` and `Krawczyk`
+    the status of a given box `X`. It returns the new box and a symbol
+    indicating the status. Current possible values are `Bisection`, `Newton`
+    and `Krawczyk`
   - `deriv`: explicit derivative of `f` for `Newton` and `Krawczyk`
   - `search_order`: `SearchStrategy` determining the order in which regions are
     processed.
-  - `tol`: Absolute tolerance. If a region has a diameter smaller than `tol`, it
-    is returned with status `:unknown`.
+  - `tol`: Absolute tolerance. If a region has a diameter smaller than `tol`,
+    it is returned with status `:unknown`.
 
 """
 function roots(f::Function, X, contractor::Type{C}=default_contractor,
@@ -139,15 +139,15 @@ end
 
 
 # For `NewtonLike` acting on `IntervalBox`
-function _roots(f, r::Root{IntervalBox{N, T}}, contractor::NewtonLike,
-               search_order::Type{S}, tol::Float64) where {N, T, S <: SearchOrder}
+function _roots(f, r::Root{<:SVector}, contractor::NewtonLike,
+               search_order::Type{<:SearchOrder}, tol::Float64)
 
     deriv = x -> ForwardDiff.jacobian(f, x)
     _roots(f, deriv, r, contractor, search_order, tol)
 end
 
-function _roots(f, deriv, r::Root{IntervalBox{N, T}}, contractor::NewtonLike,
-               search_order::Type{S}, tol::Float64) where {N, T, S <: SearchOrder}
+function _roots(f, deriv, r::Root{<:SVector}, contractor::NewtonLike,
+               search_order::Type{<:SearchOrder}, tol::Float64)
 
     branch_and_prune(r, contractor(f, deriv), search_order, tol)
 end
