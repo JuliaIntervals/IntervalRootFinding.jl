@@ -6,14 +6,14 @@ is either `:unknown` or `:unique`. If `status` is `:unique` then we know that
 there is a unique root of the function in question inside the given region.
 
 Internally the status may also be `:empty` for region guaranteed to contain no
-root, however such `Root`s are discarded by default and thus never returned
-by the `roots` function.
+root, however such `Root`s are discarded by default and thus never returned by
+the `roots` function.
 
 # Fields
-  - `interval`: a region (either `Interval` of `IntervalBox`) searched for
-        roots.
-  - `status`: the status of the region, valid values are `:empty`, `unknown` and
-        `:unique`.
+  - `interval`: a region (either `Interval` or `SVector` of interval
+        representing an interval box) searched for roots.
+  - `status`: the status of the region, valid values are `:empty`, `unknown`
+        and `:unique`.
 """
 struct Root{T}
     interval::T

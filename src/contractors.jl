@@ -42,12 +42,12 @@ struct Newton{F, FP} <: AbstractContractor{F}
 end
 
 function (N::Newton)(X::Interval ; α=where_bisect)
-    m = Interval(mid(X, α))
+    m = Interval(mid.(X, α))
     return m - (N.f(m) / N.f′(X))
 end
 
-function (N::Newton)(X::IntervalBox ; α=where_bisect)
-    m = Interval.(mid(X, α))
+function (N::Newton)(X::SVector{<:Interval} ; α=where_bisect)
+    m = Interval.(mid.(X, α))
     J = N.f′(X)
     y = gauss_elimination_interval(J, N.f(m))  # J \ f(m)
     return IntervalBox(m .- y)
@@ -85,10 +85,9 @@ function (K::Krawczyk)(X::Interval ; α=where_bisect)
     return m - Y*K.f(m) + (1 - Y*K.f′(X)) * (X - m)
 end
 
-function (K::Krawczyk)(X::IntervalBox ; α=where_bisect)
+function (K::Krawczyk)(X::SVector{<:Interval} ; α=where_bisect)
     jacobian = K.f′
-    m = mid(X, α)
-    mm = IntervalBox(m)
+    mm = mid.(X, α)
     J = jacobian(X)
     Y = mid.(inv(jacobian(mm)))
 
@@ -138,7 +137,7 @@ function contract(C::Union{Newton, Krawczyk}, R::Root)
     isinf(X) && return Root(NX, :unknown)  # force bisection
     safe_isempty(NX) && return Root(X, :empty)
 
-    if R.status == :unique || NX ⪽ X  # isinterior, we know there's a unique root inside
+    if R.status == :unique || NX ⪽ X  # isstrictsubset_interval, we know there's a unique root inside
         return Root(NX, :unique)
     end
 
