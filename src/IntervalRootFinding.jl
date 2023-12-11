@@ -4,6 +4,7 @@ module IntervalRootFinding
 
 using Reexport
 @reexport using IntervalArithmetic
+using IntervalArithmetic.Symbols
 
 using BranchAndPrune
 using ForwardDiff

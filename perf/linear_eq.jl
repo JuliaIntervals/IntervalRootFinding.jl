@@ -2,7 +2,7 @@ using BenchmarkTools, Compat, DataFrames, IntervalRootFinding, IntervalArithmeti
 
 function randVec(n::Int)
     a = randn(n)
-    A = Interval.(a)
+    A = interval.(a)
     mA = MVector{n}(A)
     sA = SVector{n}(A)
     return A, mA, sA
@@ -10,7 +10,7 @@ end
 
 function randMat(n::Int)
     a = randn(n, n)
-    A = Interval.(a)
+    A = interval.(a)
     mA = MMatrix{n, n}(A)
     sA = SMatrix{n, n}(A)
     return A, mA, sA
