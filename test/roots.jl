@@ -125,7 +125,7 @@ end
     for method in newtonlike_methods
         rts = roots(f, X, method)
         @test length(filter(isunique, rts)) == 1
-        @test length(filter(x -> contains_zero(x.interval), rts)) == 1
+        @test length(filter(x -> in_interval(0, x.interval), rts)) == 1
     end
 end
 

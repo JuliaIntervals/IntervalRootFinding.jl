@@ -42,12 +42,12 @@ struct Newton{F, FP} <: AbstractContractor{F}
 end
 
 function (N::Newton)(X::Interval ; α=where_bisect)
-    m = Interval(mid.(X, α))
+    m = interval(scaled_mid.(X, α))
     return m - (N.f(m) / N.f′(X))
 end
 
 function (N::Newton)(X::SVector{<:Interval} ; α=where_bisect)
-    m = Interval.(mid.(X, α))
+    m = interval.(mid.(X, α))
     J = N.f′(X)
     y = gauss_elimination_interval(J, N.f(m))  # J \ f(m)
     return IntervalBox(m .- y)
@@ -79,7 +79,7 @@ struct Krawczyk{F, FP} <: AbstractContractor{F}
 end
 
 function (K::Krawczyk)(X::Interval ; α=where_bisect)
-    m = Interval(mid(X, α))
+    m = interval(scaled_mid(X, α))
     Y = 1 / K.f′(m)
 
     return m - Y*K.f(m) + (1 - Y*K.f′(X)) * (X - m)
@@ -113,7 +113,7 @@ function contract(B::Bisection, R::Root)
 
     imX = B.f(X)
 
-    if !(contains_zero(imX)) || safe_isempty(imX)
+    if !(in_interval(0, imX)) || safe_isempty(imX)
         return Root(X, :empty)
     end
 
@@ -132,9 +132,9 @@ function contract(C::Union{Newton, Krawczyk}, R::Root)
     # Only happens if X is partially out of the domain of f
     safe_isempty(contracted_X) && return Root(X, :unknown)  # force bisection
 
-    NX = contracted_X ∩ X
+    NX = intersect_interval(contracted_X, X)
 
-    isinf(X) && return Root(NX, :unknown)  # force bisection
+    !isbounded(X) && return Root(NX, :unknown)  # force bisection
     safe_isempty(NX) && return Root(X, :empty)
 
     if R.status == :unique || NX ⪽ X  # isstrictsubset_interval, we know there's a unique root inside
@@ -153,8 +153,8 @@ This function assumes that it is already known that `X` contains a unique root.
 """
 function refine(C::Union{Newton, Krawczyk}, X::Region, root_problem)
     while diam(X) > root_problem.abstol
-        NX = C(X) ∩ X
-        NX == X && break  # reached limit of precision
+        NX = intersect_interval(C(X), X)
+        isequal_interval(NX, X) && break  # reached limit of precision
         X = NX
     end
 
