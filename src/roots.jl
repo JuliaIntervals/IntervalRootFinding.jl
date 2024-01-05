@@ -1,10 +1,10 @@
 
-import IntervalArithmetic: diam, bisect, isnan
+import IntervalArithmetic: diam, bisect, isnai
 
 export branch_and_prune, Bisection, Newton
 
 diam(r::Root) = diam(interval(r))
-isnan(r::Root) = isnan(interval(r))
+isnai(r::Root) = isnai(interval(r))
 
 struct RootProblem{T}
     abstol::T
@@ -26,7 +26,7 @@ function process(contractor, root_problem, r::Root)
 
     if status == :unknown
         # Avoid infinite division of intervals with singularity
-        isnan(refined_root) && diam(r) < root_problem.abstol && return :store, r
+        isnai(refined_root) && diam(r) < root_problem.abstol && return :store, r
         diam(refined_root) < root_problem.abstol && return :store, refined_root
 
         return :branch, r
