@@ -34,7 +34,7 @@ const D = derivative
 
 const where_bisect = 0.49609375  # 127//256
 
-const Region = Union{Interval, SVector{N, Interval} where N}
+const Region = Union{Interval, SVector{N, <:Interval} where N}
 
 IntervalBox(x::Interval, N::Integer) = SVector{N}(fill(x, N))
 IntervalBox(xx::Vararg{Interval, N}) where N = SVector{N}(xx...)

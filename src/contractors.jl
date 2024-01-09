@@ -46,11 +46,11 @@ function (N::Newton)(X::Interval ; α=where_bisect)
     return m - (N.f(m) / N.f′(X))
 end
 
-function (N::Newton)(X::SVector{<:Interval} ; α=where_bisect)
+function (N::Newton)(X::SVector{M, <:Interval} ; α=where_bisect) where M
     m = interval.(mid.(X, α))
     J = N.f′(X)
     y = gauss_elimination_interval(J, N.f(m))  # J \ f(m)
-    return IntervalBox(m .- y)
+    return m .- y
 end
 
 """
@@ -85,7 +85,7 @@ function (K::Krawczyk)(X::Interval ; α=where_bisect)
     return m - Y*K.f(m) + (1 - Y*K.f′(X)) * (X - m)
 end
 
-function (K::Krawczyk)(X::SVector{<:Interval} ; α=where_bisect)
+function (K::Krawczyk)(X::SVector{N, <:Interval} ; α=where_bisect) where N
     jacobian = K.f′
     mm = mid.(X, α)
     J = jacobian(X)
@@ -100,7 +100,7 @@ end
 Similar to `isempty` function for `IntervalBox`, but also works for `SVector`
 of `Interval`.
 """
-safe_isempty(X) = isempty(IntervalBox(X))
+safe_isempty(X) = any(isempty_interval.(X))
 
 """
     contract(contractor, R)
@@ -113,7 +113,7 @@ function contract(B::Bisection, R::Root)
 
     imX = B.f(X)
 
-    if !(in_interval(0, imX)) || safe_isempty(imX)
+    if !(all(in_interval.(0, imX))) || safe_isempty(imX)
         return Root(X, :empty)
     end
 
@@ -132,7 +132,8 @@ function contract(C::Union{Newton, Krawczyk}, R::Root)
     # Only happens if X is partially out of the domain of f
     safe_isempty(contracted_X) && return Root(X, :unknown)  # force bisection
 
-    NX = intersect_interval(contracted_X, X)
+    NX = intersect_interval(bareinterval(contracted_X), bareinterval(X))
+    NX = IntervalArithmetic._unsafe_interval(NX, min(decoration(contracted_X), decoration(X)), isguaranteed(contracted_X))
 
     !isbounded(X) && return Root(NX, :unknown)  # force bisection
     safe_isempty(NX) && return Root(X, :empty)
@@ -153,7 +154,8 @@ This function assumes that it is already known that `X` contains a unique root.
 """
 function refine(C::Union{Newton, Krawczyk}, X::Region, root_problem)
     while diam(X) > root_problem.abstol
-        NX = intersect_interval(C(X), X)
+        NX = intersect_interval(bareinterval(C(X)), bareinterval(X))
+        NX = IntervalArithmetic._unsafe_interval(NX, min(decoration(C(X)), decoration(X)), isguaranteed(C(X)))
         isequal_interval(NX, X) && break  # reached limit of precision
         X = NX
     end

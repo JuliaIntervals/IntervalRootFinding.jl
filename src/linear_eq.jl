@@ -143,7 +143,7 @@ function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::Abs
         p[i] = (b[i] - temp) / A[i, i]
     end
 
-    return p .∩ x
+    return intersect_interval.(p, x)
 end
 
 function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precondition=true)
