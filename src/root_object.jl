@@ -15,13 +15,10 @@ the `roots` function.
   - `status`: the status of the region, valid values are `:empty`, `unknown`
         and `:unique`.
 """
-struct Root{T}
-    interval::T
+struct Root{T, N}
+    region::IntervalRegion{T, N}
     status::Symbol
 end
-
-interval(rt::Root) = rt.interval
-
 
 """
     root_status(rt)
@@ -35,7 +32,7 @@ root_status(rt::Root) = rt.status  # Use root_status since just `status` is too 
 
 Return the region associated to a `Root`.
 """
-root_region(rt::Root) = rt.interval  # More generic name than `interval`.
+root_region(rt::Root) = rt.region
 
 """
     isunique(rt)
@@ -44,9 +41,10 @@ Return whether a `Root` is unique.
 """
 isunique(rt::Root{T}) where {T} = (rt.status == :unique)
 
-show(io::IO, rt::Root) = print(io, "Root($(rt.interval), :$(rt.status))")
+show(io::IO, rt::Root) = print(io, "Root($(rt.region), :$(rt.status))")
 
-⊆(a::Interval, b::Root) = a ⊆ b.interval   # the Root object has the interval in the first entry
-⊆(a::Root, b::Root) = a.interval ⊆ b.interval
+⊆(a::Interval, b::Root) = a ⊆ b.region
+⊆(a::Root, b::Root) = a.region ⊆ b.region
 
-big(a::Root) = Root(big(a.interval), a.status)
+diam(r::Root) = diam(interval(r))
+isnai(r::Root) = isnai(interval(r))
