@@ -49,8 +49,8 @@ function RootProblem(
     )
 end
    
-function bisect(r::Root, α)
-    Y1, Y2 = bisect(root_region(r), α)
+function bisect_region(r::Root, α)
+    Y1, Y2 = bisect_region(root_region(r), α)
     return Root(Y1, :unknown), Root(Y2, :unknown)
 end
 
@@ -82,7 +82,7 @@ function roots(f, region ; kwargs...)
     search = BranchAndPruneSearch(
         root_problem.search_order,
         X -> process(root_problem, X),
-        X -> bisect(X, root_problem.where_bisect),
+        X -> bisect_region(X, root_problem.where_bisect),
         root_problem.region
     )
     result = bpsearch(search)
