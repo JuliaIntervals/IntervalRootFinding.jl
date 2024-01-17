@@ -117,9 +117,9 @@ function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::Abs
     p .= 0
 
     for i in 1:(n-1)
-        if 0 ∈ A[i, i] # diagonal matrix is not invertible
+        if in_interval(0, A[i, i])  # diagonal matrix is not invertible
             p .= entireinterval(b[1])
-            return p .∩ x  # return x?
+            return intersect_region(p, x)  # return x?
         end
 
         for j in (i+1):n

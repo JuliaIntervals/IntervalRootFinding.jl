@@ -1,25 +1,39 @@
-struct Region{T, N}
-    intervals::T
+function intersect_region(X::Interval, Y::Interval)
+    intersection = intersect_interval(bareinterval(X), bareinterval(Y))
+    dec = min(decoration(X), decoration(Y))
+    guarantee = isguaranteed(X) && isguaranteed(Y)
+    return IntervalArithmetic._unsafe_interval(intersection, dec, guarantee)
 end
 
-Region(X::T) where {T <: Interval} = Region{T, 1}(X)
+intersect_region(X::AbstractVector, Y::AbstractVector) = intersect_region.(X, Y)
 
-function Region(Xs::AbstractVector{T}) where {T <: Interval}
-    N = length(Xs)
-    N == 1 && return Region{T, 1}(only(Xs))
-    return Region{T, N}(Xs) 
+isempty_region(X::Interval) = isempty_interval(X)
+isempty_region(X::AbstractVector) = any(isempty_region.(X))
+
+isequal_region(X::Interval, Y::Interval) = isequal_interval(X, Y)
+isequal_region(X::AbstractVector, Y::AbstractVector) = all(isequal_region.(X, Y))
+
+isbounded_region(X::Interval) = isbounded(X)
+isbounded_region(X::AbstractVector) = all(isbounded.(X))
+
+isnai_region(X::Interval) = isnai(X)
+isnai_region(X::AbstractVector) = any(isnai.(X))
+
+diam_region(X::Interval) = diam(X)
+diam_region(X::AbstractVector) = maximum(diam.(X))
+
+function bisect(X::Interval, α)
+    m = mid(X, α)
+    return (interval(inf(X), m), interval(m, sup(X)))
 end
 
-function Base.intersect(X::Region{<:Any, 1}, Y::Region{<:Any, 1})
-    x = only(X.intervals)
-    y = only(Y.intervals)
-    intersection = intersect_interval(bareinterval(x), bareinterval(x))
-    dec = min(decoration(x), decoration(y))
-    guarantee = isguaranteed(x) && isguaranteed(y)
-    decorated = IntervalArithmetic._unsafe_interval(intersection, dec, guarantee)
-    return Region(decorated)
-end
+function bisect(X::AbstractVector, α)
+    X1 = copy(X)
+    X2 = copy(X)
 
-function Base.intersect(X::Region{<:Any, N}, Y::Region{<:Any, N}) where N
-    return Region(intersect.(X.intervals, Y.intervals))
+    i = argmax(diam.(X))
+    x1, x2 = bisect(X[i], α)
+    X1[i] = x1
+    X2[i] = x2
+    return X1, X2
 end
