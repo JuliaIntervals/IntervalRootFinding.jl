@@ -20,7 +20,7 @@ export
     derivative, jacobian,  # reexport derivative from ForwardDiff
     Root, isunique, root_status,
     roots, find_roots,
-    bisect, newton1d, quadratic_roots,
+    newton1d, quadratic_roots,
     gauss_seidel_interval, gauss_seidel_interval!,
     gauss_seidel_contractor, gauss_seidel_contractor!,
     gauss_elimination_interval, gauss_elimination_interval!,

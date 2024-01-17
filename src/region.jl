@@ -22,17 +22,14 @@ isnai_region(X::AbstractVector) = any(isnai.(X))
 diam_region(X::Interval) = diam(X)
 diam_region(X::AbstractVector) = maximum(diam.(X))
 
-function bisect(X::Interval, α)
-    m = mid(X, α)
-    return (interval(inf(X), m), interval(m, sup(X)))
-end
+bisect_region(X::Interval, α) = bisect(X, α)
 
-function bisect(X::AbstractVector, α)
+function bisect_region(X::AbstractVector, α)
     X1 = copy(X)
     X2 = copy(X)
 
     i = argmax(diam.(X))
-    x1, x2 = bisect(X[i], α)
+    x1, x2 = bisect_region(X[i], α)
     X1[i] = x1
     X2[i] = x2
     return X1, X2
