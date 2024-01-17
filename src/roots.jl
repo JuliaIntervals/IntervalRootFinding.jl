@@ -15,8 +15,10 @@ struct RootProblem{C, F, G, R, S, T}
     where_bisect::T
 end
 
+RootProblem(f, region ; kwargs...) = RootProblem(f, Root(region, :unkown) ; kwargs...)
+
 function RootProblem(
-        f, region ;
+        f, root::Root ;
         contractor = Newton,
         derivative = nothing,
         search_order = BreadthFirst,
@@ -25,7 +27,7 @@ function RootProblem(
         max_iteration = 100_000,
         where_bisect = 0.49609375)  # 127//256
     
-    N = length(region)
+    N = length(root_region(root))
     if isnothing(derivative)
         if N == 1
             derivative = x -> ForwardDiff.derivative(f, x)
@@ -38,7 +40,7 @@ function RootProblem(
         contractor,
         f,
         derivative,
-        Region(region),
+        root,
         search_order,
         abstol,
         reltol,
@@ -47,8 +49,8 @@ function RootProblem(
     )
 end
    
-function bisect(r::Root)
-    Y1, Y2 = bisect(interval(r))
+function bisect(r::Root, α)
+    Y1, Y2 = bisect(root_region(r), α)
     return Root(Y1, :unknown), Root(Y2, :unknown)
 end
 
@@ -80,7 +82,7 @@ function roots(f, region ; kwargs...)
     search = BranchAndPruneSearch(
         root_problem.search_order,
         X -> process(root_problem, X),
-        bisect,
+        X -> bisect(X, root_problem.where_bisect),
         root_problem.region
     )
     result = bpsearch(search)
@@ -90,7 +92,7 @@ end
 # TODO Reinstaste support for that
 # Acting on complex `Interval`
 function _roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {T, C <: AbstractContractor, S <: SearchOrder}
+               search_order::Type{S}, tol::Float64) where {T, C, S <: SearchOrder}
 
     g = realify(f)
     Y = IntervalBox(reim(Xc)...)
@@ -99,7 +101,7 @@ function _roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end
 
-function _roots(f, Xc::Complex{Interval{T}}, contractor::NewtonLike,
+function _roots(f, Xc::Complex{Interval{T}}, contractor,
                search_order::Type{S}, tol::Float64) where {T, S <: SearchOrder}
 
     g = realify(f)
@@ -110,7 +112,7 @@ function _roots(f, Xc::Complex{Interval{T}}, contractor::NewtonLike,
     return [Root(Complex(root.interval...), root.status) for root in rts]
 end
 
-function _roots(f, deriv, Xc::Complex{Interval{T}}, contractor::NewtonLike,
+function _roots(f, deriv, Xc::Complex{Interval{T}}, contractor,
                search_order::Type{S}, tol::Float64) where {T, S <: SearchOrder}
 
     g = realify(f)

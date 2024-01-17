@@ -10,13 +10,13 @@ root, however such `Root`s are discarded by default and thus never returned by
 the `roots` function.
 
 # Fields
-  - `interval`: a region (either `Interval` or `SVector` of interval
+  - `region`: a region (either `Interval` or `SVector` of interval
         representing an interval box) searched for roots.
   - `status`: the status of the region, valid values are `:empty`, `unknown`
         and `:unique`.
 """
-struct Root{T, N}
-    region::IntervalRegion{T, N}
+struct Root{T}
+    region::T
     status::Symbol
 end
 
@@ -46,5 +46,5 @@ show(io::IO, rt::Root) = print(io, "Root($(rt.region), :$(rt.status))")
 ⊆(a::Interval, b::Root) = a ⊆ b.region
 ⊆(a::Root, b::Root) = a.region ⊆ b.region
 
-diam(r::Root) = diam(interval(r))
-isnai(r::Root) = isnai(interval(r))
+IntervalArithmetic.diam(r::Root) = diam_region(root_region(r))
+IntervalArithmetic.isnai(r::Root) = isnai_region(root_region(r))

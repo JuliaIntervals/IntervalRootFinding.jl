@@ -38,26 +38,17 @@ function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector, where_mid)
     return m - Y*f(mm) + (I - Y*J) * (X.v - m)
 end
 
-function contract(root_problem::RootProblem{C}, X::region) where C
-    CX = contract(C, root_problem.f, root_problem.derivative, region(X), root_problem.where_bisect)
-    return Region(CX)
+function contract(root_problem::RootProblem{C}, X) where C
+    return contract(C, root_problem.f, root_problem.derivative, X, root_problem.where_bisect)
 end
 
-"""
-    safe_isempty(X)
-
-Similar to `isempty` function for `IntervalBox`, but also works for `SVector`
-of `Interval`.
-"""
-safe_isempty(X) = any(isempty_interval.(X))
-
 function image_contains_zero(f, R::Root)
-    X = interval(R)
+    X = root_region(R)
     R.status == :empty && return Root(X, :empty)
 
     imX = f(X)
 
-    if !(all(in_interval.(0, imX))) || safe_isempty(imX)
+    if !(all(in_interval.(0, imX))) || isempty_region(imX)
         return Root(X, :empty)
     end
 
@@ -71,17 +62,16 @@ function contract_root(root_problem::RootProblem{C}, R::Root) where C
     C == Bisection && return R2
     R2.status == :empty && return R2
 
-    X = interval(R)
+    X = root_region(R)
     contracted_X = contract(root_problem, X)
 
     # Only happens if X is partially out of the domain of f
-    safe_isempty(contracted_X) && return Root(X, :unknown)  # force bisection
+    isempty_region(contracted_X) && return Root(X, :unknown)  # force bisection
 
-    NX = intersect_interval(bareinterval(contracted_X), bareinterval(X))
-    NX = IntervalArithmetic._unsafe_interval(NX, min(decoration(contracted_X), decoration(X)), isguaranteed(contracted_X))
+    NX = intersect_region(contracted_X, X)
 
-    !isbounded(X) && return Root(NX, :unknown)  # force bisection
-    safe_isempty(NX) && return Root(X, :empty)
+    !isbounded_region(X) && return Root(NX, :unknown)  # force bisection
+    isempty_region(NX) && return Root(X, :empty)
 
     if R.status == :unique || NX ⪽ X  # isstrictsubset_interval, we know there's a unique root inside
         return Root(NX, :unique)
@@ -91,30 +81,20 @@ function contract_root(root_problem::RootProblem{C}, R::Root) where C
 end
 
 """
-    refine(op, X::Root, tol)
+    refine(root_problem::RootProblem, X::Root)
 
-Wrap the refine method to leave unchanged intervals that are not guaranteed to
-contain an unique solution.
+Refine a root.
 """
 function refine(root_problem::RootProblem, R::Root)
     root_status(R) != :unique && return R
-    return Root(refine_root(root_problem, region(R)))
-end
 
-"""
-    refine(C, X::Region, tol)
+    X = root_region(R)
 
-Refine a interval known to contain a solution.
-
-This function assumes that it is already known that `X` contains a unique root.
-"""
-function refine_root(root_problem::RootProblem, X::Region)
-    while diam(X) > root_problem.abstol
-        NX = intersect_interval(bareinterval(C(X)), bareinterval(X))
-        NX = IntervalArithmetic._unsafe_interval(NX, min(decoration(C(X)), decoration(X)), isguaranteed(C(X)))
-        isequal_interval(NX, X) && break  # reached limit of precision
+    while diam_region(X) > root_problem.abstol
+        NX = intersect_region(contract(root_problem, X), X)
+        isequal_region(NX, X) && break  # reached limit of precision
         X = NX
     end
 
-    return X
+    return Root(X, :unique)
 end
