@@ -11,7 +11,7 @@ using ForwardDiff
 using StaticArrays
 
 using ForwardDiff: derivative, gradient, jacobian
-using LinearAlgebra: I, Diagonal
+using LinearAlgebra
 
 import Base: ⊆, show, big, \
 

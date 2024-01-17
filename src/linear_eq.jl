@@ -2,17 +2,13 @@
 Preconditions the matrix A and b with the inverse of mid(A)
 """
 function preconditioner(A::AbstractMatrix, b::AbstractArray)
-
     Aᶜ = mid.(A)
+    det(Aᶜ) == 0 && return A, b
     B = inv(Aᶜ)
-
     return B*A, B*b
-
 end
 
 function gauss_seidel_interval(A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
-
-    n = size(A, 1)
     x = similar(b)
     x .= -1e16..1e16
     gauss_seidel_interval!(x, A, b, precondition=precondition, maxiter=maxiter)
@@ -26,9 +22,7 @@ Keyword `precondition` to turn preconditioning off.
 Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Page 115
 """
 function gauss_seidel_interval!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
-
     precondition && ((A, b) = preconditioner(A, b))
-
     n = size(A, 1)
 
     @inbounds for iter in 1:maxiter
@@ -49,8 +43,6 @@ function gauss_seidel_interval!(x::AbstractArray, A::AbstractMatrix, b::Abstract
 end
 
 function gauss_seidel_contractor(A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
-
-    n = size(A, 1)
     x = similar(b)
     x .= -1e16..1e16
     x = gauss_seidel_contractor!(x, A, b, precondition=precondition, maxiter=maxiter)
@@ -58,7 +50,6 @@ function gauss_seidel_contractor(A::AbstractMatrix, b::AbstractArray; preconditi
 end
 
 function gauss_seidel_contractor!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
-
     precondition && ((A, b) = preconditioner(A, b))
 
     n = size(A, 1)
@@ -85,43 +76,24 @@ function gauss_seidel_contractor!(x::AbstractArray, A::AbstractMatrix, b::Abstra
 end
 
 function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precondition=true)
-
-    x = similar(b)
-    x .= -Inf..Inf
-    x = gauss_elimination_interval!(x, A, b, precondition=precondition)
-
-    return x
-end
-"""
-Solves the system of linear equations using Gaussian Elimination.
-Preconditioning is used when the `precondition` keyword argument is `true`.
-
-REF: Luc Jaulin et al.,
-*Applied Interval Analysis*, pg. 72
-"""
-function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true)
-
     if precondition
-        (A, b) = preconditioner(A, b)
+        A, b = preconditioner(A, b)
     end
-    _A = A
-    _b = b
-    A = similar(A)
-    b = similar(b)
-    A .= _A
-    b .= _b
+
+    A = copy(A)
+    b = copy(b)
 
     n = size(A, 1)
 
     p = similar(b)
     p .= 0
 
-    for i in 1:(n-1)
-        if in_interval(0, A[i, i])  # diagonal matrix is not invertible
-            p .= entireinterval(b[1])
-            return intersect_region(p, x)  # return x?
-        end
+    if any(a -> in_interval(0, a), diag(A))
+        p .= interval(-Inf, Inf)
+        return p
+    end
 
+    for i in 1:(n-1)
         for j in (i+1):n
             α = A[j, i] / A[i, i]
             b[j] -= α * b[i]
@@ -133,7 +105,6 @@ function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::Abs
     end
 
     for i in n:-1:1
-
         temp = zero(b[1])
 
         for j in (i+1):n
@@ -143,7 +114,52 @@ function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::Abs
         p[i] = (b[i] - temp) / A[i, i]
     end
 
-    return intersect_interval.(p, x)
+    return p
+end
+
+"""
+Solves the system of linear equations using Gaussian Elimination.
+Preconditioning is used when the `precondition` keyword argument is `true`.
+
+REF: Luc Jaulin et al.,
+*Applied Interval Analysis*, pg. 72
+"""
+function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true)
+    if precondition
+        A, b = preconditioner(A, b)
+    end
+    A = copy(A)
+    b = copy(b)
+
+    n = size(A, 1)
+
+    p = similar(b)
+    p .= 0
+
+    any(a -> in_interval(0, a), diag(A)) && return x
+
+    for i in 1:(n-1)
+        for j in (i+1):n
+            α = A[j, i] / A[i, i]
+            b[j] -= α * b[i]
+
+            for k in (i+1):n
+                A[j, k] -= α * A[i, k]
+            end
+        end
+    end
+
+    for i in n:-1:1
+        temp = zero(b[1])
+
+        for j in (i+1):n
+            temp += A[i, j] * p[j]
+        end
+
+        p[i] = (b[i] - temp) / A[i, i]
+    end
+
+    return intersect_region(p, x)
 end
 
 function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precondition=true)
