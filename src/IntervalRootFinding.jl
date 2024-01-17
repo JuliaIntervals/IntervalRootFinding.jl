@@ -18,25 +18,14 @@ import Base: ⊆, show, big, \
 ## Root finding
 export
     derivative, jacobian,  # reexport derivative from ForwardDiff
-    Root, isunique, root_status,
-    roots, find_roots,
-    newton1d, quadratic_roots,
+    Root, isunique, root_status, root_region,
+    roots, newton1d, quadratic_roots,
     gauss_seidel_interval, gauss_seidel_interval!,
     gauss_seidel_contractor, gauss_seidel_contractor!,
     gauss_elimination_interval, gauss_elimination_interval!,
     slope
 
 import IntervalArithmetic: interval
-
-
-const D = derivative
-
-
-const where_bisect = 0.49609375  # 127//256
-
-IntervalBox(x::Interval, N::Integer) = SVector{N}(fill(x, N))
-IntervalBox(xx::Vararg{Interval, N}) where N = SVector{N}(xx...)
-
 
 include("region.jl")
 include("root_object.jl")

@@ -31,11 +31,12 @@ function contract(::Type{Krawczyk}, f, derivative, X::Interval, where_mid)
 end
 
 function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector, where_mid)
-    mm = mid.(X, where_mid)
+    m = mid.(X, where_mid)
+    mm = interval.(m)
     J = derivative(X)
     Y = mid.(inv(derivative(mm)))
 
-    return m - Y*f(mm) + (I - Y*J) * (X.v - m)
+    return mm - Y*f(mm) + (I - Y*J) * (X - mm)
 end
 
 function contract(root_problem::RootProblem{C}, X) where C

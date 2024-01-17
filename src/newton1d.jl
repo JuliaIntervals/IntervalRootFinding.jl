@@ -201,4 +201,4 @@ Optional keyword arguments give the tolerances `reltol` and `abstol`.
 `reltol` is the tolerance on the relative error whereas `abstol` is the tolerance on |f(X)|,
 and a `debug` boolean argument that prints out diagnostic information."""
 newton1d(f::Function, x::Interval{T}; args...) where {T} =
-    newton1d(f, x->D(f,x), x; args...)
+    newton1d(f, x-> derivative(f,x), x; args...)
