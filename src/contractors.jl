@@ -11,36 +11,38 @@ struct Bisection <: AbstractContractor end
 struct Newton <: AbstractContractor end
 struct Krawczyk <: AbstractContractor end
 
-function contract(::Type{Newton}, f, derivative, X::Interval, where_mid)
-    m = interval(mid(X, where_mid))
+function contract(::Type{Newton}, f, derivative, X::Interval)
+    m = interval(mid(X))
     return m - (f(m) / derivative(X))
 end
 
-function contract(::Type{Newton}, f, derivative, X::AbstractVector, where_mid)
-    m = interval.(mid.(X, where_mid))
+function contract(::Type{Newton}, f, derivative, X::AbstractVector)
+    m = interval.(mid.(X))
     J = derivative(X)
     y = gauss_elimination_interval(J, f(m))  # J \ f(m)
     return m .- y
 end
 
-function contract(::Type{Krawczyk}, f, derivative, X::Interval, where_mid)
-    m = interval(mid(X, where_mid))
+function contract(::Type{Krawczyk}, f, derivative, X::Interval)
+    m = interval(mid(X))
     Y = 1 / derivative(m)
 
     return m - Y*f(m) + (1 - Y*derivative(X)) * (X - m)
 end
 
-function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector, where_mid)
-    m = mid.(X, where_mid)
+function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector)
+    m = mid.(X)
     mm = interval.(m)
     J = derivative(X)
-    Y = mid.(inv(derivative(mm)))
+    Y = inv(derivative(m))
 
     return mm - Y*f(mm) + (I - Y*J) * (X - mm)
 end
 
 function contract(root_problem::RootProblem{C}, X) where C
-    return contract(C, root_problem.f, root_problem.derivative, X, root_problem.where_bisect)
+    contracted = contract(C, root_problem.f, root_problem.derivative, X)
+    istrivial(contracted) && return X
+    return contracted
 end
 
 function image_contains_zero(f, R::Root)
