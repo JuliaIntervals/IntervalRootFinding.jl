@@ -34,3 +34,6 @@ function bisect_region(X::AbstractVector, α)
     X2[i] = x2
     return X1, X2
 end
+
+istrivial(X::Interval) = decoration(X) <= trv
+istrivial(X::AbstractVector) = any(istrivial.(X))

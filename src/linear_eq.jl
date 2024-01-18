@@ -75,14 +75,13 @@ function gauss_seidel_contractor!(x::AbstractArray, A::AbstractMatrix, b::Abstra
     x
 end
 
-function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precondition=true)
+function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray ; precondition=true)
     if precondition
         A, b = preconditioner(A, b)
     end
 
     A = copy(A)
     b = copy(b)
-
     n = size(A, 1)
 
     p = similar(b)
@@ -115,6 +114,12 @@ function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray; precond
     end
 
     return p
+end
+
+function gauss_elimination_interval(A::AbstractMatrix, B::AbstractMatrix ; kwargs...)
+    return mapreduce(hcat, eachcol(B)) do b
+        return gauss_elimination_interval(A, b ; kwargs...)
+    end
 end
 
 """
