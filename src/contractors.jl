@@ -31,13 +31,16 @@ function contract(::Type{Krawczyk}, f, derivative, X::Interval)
 end
 
 function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector)
-    m = mid.(X)
+    # We check the interval derivative first because if it works, we know that
+    # the derivative of the center below works as well
+    J = derivative(X)
+    any(xx -> decoration(xx) == trv, J) && return interval(-Inf, Inf, trv)
 
+    m = mid.(X)
     dm = derivative(m)
     det(dm) == 0 && return interval(-Inf, Inf, trv)
 
     Y = inv(dm)
-    J = derivative(X)
     mm = interval.(m)
 
     return mm - Y*f(mm) + (I - Y*J) * (X - mm)

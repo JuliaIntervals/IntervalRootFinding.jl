@@ -48,3 +48,8 @@ show(io::IO, rt::Root) = print(io, "Root($(rt.region), :$(rt.status))")
 
 IntervalArithmetic.diam(r::Root) = diam_region(root_region(r))
 IntervalArithmetic.isnai(r::Root) = isnai_region(root_region(r))
+
+function Base.:(==)(r1::Root, r2::Root)
+    root_status(r1) != root_status(r2) && return false
+    return isequal_region(root_region(r1), root_region(r2))
+end

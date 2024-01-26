@@ -94,16 +94,16 @@ end
                     x1^2 + x2^2 - 4x3
                 )
     end
+    dg = xx -> ForwardDiff.jacobian(g, xx)
 
     X = interval(-5, 5)
     XX = [X, X, X]
 
-    for method in newtonlike_methods
-        rts = roots(g, XX, method)
+    for contractor in newtonlike_methods
+        rts = roots(g, XX ; contractor)
         @test length(rts) == 4
         @test all_unique(rts)
-        deriv = xx -> ForwardDiff.jacobian(g, xx)
-        @test rts == roots(g, deriv, XX, method)
+        @test all(rts .== roots(g, XX ; contractor, derivative = dg))
     end
 end
 
@@ -122,18 +122,19 @@ end
 end
 
 @testset "NaN return value" begin
-    f(xx) = ( (x, y) = xx; SVector(log(y/x) + 3x, y - 2x) )
+    f(xx) = ( (x, y) = xx; [log(y/x) + 3x, y - 2x] )
     X = [interval(-100, 100), interval(-100, 100)]
-    for method in newtonlike_methods
-        rts = roots(f, X, method)
+    for contractor in newtonlike_methods
+        rts = roots(f, X ; contractor)
         @test length(filter(isunique, rts)) == 1
-        @test length(filter(x -> in_interval(0, x.interval), rts)) == 1
+        @test length(filter(x -> all(in_interval.(0, x)), root_region.(rts))) == 1
     end
 end
 
 @testset "Stationary points" begin
     f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
-    gradf = ∇(f)
+    gradf = xx -> ForwardDiff.gradient(f, xx)
+
     XX = [interval(-5, 6), interval(-5, 6)]
     tol = 1e-5
 
