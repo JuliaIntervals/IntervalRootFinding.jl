@@ -32,9 +32,13 @@ end
 
 function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector)
     m = mid.(X)
-    mm = interval.(m)
+
+    dm = derivative(m)
+    det(dm) == 0 && return interval(-Inf, Inf, trv)
+
+    Y = inv(dm)
     J = derivative(X)
-    Y = inv(derivative(m))
+    mm = interval.(m)
 
     return mm - Y*f(mm) + (I - Y*J) * (X - mm)
 end
