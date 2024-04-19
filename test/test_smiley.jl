@@ -11,13 +11,13 @@ function test_all_unique(xs)
     return nothing
 end
 
-const tol = 1e-6
-for method in (Newton, Krawczyk) # NOTE: Bisection method performs badly in all examples
+const abstol = 1e-6
+for contractor in (Newton, Krawczyk) # NOTE: Bisection method performs badly in all examples
 
 @info("Testing method $(method)")
 
 @testset "$(SmileyExample22.title)" begin
-    roots_found = roots(SmileyExample22.f, SmileyExample22.region, method, tol)
+    roots_found = roots(SmileyExample22.f, SmileyExample22.region ; contractor, abstol)
     @test length(roots_found) == 8
     test_all_unique(roots_found)
     # no reference data for roots given
