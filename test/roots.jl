@@ -164,3 +164,32 @@ end
         test_newtonlike(f, deriv, Xc, method, 3, 1e-10)
     end
 end
+
+@testset "@exact" begin
+    @exact f(x) = x^2 - 2.25
+    @exact g(x) = sin(1.57x)
+
+    f0(x) = x^2 - 2.25
+    g0(x) = sin(1.57x)
+
+    X = interval(-2.2, 2.2)
+
+    for (func, func0, nsol) in [(f, f0, 2), (g, g0, 3)]
+        for method in newtonlike_methods
+            rts = roots(func, X ; contractor = method)
+            @test length(rts) == nsol
+
+            rts0 = roots(func0, X ; contractor = method)
+            for (rt, rt0) in zip(rts, rts0)
+                @test isequal_interval(root_region(rt), root_region(rt0))
+            end
+
+            # Guarantee is currently broken with Krawczyk
+            if method == Krawczyk
+                @test_broken all(isguaranteed.(root_region.(rts)))
+            else
+                @test all(isguaranteed.(root_region.(rts)))
+            end
+        end
+    end
+end
