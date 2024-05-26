@@ -25,9 +25,9 @@ end
 
 function contract(::Type{Krawczyk}, f, derivative, X::Interval)
     m = interval(mid(X))
-    Y = 1 / derivative(m)
+    Y = inv(derivative(m))
 
-    return m - Y*f(m) + (1 - Y*derivative(X)) * (X - m)
+    return m - Y*f(m) + (interval(1) - Y*derivative(X)) * (X - m)
 end
 
 function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector)
@@ -40,10 +40,12 @@ function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector)
     dm = derivative(m)
     det(dm) == 0 && return interval(-Inf, Inf, trv)
 
-    Y = inv(dm)
+    Y = interval.(inv(dm))
     mm = interval.(m)
 
-    return mm - Y*f(mm) + (I - Y*J) * (X - mm)
+    Id = interval.(Matrix(I, length(m), length(m)))
+
+    return mm - Y*f(mm) + (Id - Y*J) * (X - mm)
 end
 
 function contract(root_problem::RootProblem{C}, X) where C

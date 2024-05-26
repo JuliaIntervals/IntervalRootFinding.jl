@@ -4,7 +4,7 @@ Preconditions the matrix A and b with the inverse of mid(A)
 function preconditioner(A::AbstractMatrix, b::AbstractArray)
     Aᶜ = mid.(A)
     det(Aᶜ) == 0 && return A, b
-    B = inv(Aᶜ)
+    B = interval.(inv(Aᶜ))
     return B*A, B*b
 end
 
@@ -85,7 +85,7 @@ function gauss_elimination_interval(A::AbstractMatrix, b::AbstractArray ; precon
     n = size(A, 1)
 
     p = similar(b)
-    p .= 0
+    p .= interval(0)
 
     if any(a -> in_interval(0, a), diag(A))
         p .= interval(-Inf, Inf)
