@@ -34,17 +34,15 @@ end
 
     n = length(As)
 
-    for solver in (gauss_seidel_interval, gauss_seidel_contractor, gauss_elimination_interval, \)
-        @testset "Solver $solver" begin
-            if solver in (gauss_seidel_interval, gauss_seidel_contractor)
-                @test_broken false
-                continue
-            end
+    @testset for solver in (gauss_seidel_interval, gauss_seidel_contractor, gauss_elimination_interval, \)
+        if solver in (gauss_seidel_interval, gauss_seidel_contractor)
+            @test_broken false
+            continue
+        end
 
-            for i in 1:n
-                soln = solver(As[i], bs[i])
-                @test all(issubset_interval.(xs[i], soln))
-            end
+        for i in 1:n
+            soln = solver(As[i], bs[i])
+            @test all(issubset_interval.(xs[i], soln))
         end
     end
 end
