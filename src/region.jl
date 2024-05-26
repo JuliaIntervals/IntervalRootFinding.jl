@@ -1,3 +1,6 @@
+in_region(x, Y::Interval) = in_interval(x, Y)
+in_region(x::AbstractVector, Y::AbstractVector{<:Interval}) = all(in_interval.(x, Y))
+
 function intersect_region(X::Interval, Y::Interval)
     intersection = intersect_interval(bareinterval(X), bareinterval(Y))
     dec = min(decoration(X), decoration(Y))

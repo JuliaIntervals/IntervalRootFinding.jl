@@ -58,7 +58,9 @@ newtonlike_methods = [Newton, Krawczyk]
 end
 
 
-in_solution_set(point, solution_intervals) = any(in_interval.(point, solution_intervals))
+function in_solution_set(point, solution_intervals)
+    return any(map(Y -> in_region(point, Y), solution_intervals))
+end
 
 @testset "2D roots" begin
     f(x, y) = [x^2 + y^2 - 1, y - 2x]
@@ -68,12 +70,15 @@ in_solution_set(point, solution_intervals) = any(in_interval.(point, solution_in
     # Bisection
     rts = roots(f, X ; contractor = Bisection, abstol = 1e-3)
     exact_sol = [sqrt(1/5), 2sqrt(1/5)]
-    @test_broken in_solution_set(exact_sol, root_region.(rts))
-    @test_broken in_solution_set(-exact_sol, root_region.(rts))
+    @test in_solution_set(exact_sol, root_region.(rts))
+    @test in_solution_set(-exact_sol, root_region.(rts))
 
-    for method in newtonlike_methods
+    for contractor in newtonlike_methods
         deriv = xx -> ForwardDiff.jacobian(f, xx)
-        test_newtonlike(f, deriv, X, method, 2)
+        test_newtonlike(f, deriv, X, contractor, 2)
+        rts = roots(f, X ; contractor)
+        @test in_solution_set(exact_sol, root_region.(rts))
+        @test in_solution_set(-exact_sol, root_region.(rts))
     end
 
     # Infinite interval

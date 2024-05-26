@@ -29,7 +29,7 @@ import IntervalArithmetic: interval
 
 include("region.jl")
 export
-    isempty_region, intersect_region
+    isempty_region, intersect_region, in_region
 
 include("root_object.jl")
 include("roots.jl")
