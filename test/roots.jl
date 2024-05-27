@@ -150,24 +150,19 @@ end
 end
 
 @testset "Complex roots" begin
-    @test_broken false
-    return
     X = interval(-5, 5)
     Xc = Complex(X, X)
     f(z) = z^3 - 1
+    df(z) = 3z^2
 
     # Default
-    rts = roots(f, Xc)
-    @test length(rts) == 3
+    for contractor in newtonlike_methods
+        rts = roots(f, Xc ; derivative = df, contractor, abstol = 1e-3)
+        @test count(isunique, rts) == 3
+    end
 
     # Bisection
-    rts = roots(f, Xc, Bisection, 1e-3)
-    @test length(rts) == 7
-
-    for method in newtonlike_methods
-        deriv = z -> 3*z^2
-        test_newtonlike(f, deriv, Xc, method, 3, 1e-10)
-    end
+    rts = roots(f, Xc ; contractor = Bisection, abstol = 1e-3)
 end
 
 @testset "@exact" begin

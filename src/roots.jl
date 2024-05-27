@@ -27,9 +27,15 @@ function RootProblem(
         max_iteration = nothing,
         where_bisect = 0.49609375)  # 127//256
     
-    (!isnothing(reltol) || !isnothing(max_iteration)) && throw(
-        ArgumentError("reltol and max_iteration not yet implemented")
-    )
+    @show contractor
+    if !isnothing(reltol) || !isnothing(max_iteration)
+        throw(
+            ArgumentError("reltol and max_iteration not yet implemented")
+        )
+    else
+        reltol = 0.0
+        max_iteration = -1
+    end
     
     N = length(root_region(root))
     if isnothing(derivative)
@@ -93,36 +99,18 @@ function roots(f, region ; kwargs...)
     return vcat(result.final_regions, result.unfinished_regions)
 end
 
-# TODO Reinstaste support for that
 # Acting on complex `Interval`
-function _roots(f, Xc::Complex{Interval{T}}, contractor::Type{C},
-               search_order::Type{S}, tol::Float64) where {T, C, S <: SearchOrder}
-
+function roots(f, region::Complex{<:Interval} ; derivative = nothing, contractor = Newton, kwargs...)
     g = realify(f)
-    Y = IntervalBox(reim(Xc)...)
-    rts = _roots(g, Root(Y, :unknown), contractor, search_order, tol)
+    X = [real(region), imag(region)]
 
-    return [Root(Complex(root.interval...), root.status) for root in rts]
-end
+    contractor != Bisection && isnothing(derivative) && throw(
+        ArgumentError("when using complex numbers, the derivative must be " *
+        "given explicitly as ForwardDiff does not support complex numbers.")
+    )
 
-function _roots(f, Xc::Complex{Interval{T}}, contractor,
-               search_order::Type{S}, tol::Float64) where {T, S <: SearchOrder}
+    dg = realify_derivative(derivative)
 
-    g = realify(f)
-    g_prime = x -> ForwardDiff.jacobian(g, x)
-    Y = IntervalBox(reim(Xc)...)
-    rts = _roots(g, g_prime, Root(Y, :unknown), contractor, search_order, tol)
-
-    return [Root(Complex(root.interval...), root.status) for root in rts]
-end
-
-function _roots(f, deriv, Xc::Complex{Interval{T}}, contractor,
-               search_order::Type{S}, tol::Float64) where {T, S <: SearchOrder}
-
-    g = realify(f)
-    g_prime = realify_derivative(deriv)
-    Y = IntervalBox(reim(Xc)...)
-    rts = _roots(g, g_prime, Root(Y, :unknown), contractor, search_order, tol)
-
-    return [Root(Complex(root.interval...), root.status) for root in rts]
+    rts = roots(g, X ; derivative = dg, contractor, kwargs...)
+    return [Root(Complex(root_region(rt)...), root_status(rt)) for rt in rts]
 end
