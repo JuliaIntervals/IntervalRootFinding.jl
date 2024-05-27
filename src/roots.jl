@@ -23,9 +23,13 @@ function RootProblem(
         derivative = nothing,
         search_order = BreadthFirst,
         abstol = 1e-7,
-        reltol = NaN,
-        max_iteration = 100_000,
+        reltol = nothing,
+        max_iteration = nothing,
         where_bisect = 0.49609375)  # 127//256
+    
+    (!isnothing(reltol) || !isnothing(max_iteration)) && throw(
+        ArgumentError("reltol and max_iteration not yet implemented")
+    )
     
     N = length(root_region(root))
     if isnothing(derivative)
