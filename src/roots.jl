@@ -27,7 +27,6 @@ function RootProblem(
         max_iteration = nothing,
         where_bisect = 0.49609375)  # 127//256
     
-    @show contractor
     if !isnothing(reltol) || !isnothing(max_iteration)
         throw(
             ArgumentError("reltol and max_iteration not yet implemented")

@@ -13,7 +13,7 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 [compat]
 BranchAndPrune = "0.2.1"
 ForwardDiff = "0.10"
-IntervalArithmetic = "0.22.12"
+IntervalArithmetic = "0.22.13"
 Reexport = "1"
 StaticArrays = "1"
 julia = "1"
