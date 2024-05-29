@@ -38,5 +38,13 @@ function bisect_region(X::AbstractVector, α)
     return X1, X2
 end
 
+function bisect_region(X::SVector{N, T}, α) where {N, T}
+    i = argmax(diam.(X))
+    x1, x2 = bisect_region(X[i], α)
+    X1 = SVector{N, T}(k == i ? x1 : X[k] for k in 1:N)
+    X2 = SVector{N, T}(k == i ? x2 : X[k] for k in 1:N)
+    return X1, X2
+end
+
 istrivial(X::Interval) = decoration(X) <= trv
 istrivial(X::AbstractVector) = any(istrivial.(X))

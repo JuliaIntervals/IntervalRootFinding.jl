@@ -29,8 +29,6 @@ function test_newtonlike(f, derivative, X, contractor, nsol, tol=1e-10)
     @test sum(roots_dist.(rts, roots(f, X ; contractor, derivative))) < tol
 end
 
-newtonlike_methods = [Newton, Krawczyk]
-
 @testset "1D roots" begin
     # Default
     rts = roots(sin, interval(-5, 5))
