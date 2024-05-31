@@ -39,20 +39,44 @@ end
     rts = roots(sin, interval(-5, 6) ; contractor = Bisection, abstol = 1e-3)
     @test length(rts) == 3
 
-    # Refinement
-    for rt in rts
-        refined = roots(sin, rt ; contractor = Newton)
-        @test length(refined) == 1
-        @test isunique(only(refined))
-    end
+    @testset for contractor in newtonlike_methods
+        # Refinement
+        rts = roots(sin, interval(-5, 6) ; contractor = Bisection, abstol = 1e-3)
+        for rt in rts
+            refined = roots(sin, rt ; contractor)
+            @test length(refined) == 1
+            @test isunique(only(refined))
+        end
 
-    for method in newtonlike_methods
-        test_newtonlike(sin, cos, interval(-5, 5), method, 3)
-    end
+        test_newtonlike(sin, cos, interval(-5, 5), contractor, 3)
 
-    # Infinite interval
-    rts = roots(x -> x^2 - 2, interval(-Inf, Inf)) 
-    @test length(rts) == 2
+        # Infinite interval
+        rts = roots(x -> x^2 - 2, interval(-Inf, Inf) ; contractor)
+        @test length(rts) == 2
+
+        # abs
+        g(p) = abs(1 / ( (1+p)^30 ) * 10_000 - 100)
+        g2(p) = (1 / ( (1+p)^30 ) * 10_000 - 100)^2
+        X = interval(-1000, 1000)
+        rts = roots(g, X ; contractor)
+        rts2 = roots(g2, X ; contractor)
+        rr = intersect_interval.(root_region.(rts), root_region.(rts2))
+        @test !any(isempty(rr))
+
+        # Hard problem with a known zero at zero
+        h(E) = tan(√(2E)) + √(E / (3π^2 - E))
+        rts = roots(h, interval(-1e100, 1e100) ; contractor)
+        @test any(rts) do rt
+            in_interval(0, root_region(rt))
+        end
+
+        # Singularity
+        s(x) = x + zero(x)/x
+        rts = roots(s, interval(-1, 1) ; contractor)
+        @test length(rts) == 1
+        @test root_status(only(rts)) == :unknown
+        @test in_interval(0, root_region(only(rts)))
+    end
 end
 
 
