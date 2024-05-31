@@ -1,5 +1,3 @@
-export Bisection, Newton, Krawczyk
-
 """
     AbstractContractor
 

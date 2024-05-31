@@ -1,5 +1,3 @@
-# This file is part of the ValidatedNumerics.jl package; MIT licensed
-
 module IntervalRootFinding
 
 using Reexport
@@ -8,37 +6,34 @@ using IntervalArithmetic.Symbols
 
 using BranchAndPrune
 using ForwardDiff
+using ForwardDiff: derivative, jacobian
 using StaticArrays
 
-using ForwardDiff: derivative, gradient, jacobian
 using LinearAlgebra
 
 import Base: ⊆, show, big, \
 
-## Root finding
-export
-    derivative, jacobian,  # reexport derivative from ForwardDiff
-    Root, isunique, root_status, root_region,
-    roots, newton1d, quadratic_roots,
-    gauss_seidel_interval, gauss_seidel_interval!,
-    gauss_seidel_contractor, gauss_seidel_contractor!,
-    gauss_elimination_interval, gauss_elimination_interval!,
-    slope
-
-import IntervalArithmetic: interval
+export derivative, jacobian
 
 include("region.jl")
-export
-    isempty_region, intersect_region, in_region
+export isempty_region, intersect_region, in_region
 
 include("root_object.jl")
+export Root, isunique, root_status, root_region
+
 include("roots.jl")
+export roots, RootProblem
+
+include("contractors.jl")
+export Bisection, Newton, Krawczyk
+
+include("linear_eq.jl")
+export gauss_seidel_interval, gauss_elimination_interval, gauss_seidel_contractor
 
 include("complex.jl")
-include("contractors.jl")
+
 include("newton1d.jl")
 include("quadratic.jl")
-include("linear_eq.jl")
 include("slopes.jl")
 
 end
