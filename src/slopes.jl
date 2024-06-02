@@ -3,7 +3,7 @@ using IntervalArithmetic, ForwardDiff
 import Base: +, -, *, /, ^, sqrt, exp, log, sin, cos, tan, asin, acos, atan
 import IntervalArithmetic: mid, interval
 
-function slope(f::Function, x::Interval, c::Number)
+function slope(f::Function, x::Interval, c::Number = mid(x))
     f(slope_var(x, c)).s
 end
 
