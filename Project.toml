@@ -1,6 +1,6 @@
 name = "IntervalRootFinding"
 uuid = "d2bf35a9-74e0-55ec-b149-d360ff49b807"
-version = "0.5.11"
+version = "0.6"
 
 [deps]
 BranchAndPrune = "d3bc4f2e-91e6-11e9-365e-cd067da536ce"
