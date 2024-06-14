@@ -57,6 +57,19 @@ function RootProblem(
         where_bisect
     )
 end
+
+function Base.iterate(root_problem::RootProblem, state = nothing)
+    if isnothing(state)
+        search = root_search(root_problem)
+        iteration = iterate(search)
+    else
+        search, search_state = state
+        iteration = iterate(search, search_state)
+    end
+    isnothing(iteration) && return nothing
+    value, new_search_state = iteration
+    return value, (search, new_search_state)
+end
    
 function bisect_region(r::Root, α)
     Y1, Y2 = bisect_region(root_region(r), α)
@@ -83,17 +96,18 @@ function process(root_problem, r::Root)
     end
 end
 
+root_search(root_problem::RootProblem) = BranchAndPruneSearch(
+    root_problem.search_order,
+    X -> process(root_problem, X),
+    X -> bisect_region(X, root_problem.where_bisect),
+    root_problem.region
+)
+
 """
     roots(f, region ; kwargs...)
 """
 function roots(f, region ; kwargs...)
-    root_problem = RootProblem(f, region ; kwargs...)
-    search = BranchAndPruneSearch(
-        root_problem.search_order,
-        X -> process(root_problem, X),
-        X -> bisect_region(X, root_problem.where_bisect),
-        root_problem.region
-    )
+    search = root_search(RootProblem(f, region ; kwargs...))
     result = bpsearch(search)
     return vcat(result.final_regions, result.unfinished_regions)
 end
