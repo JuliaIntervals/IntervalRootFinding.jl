@@ -1,3 +1,16 @@
+function image_contains_zero(f, R::Root)
+    X = root_region(R)
+    R.status == :empty && return Root(X, :empty)
+
+    imX = f(X)
+
+    if !(all(in_interval.(0, imX))) || isempty_region(imX)
+        return Root(X, :empty)
+    end
+
+    return Root(X, :unknown)
+end
+
 """
     AbstractContractor
 
@@ -46,34 +59,16 @@ function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector)
     return mm - Y*f(mm) + (Id - Y*J) * (X - mm)
 end
 
-function contract(root_problem::RootProblem{C}, X) where C
-    contracted = contract(C, root_problem.f, root_problem.derivative, X)
-    istrivial(contracted) && return X
-    return contracted
-end
-
-function image_contains_zero(f, R::Root)
-    X = root_region(R)
-    R.status == :empty && return Root(X, :empty)
-
-    imX = f(X)
-
-    if !(all(in_interval.(0, imX))) || isempty_region(imX)
-        return Root(X, :empty)
-    end
-
-    return Root(X, :unknown)
-end
-
-function contract_root(root_problem::RootProblem{C}, R::Root) where C
+function contract(::Type{C}, f, derivative, R::Root) where {C <: AbstractContractor}
     # We first check with the simple bisection method
     # If we can prove it is empty at this point, we don't go further
-    R2 = image_contains_zero(root_problem.f, R)
+    R2 = image_contains_zero(f, R)
     C == Bisection && return R2
     R2.status == :empty && return R2
 
     X = root_region(R)
-    contracted_X = contract(root_problem, X)
+    contracted_X = contract(C, f, derivative, X)
+    istrivial(contracted_X) && return Root(X, :unknown)
 
     # Only happens if X is partially out of the domain of f
     isempty_region(contracted_X) && return Root(X, :unknown)  # force bisection
@@ -90,18 +85,24 @@ function contract_root(root_problem::RootProblem{C}, R::Root) where C
     return Root(NX, :unknown)
 end
 
+function contract(root_problem::RootProblem{C}, R::Root) where C
+    return contract(C, root_problem.f, root_problem.derivative, R)
+end
+
 """
     refine(root_problem::RootProblem, X::Root)
 
 Refine a root.
 """
-function refine(root_problem::RootProblem, R::Root)
+function refine(root_problem::RootProblem{C}, R::Root) where C
     root_status(R) != :unique && return R
 
     X = root_region(R)
 
     while diam_region(X) > root_problem.abstol
-        NX = intersect_region(contract(root_problem, X), X)
+        contracted = contract(C, root_problem.f, root_problem.derivative, X)
+        istrivial(contracted) && break  # no point going further
+        NX = intersect_region(contracted, X)
         isequal_region(NX, X) && break  # reached limit of precision
         X = NX
     end

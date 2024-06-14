@@ -25,7 +25,7 @@ include("roots.jl")
 export roots, RootProblem
 
 include("contractors.jl")
-export Bisection, Newton, Krawczyk
+export Bisection, Newton, Krawczyk, contract
 
 include("linear_eq.jl")
 export gauss_seidel_interval, gauss_elimination_interval, gauss_seidel_contractor

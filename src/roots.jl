@@ -64,7 +64,7 @@ function bisect_region(r::Root, α)
 end
 
 function process(root_problem, r::Root)
-    contracted_root = contract_root(root_problem, r)
+    contracted_root = contract(root_problem, r)
     refined_root = refine(root_problem, contracted_root)
 
     status = root_status(refined_root)

@@ -30,20 +30,22 @@ Two strategies are currently available: a breadth-first strategy (leaves closer 
 
 ## Contractors
 
-To determine the status of a region, the algorithm uses so-called *contractors*. A `Contractor` is a callable object built from a function (in the case of `Bisection`) and possibly its derivative as well (for `Newton` and `Krawczyk`). When called with a region (wrapped in a `Root` object) and a tolerance, it returns the status of the root and the region (refined if the region contained a unique root).
+To determine the status of a region, the algorithm uses so-called *contractors*.
+When we contract a region (wrapped in a `Root` object),
+it returns the status of the root and the region.
+The contractors are various methods to guarantee and refine the
+status of a root.
+The available contractors are `Bisection`, `Newton` or `Krawczyk`.
 
 ```jl
-julia> C = Newton(sin, cos)
-Newton{typeof(sin),typeof(cos)}(sin, cos)
+julia> using IntervalArithmetic.Symbols
 
-julia> C(Root(pi ± 0.001, :unknown), 1e-10)
-Root([3.14159, 3.1416], :unique)
+julia> contract(Newton, sin, cos, Root(pi ± 0.001, :unknown))
+Root([3.14159, 3.1416]_com, :unique)
 
-julia> C(Root(2 ± 0.001, :unknown), 1e-10)
-Root([1.99899, 2.00101], :empty)
+julia> contract(Newton, sin, cos, Root(2 ± 0.001, :unknown))
+Root([1.99899, 2.00101]_com, :empty)
 ```
-
-Contractors play a central role in the algorithm: they are the only part of it that varies for different methods.
 
 ## Search object
 
