@@ -30,6 +30,8 @@ The basic function is `roots`. Given a standard Julia function and an interval, 
 ```julia
 julia> using IntervalArithmetic, IntervalRootFinding
 
+julia> using IntervalArithmetic.Symbols  # to use `..`
+
 julia> f(x) = sin(x) - 0.1*x^2 + 1
 f (generic function with 1 method)
 

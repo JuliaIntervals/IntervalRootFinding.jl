@@ -21,10 +21,11 @@ end
         push!(example, Slopes(x->(x^4 - 12x^3 + 47x^2 - 60x - 20exp(-x)), s, mid(s), interval(T(-39), T(65.56))))
         push!(example, Slopes(x->(x^6 - 15x^4 + 27x^2 + 250), s, mid(s), interval(T(-146.9), T(67.1))))
         push!(example, Slopes(x->(atan(cos(tan(x)))), s, mid(s), interval(T(1), T(2))))
-        push!(example, Slopes(x->(asin(cos(acos(sin(x))))), s, mid(s), interval(T(1.36), T(∞))))
+        push!(example, Slopes(x->(asin(cos(acos(sin(x))))), s, mid(s), interval(T(1.36), T(Inf))))
 
-        for i in 1:length(example)
-            @test slope(example[i].f, example[i].x, example[i].c) ⊆ example[i].sol
+        for i in eachindex(example)
+            s = slope(example[i].f, example[i].x, example[i].c)
+            @test issubset_interval(s, example[i].sol)
         end
     end
 end

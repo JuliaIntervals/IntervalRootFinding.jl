@@ -6,22 +6,19 @@ is either `:unknown` or `:unique`. If `status` is `:unique` then we know that
 there is a unique root of the function in question inside the given region.
 
 Internally the status may also be `:empty` for region guaranteed to contain no
-root, however such `Root`s are discarded by default and thus never returned
-by the `roots` function.
+root, however such `Root`s are discarded by default and thus never returned by
+the `roots` function.
 
 # Fields
-  - `interval`: a region (either `Interval` of `IntervalBox`) searched for
-        roots.
-  - `status`: the status of the region, valid values are `:empty`, `unknown` and
-        `:unique`.
+  - `region`: a region (either `Interval` or `SVector` of interval
+        representing an interval box) searched for roots.
+  - `status`: the status of the region, valid values are `:empty`, `unknown`
+        and `:unique`.
 """
 struct Root{T}
-    interval::T
+    region::T
     status::Symbol
 end
-
-interval(rt::Root) = rt.interval
-
 
 """
     root_status(rt)
@@ -35,7 +32,7 @@ root_status(rt::Root) = rt.status  # Use root_status since just `status` is too 
 
 Return the region associated to a `Root`.
 """
-root_region(rt::Root) = rt.interval  # More generic name than `interval`.
+root_region(rt::Root) = rt.region
 
 """
     isunique(rt)
@@ -44,9 +41,15 @@ Return whether a `Root` is unique.
 """
 isunique(rt::Root{T}) where {T} = (rt.status == :unique)
 
-show(io::IO, rt::Root) = print(io, "Root($(rt.interval), :$(rt.status))")
+show(io::IO, rt::Root) = print(io, "Root($(rt.region), :$(rt.status))")
 
-⊆(a::Interval, b::Root) = a ⊆ b.interval   # the Root object has the interval in the first entry
-⊆(a::Root, b::Root) = a.interval ⊆ b.interval
+⊆(a::Interval, b::Root) = a ⊆ b.region
+⊆(a::Root, b::Root) = a.region ⊆ b.region
 
-big(a::Root) = Root(big(a.interval), a.status)
+IntervalArithmetic.diam(r::Root) = diam_region(root_region(r))
+IntervalArithmetic.isnai(r::Root) = isnai_region(root_region(r))
+
+function Base.:(==)(r1::Root, r2::Root)
+    root_status(r1) != root_status(r2) && return false
+    return isequal_region(root_region(r1), root_region(r2))
+end

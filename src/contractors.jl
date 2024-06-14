@@ -1,174 +1,111 @@
-export Bisection, Newton, Krawczyk
-
-"""
-    AbstractContractor{F}
-
-Abstract type for contractors.
-"""
-abstract type AbstractContractor{F} end
-
-"""
-    Bisection{F} <: AbstractContractor{F}
-
-AbstractContractor type for the bisection method.
-"""
-struct Bisection{F} <: AbstractContractor{F}
-    f::F
-end
-
-"""
-    Newton{F, FP} <: AbstractContractor{F}
-
-AbstractContractor type for the interval Newton method.
-
-# Fields
-    - `f::F`: function whose roots are searched
-    - `f::FP`: derivative or jacobian of `f`
-
------
-
-    (N::Newton)(X, α=where_bisect)
-
-Contract an interval `X` using Newton operator and return the
-contracted interval together with its status.
-
-# Inputs
-    - `R`: Root object containing the interval to contract.
-    - `α`: Point of bisection of intervals.
-"""
-struct Newton{F, FP} <: AbstractContractor{F}
-    f::F
-    f′::FP   # use \prime<TAB> for ′
-end
-
-function (N::Newton)(X::Interval ; α=where_bisect)
-    m = Interval(mid(X, α))
-    return m - (N.f(m) / N.f′(X))
-end
-
-function (N::Newton)(X::IntervalBox ; α=where_bisect)
-    m = Interval.(mid(X, α))
-    J = N.f′(X)
-    y = gauss_elimination_interval(J, N.f(m))  # J \ f(m)
-    return IntervalBox(m .- y)
-end
-
-"""
-    Krawczyk{F, FP} <: AbstractContractor{F}
-
-AbstractContractor type for the interval Krawczyk method.
-
-# Fields
-    - `f::F`: function whose roots are searched
-    - `f::FP`: derivative or jacobian of `f`
-
------
-
-    (K::Krawczyk)(X ; α=where_bisect)
-
-Contract an interval `X` using Krawczyk operator and return the
-contracted interval together with its status.
-
-# Inputs
-    - `R`: Root object containing the interval to contract.
-    - `α`: Point of bisection of intervals.
-"""
-struct Krawczyk{F, FP} <: AbstractContractor{F}
-    f::F
-    f′::FP   # use \prime<TAB> for ′
-end
-
-function (K::Krawczyk)(X::Interval ; α=where_bisect)
-    m = Interval(mid(X, α))
-    Y = 1 / K.f′(m)
-
-    return m - Y*K.f(m) + (1 - Y*K.f′(X)) * (X - m)
-end
-
-function (K::Krawczyk)(X::IntervalBox ; α=where_bisect)
-    jacobian = K.f′
-    m = mid(X, α)
-    mm = IntervalBox(m)
-    J = jacobian(X)
-    Y = mid.(inv(jacobian(mm)))
-
-    return m - Y*K.f(mm) + (I - Y*J) * (X.v - m)
-end
-
-"""
-    safe_isempty(X)
-
-Similar to `isempty` function for `IntervalBox`, but also works for `SVector`
-of `Interval`.
-"""
-safe_isempty(X) = isempty(IntervalBox(X))
-
-"""
-    contract(contractor, R)
-
-Contract the region R using the given contractor.
-"""
-function contract(B::Bisection, R::Root)
-    X = interval(R)
+function image_contains_zero(f, R::Root)
+    X = root_region(R)
     R.status == :empty && return Root(X, :empty)
 
-    imX = B.f(X)
+    imX = f(X)
 
-    if !(contains_zero(imX)) || safe_isempty(imX)
+    if !(all(in_interval.(0, imX))) || isempty_region(imX)
         return Root(X, :empty)
     end
 
     return Root(X, :unknown)
 end
 
-function contract(C::Union{Newton, Krawczyk}, R::Root)
+"""
+    AbstractContractor
+
+Abstract type for contractors.
+"""
+abstract type AbstractContractor end
+
+struct Bisection <: AbstractContractor end
+struct Newton <: AbstractContractor end
+struct Krawczyk <: AbstractContractor end
+
+function contract(::Type{Newton}, f, derivative, X::Interval)
+    m = interval(mid(X))
+    return m - (f(m) / derivative(X))
+end
+
+function contract(::Type{Newton}, f, derivative, X::AbstractVector)
+    m = interval.(mid.(X))
+    J = derivative(X)
+    y = gauss_elimination_interval(J, f(m))  # J \ f(m)
+    return m .- y
+end
+
+function contract(::Type{Krawczyk}, f, derivative, X::Interval)
+    m = interval(mid(X))
+    Y = inv(derivative(m))
+
+    return m - Y*f(m) + (interval(1) - Y*derivative(X)) * (X - m)
+end
+
+function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector)
+    # We check the interval derivative first because if it works, we know that
+    # the derivative of the center below works as well
+    J = derivative(X)
+    any(xx -> decoration(xx) == trv, J) && return interval(-Inf, Inf, trv)
+
+    m = mid.(X)
+    dm = derivative(m)
+    det(dm) == 0 && return interval(-Inf, Inf, trv)
+
+    Y = interval.(inv(dm))
+    mm = interval.(m)
+
+    Id = interval.(Matrix(I, length(m), length(m)))
+
+    return mm - Y*f(mm) + (Id - Y*J) * (X - mm)
+end
+
+function contract(::Type{C}, f, derivative, R::Root) where {C <: AbstractContractor}
     # We first check with the simple bisection method
     # If we can prove it is empty at this point, we don't go further
-    R2 = contract(Bisection(C.f), R)
+    R2 = image_contains_zero(f, R)
+    C == Bisection && return R2
     R2.status == :empty && return R2
 
-    X = interval(R)
-    contracted_X = C(X)
+    X = root_region(R)
+    contracted_X = contract(C, f, derivative, X)
+    istrivial(contracted_X) && return Root(X, :unknown)
 
     # Only happens if X is partially out of the domain of f
-    safe_isempty(contracted_X) && return Root(X, :unknown)  # force bisection
+    isempty_region(contracted_X) && return Root(X, :unknown)  # force bisection
 
-    NX = contracted_X ∩ X
+    NX = intersect_region(contracted_X, X)
 
-    isinf(X) && return Root(NX, :unknown)  # force bisection
-    safe_isempty(NX) && return Root(X, :empty)
+    !isbounded_region(X) && return Root(NX, :unknown)  # force bisection
+    isempty_region(NX) && return Root(X, :empty)
 
-    if R.status == :unique || NX ⪽ X  # isinterior, we know there's a unique root inside
+    if R.status == :unique || NX ⪽ X  # isstrictsubset_interval, we know there's a unique root inside
         return Root(NX, :unique)
     end
 
     return Root(NX, :unknown)
 end
 
-"""
-    refine(C, X::Region, tol)
-
-Refine a interval known to contain a solution.
-
-This function assumes that it is already known that `X` contains a unique root.
-"""
-function refine(C::Union{Newton, Krawczyk}, X::Region, root_problem)
-    while diam(X) > root_problem.abstol
-        NX = C(X) ∩ X
-        NX == X && break  # reached limit of precision
-        X = NX
-    end
-
-    return X
+function contract(root_problem::RootProblem{C}, R::Root) where C
+    return contract(C, root_problem.f, root_problem.derivative, R)
 end
 
 """
-    refine(op, X::Tuple{Symbol, Region}, tol)
+    refine(root_problem::RootProblem, X::Root)
 
-Wrap the refine method to leave unchanged intervals that are not guaranteed to
-contain an unique solution.
+Refine a root.
 """
-function refine(C::AbstractContractor, R::Root, root_problem)
+function refine(root_problem::RootProblem{C}, R::Root) where C
     root_status(R) != :unique && return R
-    return Root(refine(C, interval(R), root_problem), :unique)
+
+    X = root_region(R)
+
+    while diam_region(X) > root_problem.abstol
+        contracted = contract(C, root_problem.f, root_problem.derivative, X)
+        istrivial(contracted) && break  # no point going further
+        NX = intersect_region(contracted, X)
+        isequal_region(NX, X) && break  # reached limit of precision
+        X = NX
+    end
+
+    return Root(X, :unique)
 end

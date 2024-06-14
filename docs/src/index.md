@@ -10,19 +10,21 @@ To do so, it uses methods from interval analysis, using interval arithmetic from
 
 ## Basic 1D example
 
-To begin, we need a standard Julia function and an interval in which to search roots of that function. Intervals use the `Interval` type provided by the `IntervalArithmetic.jl` package and are generally constructed using the `..` syntax, `a..b` representing the closed interval $[a, b]$.
+To begin, we need a standard Julia function and an interval in which to search roots of that function. Intervals use the `Interval` type provided by the `IntervalArithmetic.jl` package
+Intervals are generally constructed using the `..` syntax (from the `IntervalArithmetic.Symbols` submodule),
+`a..b` representing the closed interval $[a, b]$.
 
 When provided with this information, the `roots` function will return a vector of all roots of the function in the given interval.
 
 Example:
 
 ```jl
-julia> using IntervalArithmetic, IntervalRootFinding
+julia> using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
 
 julia> rts = roots(x -> x^2 - 2x, 0..10)
-2-element Array{Root{Interval{Float64}},1}:
- Root([1.99999, 2.00001], :unique)
- Root([0, 4.4724e-16], :unknown)
+2-element Vector{Root{Interval{Float64}}}:
+ Root([0.0, 3.73849e-08]_com_NG, :unknown)
+ Root([1.999999, 2.00001]_com_NG, :unique)
 ```
 
 The roots are returned as `Root` objects, containing an interval and the status of that interval, represented as a `Symbol`. There are two possible types of root status, as shown in the example:
@@ -42,11 +44,11 @@ julia> g(x) = (x^2 - 2)^2 * (x^2 - 3)
 g (generic function with 1 method)
 
 julia> roots(g, -10..10)
-4-element Array{IntervalRootFinding.Root{IntervalArithmetic.Interval{Float64}},1}:
- Root([1.73205, 1.73206], :unique)
- Root([1.41418, 1.4148], :unknown)
- Root([-1.4148, -1.41418], :unknown)
- Root([-1.73206, -1.73205], :unique)
+4-element Vector{Root{Interval{Float64}}}:
+ Root([-1.73206, -1.73205]_com_NG, :unique)
+ Root([-1.41422, -1.41421]_com, :unknown)  
+ Root([1.41421, 1.41422]_com, :unknown)    
+ Root([1.73205, 1.73206]_com_NG, :unique)  
 ```
 
 Here we see that the two double roots are reported as being possible roots without guarantee and the simple roots have been proved to be unique.
@@ -54,56 +56,77 @@ Here we see that the two double roots are reported as being possible roots witho
 
 ## Basic multi-dimensional example
 
-For dimensions $n > 1$, the function passed to `roots` must currently return an `SVector` from the `StaticArrays.jl` package.
+For dimensions $n > 1$, the function passed to `roots` must take an array as
+argument and return an array.
+The initial search region is an array of interval.
 
 Here we give a 3D example:
 
 ```jl
 julia> function g( (x1, x2, x3) )
-           return SVector(x1^2 + x2^2 + x3^2 - 1,
-                          x1^2 + x3^2 - 0.25,
-                          x1^2 + x2^2 - 4x3
-                         )
+          return [
+              x1^2 + x2^2 + x3^2 - 1,
+              x1^2 + x3^2 - 0.25,
+              x1^2 + x2^2 - 4x3
+          ]
        end
 g (generic function with 1 method)
 
 julia> X = -5..5
-[-5, 5]
+[-5.0, 5.0]_com
 
-julia> rts = roots(g, X × X × X)
-4-element Array{Root{IntervalBox{3,Float64}},1}:
- Root([0.440762, 0.440763] × [0.866025, 0.866026] × [0.236067, 0.236068], :unique)
- Root([0.440762, 0.440763] × [-0.866026, -0.866025] × [0.236067, 0.236068], :unique)
- Root([-0.440763, -0.440762] × [0.866025, 0.866026] × [0.236067, 0.236068], :unique)
- Root([-0.440763, -0.440762] × [-0.866026, -0.866025] × [0.236067, 0.236068], :unique)
+julia> rts = roots(g, [X, X, X])
+4-element Vector{Root{Vector{Interval{Float64}}}}:
+ Root(Interval{Float64}[[-0.440763, -0.440762]_com_NG, [-0.866026, -0.866025]_com_NG, [0.236067, 0.236069]_com_NG], :unique)
+ Root(Interval{Float64}[[-0.440763, -0.440762]_com_NG, [0.866025, 0.866026]_com_NG, [0.236067, 0.236069]_com_NG], :unique)
+ Root(Interval{Float64}[[0.440762, 0.440763]_com_NG, [-0.866026, -0.866025]_com_NG, [0.236067, 0.236069]_com_NG], :unique)
+ Root(Interval{Float64}[[0.440762, 0.440763]_com_NG, [0.866025, 0.866026]_com_NG, [0.236067, 0.236069]_com_NG], :unique)
 ```
 
-Thus the system admits four unique roots in the box $[-5, 5]^3$. We have used the unicode character `×` (typed as `\times<tab>`) to compose several intervals into a multidimensional box.
+Thus, the system admits four unique roots in the box $[-5, 5]^3$.
+
+Moreover, the package is compatible with `StaticArrays.jl`.
+Usage of static arrays is recommended to increase performance.
+```jl
+julia> using StaticArrays
+
+julia> h((x, y)) = SVector(x^2 - 4, y^2 - 16)
+h (generic function with 1 method)
+
+julia> roots(h, SVector(X, X))
+4-element Vector{Root{SVector{2, Interval{Float64}}}}:
+ Root(Interval{Float64}[[-2.00001, -1.999999]_com_NG, [-4.00001, -3.999999]_com_NG], :unique)
+ Root(Interval{Float64}[[-2.00001, -1.999999]_com_NG, [3.999999, 4.00001]_com_NG], :unique)
+ Root(Interval{Float64}[[1.999999, 2.00001]_com_NG, [-4.00001, -3.999999]_com_NG], :unique)
+ Root(Interval{Float64}[[1.999999, 2.00001]_com_NG, [3.999999, 4.00001]_com_NG], :unique)
+```
 
 ## Stationary points
 
 Stationary points of a function $f:\mathbb{R}^n \to \mathbb{R}$ may be found as zeros of the gradient of $f$.
-The package exports the `∇` operator to calculate gradients using `ForwardDiff.jl`:
+The gradient can be computed using `ForwardDiff.jl`:
 
 ```jl
+julia> using ForwardDiff: gradient
+
 julia> f( (x, y) ) = sin(x) * sin(y)
 f (generic function with 1 method)
 
-julia> ∇f = ∇(f)  # gradient operator from the package
+julia> ∇f(x) = gradient(f, x)  # gradient operator from the package
 (::#53) (generic function with 1 method)
 
 julia> rts = roots(∇f, IntervalBox(-5..6, 2), Newton, 1e-5)
-25-element Array{IntervalRootFinding.Root{IntervalArithmetic.IntervalBox{2,Float64}},1}:
- Root([4.71238, 4.71239] × [4.71238, 4.71239], :unique)
- Root([4.71238, 4.71239] × [1.57079, 1.5708], :unique)
+25-element Vector{Root{Vector{Interval{Float64}}}}:
+ Root(Interval{Float64}[[-4.7124, -4.71238]_com, [-4.7124, -4.71238]_com], :unique)
+ Root(Interval{Float64}[[-3.1416, -3.14159]_com, [-3.1416, -3.14159]_com], :unique)
  ⋮
- [output snipped for brevity]
+ [output skipped for brevity]
 ```
 
 Now let's find the midpoints and plot them:
 
 ```jl
-midpoints = mid.(interval.(rts))
+midpoints = [mid.(root_region(rt)) for rt in rts]
 
 xs = first.(midpoints)
 ys = last.(midpoints)
@@ -113,7 +136,5 @@ using Plots; plotlyjs()
 surface(-5:0.1:6, -6:0.1:6, (x,y) -> f([x, y]))
 scatter!(xs, ys, f.(midpoints))
 ```
-
-The result is the following:
 
 ![stationary points](stationary_points.png)

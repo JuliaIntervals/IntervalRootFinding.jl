@@ -10,6 +10,7 @@ makedocs(
     pages = Any[
         "Home" => "index.md",
         "`roots` interface" => "roots.md",
+        "Decorations and guarantees" => "decorations.md",
         "Internals" => "internals.md",
         "Bibliography" => "biblio.md",
         "API" => "api.md"
