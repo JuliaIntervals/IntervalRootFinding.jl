@@ -16,7 +16,8 @@ import Base: ⊆, show, big, \
 export derivative, jacobian
 
 include("region.jl")
-export isempty_region, intersect_region, in_region
+export isempty_region, intersect_region, in_region, isequal_region,
+    isbounded_region, isnai_region, bisect_region
 
 include("root_object.jl")
 export Root, isunique, root_status, root_region

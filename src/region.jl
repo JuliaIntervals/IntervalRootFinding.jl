@@ -2,28 +2,26 @@ in_region(x, Y::Interval) = in_interval(x, Y)
 in_region(x::AbstractVector, Y::AbstractVector{<:Interval}) = all(in_interval.(x, Y))
 
 function intersect_region(X::Interval, Y::Interval)
-    intersection = intersect_interval(bareinterval(X), bareinterval(Y))
     dec = min(decoration(X), decoration(Y))
-    guarantee = isguaranteed(X) && isguaranteed(Y)
-    return IntervalArithmetic._unsafe_interval(intersection, dec, guarantee)
+    return IntervalArithmetic.setdecoration(intersect_interval(X, Y), dec)
 end
 
 intersect_region(X::AbstractVector, Y::AbstractVector) = intersect_region.(X, Y)
 
 isempty_region(X::Interval) = isempty_interval(X)
-isempty_region(X::AbstractVector) = any(isempty_region.(X))
+isempty_region(X::AbstractVector) = any(isempty_region, X)
 
 isequal_region(X::Interval, Y::Interval) = isequal_interval(X, Y)
-isequal_region(X::AbstractVector, Y::AbstractVector) = all(isequal_region.(X, Y))
+isequal_region(X::AbstractVector, Y::AbstractVector) = all((a, b) -> isequal_region(a, b), zip(X, Y))
 
 isbounded_region(X::Interval) = isbounded(X)
-isbounded_region(X::AbstractVector) = all(isbounded.(X))
+isbounded_region(X::AbstractVector) = all(isbounded, X)
 
 isnai_region(X::Interval) = isnai(X)
-isnai_region(X::AbstractVector) = any(isnai.(X))
+isnai_region(X::AbstractVector) = any(isnai, X)
 
 diam_region(X::Interval) = diam(X)
-diam_region(X::AbstractVector) = maximum(diam.(X))
+diam_region(X::AbstractVector) = maximum(diam, X)
 
 bisect_region(X::Interval, α) = bisect(X, α)
 
@@ -47,4 +45,4 @@ function bisect_region(X::SVector{N, T}, α) where {N, T}
 end
 
 istrivial(X::Interval) = decoration(X) <= trv
-istrivial(X::AbstractVector) = any(istrivial.(X))
+istrivial(X::AbstractVector) = any(istrivial, X)
