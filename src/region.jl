@@ -12,7 +12,7 @@ isempty_region(X::Interval) = isempty_interval(X)
 isempty_region(X::AbstractVector) = any(isempty_region, X)
 
 isequal_region(X::Interval, Y::Interval) = isequal_interval(X, Y)
-isequal_region(X::AbstractVector, Y::AbstractVector) = all((a, b) -> isequal_region(a, b), zip(X, Y))
+isequal_region(X::AbstractVector, Y::AbstractVector) = all(XY -> isequal_region(XY...), zip(X, Y))
 
 isbounded_region(X::Interval) = isbounded(X)
 isbounded_region(X::AbstractVector) = all(isbounded, X)
