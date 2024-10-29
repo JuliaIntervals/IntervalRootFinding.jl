@@ -10,11 +10,45 @@ struct RootProblem{C, F, G, R, S, T}
     region::R
     search_order::Type{S}
     abstol::T
-    reltol::T  # TODO
-    max_iteration::Int  # TODO
+    reltol::T
+    max_iteration::Int
     where_bisect::T
 end
 
+"""
+    RootProblem(f::Function, search_region ; kwargs...)
+
+Setup a `RootProblem` for searching the roots (also known as zeros)
+of the function `f` in the given search region.
+
+`search_region` must be either an `Interval` if `f` is scalar
+or a vector of `Interval`s if `f` is vector-valued.
+
+The returned `RootProblem` is an iterator that give access to the internal
+state of the search during the iteration,
+allowing to add callbacks and logging to the search.
+
+Parameters
+==========
+- `contractor`: Contractor used to determine the status of a region.
+    Must be either `Newton`, `Krawczyk`, or `Bisection`. `Bisection` do not require
+    to compute the derivative of the function, but can also never guarantee the
+    existence of a root. Default: `Newton`.
+- `derivative`: Explicit derivative of the function (or its jacobian for
+    vector-valued functions) used by the `Newton` and `Krawczyk` contractors.
+    Default: `nothing` (the derivative is computed automatically using ForwardDiff.jl).
+- `search_order`: Order in which the sub-regions are searched.
+    `BreadthFirst` (visit the largest regions first) and `DepthFirst`
+    (visit the smallest regions first) are supported. Default: `BreadthFirst`.
+- `abstol`: Absolute tolerance. The search is stopped when all dimension
+    of the remaining regions are smaller than `abstol`. Default: 1e-7.
+- `where_bisect`: Value used to bisect the region. It is used to avoid
+    bisecting exactly on zero when starting with symmetrical regions,
+    often leading to having a solution directly on the boundary of a region,
+    which prevent the contractor to prove it's unicity. Default: 127/256.
+
+`reltol` and `max_iteration` are currently ignored.
+"""
 RootProblem(f, region ; kwargs...) = RootProblem(f, Root(region, :unkown) ; kwargs...)
 
 function RootProblem(
@@ -104,7 +138,23 @@ root_search(root_problem::RootProblem) = BranchAndPruneSearch(
 )
 
 """
-    roots(f, region ; kwargs...)
+    roots(f::Function, search_region ; kwargs...)
+
+Return the roots (also known as zeros) of the function `f`
+contained in the given search region
+(either an `Interval` for a scalar function or vector of `Interval`s for a
+vector valued function),
+together with a status.
+
+The status of the returned regions can be either of
+- `:unique`: the region provably contains exactly one root of `f`
+- `:unknown`: the region may contain any number of roots (potentially none)
+
+The parts of the search region that are not covered by any of the returned
+roots are guaranteed to contain no root of the function.
+
+For information about the optional search parameters,
+see [`RootProblem`](@ref).
 """
 function roots(f, region ; kwargs...)
     search = root_search(RootProblem(f, region ; kwargs...))
