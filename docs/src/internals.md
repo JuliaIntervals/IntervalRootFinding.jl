@@ -30,91 +30,62 @@ Two strategies are currently available: a breadth-first strategy (leaves closer 
 
 ## Contractors
 
-To determine the status of a region, the algorithm uses so-called *contractors*. A `Contractor` is a callable object built from a function (in the case of `Bisection`) and possibly its derivative as well (for `Newton` and `Krawczyk`). When called with a region (wrapped in a `Root` object) and a tolerance, it returns the status of the root and the region (refined if the region contained a unique root).
+To determine the status of a region, the algorithm uses so-called *contractors*.
+When we contract a region (wrapped in a `Root` object),
+it returns the status of the root and the region.
+The contractors are various methods to guarantee and refine the
+status of a root.
+The available contractors are `Bisection`, `Newton` or `Krawczyk`.
 
 ```jl
-julia> C = Newton(sin, cos)
-Newton{typeof(sin),typeof(cos)}(sin, cos)
+julia> using IntervalArithmetic.Symbols
 
-julia> C(Root(pi ± 0.001, :unknown), 1e-10)
-Root([3.14159, 3.1416], :unique)
+julia> contract(Newton, sin, cos, Root(pi ± 0.001, :unknown))
+Root([3.14159, 3.1416]_com, :unique)
 
-julia> C(Root(2 ± 0.001, :unknown), 1e-10)
-Root([1.99899, 2.00101], :empty)
+julia> contract(Newton, sin, cos, Root(2 ± 0.001, :unknown))
+Root([1.99899, 2.00101]_com, :empty)
 ```
 
-Contractors play a central role in the algorithm: they are the only part of it that varies for different methods.
+## RootProblem and search object
 
-## Search object
+The parameters of a search are represented by a `RootProblem` object
+that has the same signature as the `roots` function.
 
-Now that we have presented the foundation of the internal algorithm, we can discuss the representation of the search. Each search strategy has a type associated, the defined types being `BreadthFirst` and `DepthFirst`.
+The `RootProblem` can be iterated to perform the search of the roots,
+for example to log information at each iteration.
 
-A search must be given three pieces of information:
-  1. The region to search;
-  2. A contractor;
-  3. A tolerance.
+For example, the following stops the search after 15 iterations and
+shows the state of the search at that point.
 
 ```jl
 julia> f(x) = exp(x) - sin(x)
 f (generic function with 1 method)
 
-julia> df(x) = exp(x) - cos(x)
-df (generic function with 1 method)
+julia> problem = RootProblem(f, interval(-10, 10))
 
-julia> C = Newton(f, df)
-Newton{typeof(f),typeof(df)}(f, df)
+julia> state = nothing   # stores current state of the search
 
-julia> search = DepthFirst(-10..10, C, 1e-10)
-DepthFirst{Interval{Float64},Newton{typeof(f),typeof(df)},
-Float64}(Root([-10, 10], :unknown), Newton{typeof(f),typeof(df)}(f, df),
-1.0e-10)
-```
-
-Then the search is performed using the iterator interface, i.e. a `for` loop.
-
-```jl
-julia> current_tree = nothing   # stores current version of tree
-
-julia> for tree in search
-           global current_tree = tree
+julia> for (k, s) in enumerate(problem)
+           global state = s
+           k == 15 && break  # stop at iteration 15
        end
 
-julia> current_tree
-Working tree with 9 elements of type Root{Interval{Float64}}
-Indices: [1, 2, 3, 4, 5, 7, 8, 9, 10]
-Structure:
-  [1] Node with children [2]
-    [2] Node with children [3, 4]
-      [3] Node with children [8, 9]
-        [8] Node with children [10]
-          [10] Leaf (:final) with data Root([-9.42486, -9.42485], :unique)
-        [9] Leaf (:final) with data Root([-6.28132, -6.28131], :unique)
-      [4] Node with children [5]
-        [5] Node with children [7]
-          [7] Leaf (:final) with data Root([-3.18307, -3.18306], :unique)
+julia> state.tree
+Branching
+└─ Branching
+   ├─ Branching
+   │  ├─ Branching
+   │  │  ├─ (:working, Root([-10.0, -8.7886]_com, :unknown))
+   │  │  └─ (:working, Root([-8.78861, -7.55813]_com, :unknown))
+   │  └─ (:final, Root([-6.28132, -6.28131]_com, :unique))
+   └─ Branching
+      ├─ (:working, Root([-5.07783, -3.84734]_com, :unknown))
+      └─ (:working, Root([-3.84736, -2.5975]_com, :unknown))
 ```
 
-The elements of the iteration are the trees (of type `BBTree`) that get constructed during the search. In the above example we simply get the final iteration of the tree and show it. The list of final roots can be retrieved using the `data` function:
-
-```jl
-julia> data(endtree)
-3-element Array{Root{Interval{Float64}},1}:
- Root([-3.18307, -3.18306], :unique)
- Root([-6.28132, -6.28131], :unique)
- Root([-9.42486, -9.42485], :unique)
-```
-
-We can use this interface to do some analysis at each iteration.
-
-```jl
-julia> for (k, tree) in enumerate(search)
-           println("The tree at iteration $k has $(IntervalRootFinding.nnodes(tree)) nodes")
-       end
-The tree at iteration 1 has 3 nodes
-The tree at iteration 2 has 5 nodes
-The tree at iteration 3 has 4 nodes
-                ⋮   # several lines omitted for brevity
-The tree at iteration 17 has 10 nodes
-The tree at iteration 18 has 9 nodes
-The tree at iteration 19 has 9 nodes
-```
+The elements of the iteration are `SearchState` from the `BranchAndPrune.jl`
+package.
+In the example, we show the tree that get constructed during the search,
+which, at iteration 15, has found one root and have 4 regions of unknown status
+to process.
