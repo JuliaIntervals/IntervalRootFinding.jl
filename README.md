@@ -36,11 +36,11 @@ julia> f(x) = sin(x) - 0.1*x^2 + 1
 f (generic function with 1 method)
 
 julia> roots(f, -10..10)
-4-element Array{Root{Interval{Float64}},1}:
- Root([3.14959, 3.1496], :unique)
- Root([-4.42654, -4.42653], :unique)
- Root([-1.08205, -1.08204], :unique)
- Root([-3.10682, -3.10681], :unique)
+4-element Vector{Root{Interval{Float64}}}:
+ Root([-4.42654, -4.42653]_com_NG, :unique)
+ Root([-3.10682, -3.10681]_com_NG, :unique)
+ Root([-1.08205, -1.08204]_com_NG, :unique)
+ Root([3.14959, 3.1496]_com_NG, :unique)
 ```
 
 The `:unique` status indicates that each listed interval contains exactly one root. The other possible status is `:unknown`, which corresponds to intervals that may contain zero, one, or more roots (no guarantee is provided for these intervals).
