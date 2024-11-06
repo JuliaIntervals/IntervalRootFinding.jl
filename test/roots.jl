@@ -183,6 +183,28 @@ end
     end
 end
 
+@testset "Root at infinity" begin
+    for contractor in newtonlike_methods
+        pb = RootProblem(x -> 1/x, interval(1, Inf) ; contractor)
+
+        state = nothing
+        for (k, s) in enumerate(pb)
+            state = s
+            
+            k > 1000 && break
+        end
+
+        rts = [leaf.region for leaf in BranchAndPrune.Leaves(state.tree)]
+        for rt in rts
+            # Some roots have an empty trivial interval for unknown reason,
+            # which is unhelpful but not incorrect
+            if decoration(rt.region) != trv
+                @test sup(rt.region) == Inf
+            end
+        end
+    end
+end
+
 @testset "Complex roots" begin
     X = interval(-5, 5)
     Xc = Complex(X, X)
