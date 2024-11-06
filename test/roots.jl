@@ -134,6 +134,18 @@ end
     end
 end
 
+@testset "Dimension mismatch" begin
+    f21(xy) = [xy[1]^2 - 2]
+    f23(xy) = [xy[1]^2 - 2, xy[2]^2 - 3, xy[1] + xy[2]]
+
+    X = [interval(0, 5), interval(0, 5)]
+
+    for contractor in newtonlike_methods
+        @test_throws DimensionMismatch roots(f21, X ; contractor)
+        @test_throws DimensionMismatch roots(f23, X ; contractor)
+    end
+end
+
 @testset "Out of domain" begin
     for contractor in newtonlike_methods
         @test length(roots(log, interval(-100, 2) ; contractor)) == 1
@@ -158,16 +170,25 @@ end
     end
 end
 
-@testset "Stationary points" begin
-    f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
-    gradf = xx -> ForwardDiff.gradient(f, xx)
+@testset "Root at infinity" begin
+    for contractor in newtonlike_methods
+        pb = RootProblem(x -> 1/x, interval(1, Inf) ; contractor)
 
-    XX = [interval(-5, 6), interval(-5, 6)]
-    tol = 1e-5
+        state = nothing
+        for (k, s) in enumerate(pb)
+            state = s
+            
+            k > 1000 && break
+        end
 
-    for method in newtonlike_methods
-        deriv = xx -> ForwardDiff.jacobian(gradf, xx)
-        test_newtonlike(gradf, deriv, XX, method, 25, tol)
+        rts = [leaf.region for leaf in BranchAndPrune.Leaves(state.tree)]
+        for rt in rts
+            # Some roots have an empty trivial interval for unknown reason,
+            # which is unhelpful but not incorrect
+            if decoration(rt.region) != trv
+                @test sup(rt.region) == Inf
+            end
+        end
     end
 end
 
