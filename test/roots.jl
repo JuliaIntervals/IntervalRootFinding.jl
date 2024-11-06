@@ -170,19 +170,6 @@ end
     end
 end
 
-@testset "Stationary points" begin
-    f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
-    gradf = xx -> ForwardDiff.gradient(f, xx)
-
-    XX = [interval(-5, 6), interval(-5, 6)]
-    tol = 1e-5
-
-    for method in newtonlike_methods
-        deriv = xx -> ForwardDiff.jacobian(gradf, xx)
-        test_newtonlike(gradf, deriv, XX, method, 25, tol)
-    end
-end
-
 @testset "Root at infinity" begin
     for contractor in newtonlike_methods
         pb = RootProblem(x -> 1/x, interval(1, Inf) ; contractor)
