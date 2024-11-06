@@ -134,6 +134,18 @@ end
     end
 end
 
+@testset "Dimension mismatch" begin
+    f21(xy) = [xy[1]^2 - 2]
+    f23(xy) = [xy[1]^2 - 2, xy[2]^2 - 3, xy[1] + xy[2]]
+
+    X = [interval(0, 5), interval(0, 5)]
+
+    for contractor in newtonlike_methods
+        @test_throws DimensionMismatch roots(f21, X ; contractor)
+        @test_throws DimensionMismatch roots(f23, X ; contractor)
+    end
+end
+
 @testset "Out of domain" begin
     for contractor in newtonlike_methods
         @test length(roots(log, interval(-100, 2) ; contractor)) == 1
