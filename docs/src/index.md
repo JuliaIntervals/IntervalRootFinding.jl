@@ -101,6 +101,11 @@ julia> roots(h, SVector(X, X))
  Root(Interval{Float64}[[1.999999, 2.00001]_com_NG, [3.999999, 4.00001]_com_NG], :unique)
 ```
 
+!!! warning
+
+    Inputs and outputs must have the same vector type. In particular, if the function return a `SVector`, the initial search region should be a `SVector` as well (and if a Jacobian is given, it should return a `SMatrix`).
+    Mixing vector types may either error or convert everything to `Vector` and ruin performances.
+
 ## Stationary points
 
 Stationary points of a function $f:\mathbb{R}^n \to \mathbb{R}$ may be found as zeros of the gradient of $f$.
