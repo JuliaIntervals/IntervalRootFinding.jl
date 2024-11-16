@@ -2,6 +2,7 @@
 IntervalRootFinding
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaintervals.github.io/IntervalRootFinding.jl/stable)
+[![Stable](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaintervals.github.io/IntervalRootFinding.jl/dev)
 [![Build Status](https://github.com/JuliaIntervals/IntervalRootFinding.jl/workflows/CI/badge.svg)](https://github.com/JuliaIntervals/IntervalRootFinding.jl/actions/workflows/CI.yml)
 [![coverage](https://codecov.io/gh/JuliaIntervals/IntervalRootFinding.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaIntervals/IntervalRootFinding.jl)
 </h1>
