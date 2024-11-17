@@ -101,12 +101,56 @@ julia> roots(h, SVector(X, X))
  Root(Interval{Float64}[[1.999999, 2.00001]_com_NG, [3.999999, 4.00001]_com_NG], :unique)
 ```
 
-!!! warning
+### Vector types
 
-    Inputs and outputs must have the same vector type. In particular, if the function return a `SVector`, the initial search region should be a `SVector` as well (and if a Jacobian is given, it should return a `SMatrix`).
-    Mixing vector types may either error or convert everything to `Vector` and ruin performances.
+The multidimensional search region (formerly represented as `IntervalBox`)
+can be represented by both `Vector` and `SVector` (from `StaticArrays.jl`)
+of `Interval`,
+the latter giving better performances.
 
-## Stationary points
+However, the types used must be consistent:
+when using `roots(f, X)`, `f(X)` should have the same type as `X`.
+In particular, if `f` return a `SVector` of `Interval`,
+make sure to use a `SVector` of `Interval` for the initial search region `X`.
+
+Moreover, if `X` and `f(X)` are `SVector`, and the jacobian function
+is given explicitly,
+then the jacobian function should return a `SMatrix` of the appropriate size.
+
+Mixing between (standard) `Vector` and (static) `SVector`
+may result in errors or bad performances.
+
+Note that the function doesn't need to be defined specifically for `Interval` inputs:
+for example `f(X) = [X[1]^2 - 2, X[2]^2 - 3]`
+returns either a `Vector{Float64}` or a `Vector{Interval}` depending
+on the input.
+
+Furthermore, when you know that the number given as literals are parsed exactly
+(which is typically not guaranteed for floating points inputs),
+you can avoid the `NG` flag that arise from mixing numbers and intervals,
+with the `@exact` macro:
+```julia
+julia> f(X) = @exact [X[1]^2 - 2, X[2]^2 - 3]
+f (generic function with 1 method)
+
+julia> x = [interval(0, 5), interval(0, 5)]
+2-element Vector{Interval{Float64}}:
+ [0.0, 5.0]_com
+ [0.0, 5.0]_com
+
+julia> roots(f, x)
+1-element Vector{Root{Vector{Interval{Float64}}}}:
+ Root(Interval{Float64}[[1.41421, 1.41422]_com, [1.73205, 1.73206]_com], :unique)
+```
+This macro does not disturb the function when called with non-interval inputs:
+```julia
+julia> f([1.2, 2.2])
+2-element Vector{Float64}:
+ -0.56
+  1.8400000000000007
+```
+
+### Stationary points
 
 Stationary points of a function $f:\mathbb{R}^n \to \mathbb{R}$ may be found as zeros of the gradient of $f$.
 The gradient can be computed using `ForwardDiff.jl`:
@@ -120,8 +164,8 @@ f (generic function with 1 method)
 julia> ∇f(x) = gradient(f, x)  # gradient operator from the package
 (::#53) (generic function with 1 method)
 
-julia> rts = roots(∇f, IntervalBox(-5..6, 2), Newton, 1e-5)
-25-element Vector{Root{Vector{Interval{Float64}}}}:
+julia> rts = roots(∇f, SVector(interval(-5, 6), interval(-5, 6)) ; abstol = 1e-5)
+25-element Vector{Root{SVector{2, Interval{Float64}}}}:
  Root(Interval{Float64}[[-4.7124, -4.71238]_com, [-4.7124, -4.71238]_com], :unique)
  Root(Interval{Float64}[[-3.1416, -3.14159]_com, [-3.1416, -3.14159]_com], :unique)
  ⋮
