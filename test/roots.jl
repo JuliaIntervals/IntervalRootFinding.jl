@@ -244,3 +244,46 @@ end
         end
     end
 end
+
+@testset "Type stability" begin
+    f(x) = x^2 - 2
+    df(x) = 2x
+
+    function A(X)
+        x, y = X
+        return [x^2 - 2, y^2 - 2]
+    end
+
+    function dA(X)
+        x, y = X
+        return [2x 0.0 ; 0.0 2y]
+    end
+
+    function S(X)
+        x, y = X
+        return SVector(x^2 - 2, y^2 - 2)
+    end
+
+    function dS(X)
+        x, y = X
+        return SMatrix{2, 2}(2x, 0.0, 0.0, 2y)
+    end
+    x = interval(0, 5)
+    a = [x, x]
+    s = SVector(x, x)
+
+    for contractor in newtonlike_methods
+        @inferred roots(f, x ; contractor)
+        @inferred roots(f, x ; contractor, derivative = df)
+
+        rA1 = @inferred roots(A, a ; contractor)
+        rA2 = @inferred roots(A, a ; contractor, derivative = dA)
+        @test eltype(rA1) <: Root{<:Vector}
+        @test eltype(rA2) <: Root{<:Vector}
+
+        rS1 = @inferred roots(S, s ; contractor)
+        rS2 = @inferred roots(S, s ; contractor, derivative = dS)
+        @test eltype(rS1) <: Root{<:SVector}
+        @test eltype(rS2) <: Root{<:SVector}
+    end
+end

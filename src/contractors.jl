@@ -54,9 +54,7 @@ function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector)
     Y = interval.(inv(dm))
     mm = interval.(m)
 
-    Id = interval.(Matrix(I, length(m), length(m)))
-
-    return mm - Y*f(mm) + (Id - Y*J) * (X - mm)
+    return mm - Y*f(mm) + (interval(I) - Y*J) * (X - mm)
 end
 
 function contract(::Type{C}, f, derivative, R::Root) where {C <: AbstractContractor}
