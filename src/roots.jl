@@ -57,16 +57,15 @@ function RootProblem(
         derivative = nothing,
         search_order = BreadthFirst,
         abstol = 1e-7,
-        reltol = nothing,
+        reltol = 0.0,
         max_iteration = nothing,
         where_bisect = 0.49609375)  # 127//256
     
-    if !isnothing(reltol) || !isnothing(max_iteration)
+    if !isnothing(max_iteration)
         throw(
-            ArgumentError("reltol and max_iteration not yet implemented")
+            ArgumentError("max_iteration not yet implemented")
         )
     else
-        reltol = 0.0
         max_iteration = -1
     end
     
@@ -110,6 +109,13 @@ function bisect_region(r::Root, α)
     return Root(Y1, :unknown), Root(Y2, :unknown)
 end
 
+function under_tolerance(root_problem, root::Root)
+    d = diam(root)
+    d < root_problem.abstol && return true
+    d / mag(root) < root_problem.reltol && return true
+    return false
+end
+
 function process(root_problem, root::Root)
     contracted = contract(root_problem, root)
     status = root_status(contracted)
@@ -123,8 +129,8 @@ function process(root_problem, root::Root)
 
     if status == :unknown
         # Avoid infinite division of intervals with singularity
-        istrivial(contracted.region) && diam(root) < root_problem.abstol && return :store, root
-        diam(contracted) < root_problem.abstol && return :store, root
+        istrivial(contracted.region) && under_tolerance(root_problem, root) && return :store, root
+        under_tolerance(root_problem, contracted) && return :store, contracted
         
         return :branch, root
     else

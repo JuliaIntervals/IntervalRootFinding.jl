@@ -23,6 +23,12 @@ isnai_region(X::AbstractVector) = any(isnai, X)
 diam_region(X::Interval) = diam(X)
 diam_region(X::AbstractVector) = maximum(diam, X)
 
+mag_region(X::Interval) = mag(X)
+mag_region(X::AbstractVector) = maximum(mag, X)
+
+mig_region(X::Interval) = mig(X)
+mig_region(X::AbstractVector) = minimum(mig, X)
+
 bisect_region(X::Interval, α) = bisect(X, α)
 
 function bisect_region(X::AbstractVector, α)
