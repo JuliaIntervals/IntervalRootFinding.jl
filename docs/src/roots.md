@@ -136,3 +136,5 @@ The last example shows a case where the tolerance was too large to be able to is
 !!! warning
 
     For a root `x` of some function, if the absolute tolerance is smaller than `eps(x)` i.e. if `tol + x == x`, `roots` may never be able to converge to the required tolerance and the function may get stuck in an infinite loop.
+    To avoid that, either increase `abstol` or `reltol`,
+    or set a maximum number of iterations with the `max_iteration` keyword.
