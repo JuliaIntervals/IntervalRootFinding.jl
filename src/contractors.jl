@@ -93,7 +93,7 @@ end
 Refine a root.
 """
 function refine(root_problem::RootProblem{C}, R::Root) where C
-    root_status(R) != :unique && return R
+    root_status(R) != :unique && throw(ArgumentError("trying to refine a non unique root"))
 
     X = root_region(R)
 

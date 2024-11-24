@@ -110,23 +110,25 @@ function bisect_region(r::Root, α)
     return Root(Y1, :unknown), Root(Y2, :unknown)
 end
 
-function process(root_problem, r::Root)
-    contracted_root = contract(root_problem, r)
-    refined_root = refine(root_problem, contracted_root)
+function process(root_problem, root::Root)
+    contracted = contract(root_problem, root)
+    status = root_status(contracted)
 
-    status = root_status(refined_root)
+    if status == :unique 
+        refined_root = refine(root_problem, contracted)
+        return :store, refined_root
+    end
 
-    status == :unique && return :store, refined_root
-    status == :empty && return :prune, refined_root
+    status == :empty && return :prune, root
 
     if status == :unknown
         # Avoid infinite division of intervals with singularity
-        isnai(refined_root) && diam(r) < root_problem.abstol && return :store, r
-        diam(refined_root) < root_problem.abstol && return :store, refined_root
-
-        return :branch, r
+        istrivial(contracted.region) && diam(root) < root_problem.abstol && return :store, root
+        diam(contracted) < root_problem.abstol && return :store, root
+        
+        return :branch, root
     else
-        error("Unrecognized root status: $status")
+        throw(ArgumentError("unrecognized root status: $status"))
     end
 end
 
