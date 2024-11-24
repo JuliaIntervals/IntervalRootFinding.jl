@@ -1,6 +1,4 @@
 
-import IntervalArithmetic: diam, bisect, isnai
-
 export branch_and_prune, Bisection, Newton
 
 struct RootProblem{C, F, G, R, S, T}
@@ -40,14 +38,17 @@ Parameters
 - `search_order`: Order in which the sub-regions are searched.
     `BreadthFirst` (visit the largest regions first) and `DepthFirst`
     (visit the smallest regions first) are supported. Default: `BreadthFirst`.
-- `abstol`: Absolute tolerance. The search is stopped when all dimension
-    of the remaining regions are smaller than `abstol`. Default: 1e-7.
+- `abstol`: Absolute tolerance. The search is stopped when all dimensions
+    of the remaining regions are smaller than `abstol`. Default: `1e-7`.
+- `reltol`: Relative tolerance. The search is stopped when all dimensions
+    of the remaining regions are smaller than `reltol * mag(interval)`.
+    Default: `0.0``.
+- `max_iteration`: The maximum number of iteration, which also corresponds to
+    the maximum number of bisections allowed. Default: `typemax(Int)`.
 - `where_bisect`: Value used to bisect the region. It is used to avoid
     bisecting exactly on zero when starting with symmetrical regions,
     often leading to having a solution directly on the boundary of a region,
-    which prevent the contractor to prove it's unicity. Default: 127/256.
-
-`reltol` and `max_iteration` are currently ignored.
+    which prevent the contractor to prove it's unicity. Default: `127/256`.
 """
 RootProblem(f, region ; kwargs...) = RootProblem(f, Root(region, :unkown) ; kwargs...)
 
@@ -58,16 +59,8 @@ function RootProblem(
         search_order = BreadthFirst,
         abstol = 1e-7,
         reltol = 0.0,
-        max_iteration = nothing,
+        max_iteration = typemax(Int),
         where_bisect = 0.49609375)  # 127//256
-    
-    if !isnothing(max_iteration)
-        throw(
-            ArgumentError("max_iteration not yet implemented")
-        )
-    else
-        max_iteration = -1
-    end
     
     N = length(root_region(root))
     if isnothing(derivative)
@@ -165,8 +158,21 @@ For information about the optional search parameters,
 see [`RootProblem`](@ref).
 """
 function roots(f, region ; kwargs...)
-    search = root_search(RootProblem(f, region ; kwargs...))
-    result = bpsearch(search)
+    problem = RootProblem(f, region ; kwargs...)
+    search = root_search(problem)
+    endstate = nothing
+
+    for (iter, state) in enumerate(search)
+        endstate = state
+        iter >= problem.max_iteration && break
+    end
+
+    result = BranchAndPrune.BranchAndPruneResult(
+        endstate.search_order,
+        search.initial_region,
+        endstate.tree
+    )
+
     return vcat(result.final_regions, result.unfinished_regions)
 end
 

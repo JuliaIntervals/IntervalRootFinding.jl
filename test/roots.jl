@@ -305,4 +305,9 @@ end
             )
         end
     end
+
+    for max_iteration in [10, 100, 1000, 10_000]
+        rts = roots(f, interval(0, 1) ; abstol = 1e-10, max_iteration)
+        @test length(rts) <= max_iteration
+    end
 end
