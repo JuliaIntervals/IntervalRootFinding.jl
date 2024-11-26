@@ -287,3 +287,27 @@ end
         @test eltype(rS2) <: Root{<:SVector}
     end
 end
+
+@testset "Stop criteria" begin
+    abstols = [1e-4, 1e-7, 1e-10]
+    reltols = [1e-4, 1e-7, 1e-10]
+
+    f(x) = x*sin(1/x)
+
+    for abstol in abstols
+        for reltol in reltols
+            rts = roots(f, interval(0, 1) ; abstol, reltol)
+            regions = [rt.region for rt in rts if root_status(rt) == :unknown]
+
+            @test all(
+                (diam.(regions) .< abstol) .|
+                (diam.(regions) .< (reltol .* mag.(regions)))
+            )
+        end
+    end
+
+    for max_iteration in [10, 100, 1000, 10_000]
+        rts = roots(f, interval(0, 1) ; abstol = 1e-10, max_iteration)
+        @test length(rts) <= max_iteration
+    end
+end

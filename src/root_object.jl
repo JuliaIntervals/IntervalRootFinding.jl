@@ -47,6 +47,8 @@ show(io::IO, rt::Root) = print(io, "Root($(rt.region), :$(rt.status))")
 ⊆(a::Root, b::Root) = a.region ⊆ b.region
 
 IntervalArithmetic.diam(r::Root) = diam_region(root_region(r))
+IntervalArithmetic.mag(r::Root) = mag_region(root_region(r))
+IntervalArithmetic.mig(r::Root) = mig_region(root_region(r))
 IntervalArithmetic.isnai(r::Root) = isnai_region(root_region(r))
 
 function Base.:(==)(r1::Root, r2::Root)
