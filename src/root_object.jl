@@ -57,40 +57,13 @@ function Base.:(==)(r1::Root, r2::Root)
 big(a::Root) = Root(big(a.interval), a.status)
 
 """
-    Base.iterate(r::Root{T})
+    Base.iterate(r::Root [, state])
 
-    Implements the first necessary method for iterate over a Root object.
-
-    Outputs:
-    - `r.interval`: interval where some true root of a given function lies.
-    - `state`: indicates that the first iterable element of r has been returned.
-
+Return successively the root region and status,
+allowing to unpack the root object as `region, status = root`.
 """
-function Base.iterate(r::Root{T}) where {T}
-    state = 1
-    return (r.interval, state)
-end
-
-"""
-    Base.iterate(r::Root{T}, state)
-
-    Implements the second necessary method for iterate over a Root object.
-
-    Inputs:
-    - `r`: Root object.
-    - `state`: indicates the prior element iterated.
-
-    Outputs:
-    - `r.status`: status of the root.
-    - `state`: indicates that the second iterable element of r has been returned.
-    or 
-    - nothing: the iteration has been completed.
-"""
-function Base.iterate(r::Root{T}, state::Integer) where {T}
-    if state == 1
-        state = 2
-        return (r.status, state)
-    end
-    # there are no more items to be iterated
+function Base.iterate(r::Root{T}, state::Interger=1) where {T}
+    state == 1 && return (r.interval, 2)
+    state == 2 && return (r.status, 3)
     return nothing
 end
