@@ -86,7 +86,7 @@ end
     or 
     - nothing: the iteration has been completed.
 """
-function Base.iterate(r::Root{T}, state::Int64) where {T}
+function Base.iterate(r::Root{T}, state::Integer) where {T}
     if state == 1
         state = 2
         return (r.status, state)
