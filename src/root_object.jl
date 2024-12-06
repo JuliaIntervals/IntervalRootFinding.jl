@@ -55,3 +55,17 @@ function Base.:(==)(r1::Root, r2::Root)
     root_status(r1) != root_status(r2) && return false
     return isequal_region(root_region(r1), root_region(r2))
 end
+
+big(a::Root) = Root(big(a.interval), a.status)
+
+"""
+    Base.iterate(r::Root [, state])
+
+Return successively the root region and status,
+allowing to unpack the root object as `region, status = root`.
+"""
+function Base.iterate(r::Root{T}, state::Integer=1) where {T}
+    state == 1 && return (r.region, 2)
+    state == 2 && return (r.status, 3)
+    return nothing
+end
