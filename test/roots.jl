@@ -312,80 +312,63 @@ end
     end
 end
 
-# testsets for the iterate method on Root objects.
-
 # straightforward method for unpacking the elements of a root.
 function unpacking(r::Root{T}) where T
-    return (r.interval, r.status)
+    return (r.region, r.status)
 end
 
-# R -> R function
-g(x) = cos(x) * sin(1 / x)
+@testset "Unpacking roots" begin
+    @testset "1D" begin
+        g(x) = cos(x) * sin(1 / x)
 
-@testset "unpacking roots 1D" begin
-    # get the roots over the interval 0.05..1
-    for r in roots(g, 0.05..1)
-        # r is a Root object.
-        # call the Base.iterate method.
-        x, status = r
-        # check is x is a interval
-        @test isa(x, Interval{Float64})
-        # check is status is a Symbol
-        @test isa(status, Symbol)
-        # unpack using the straightforward method. 
-        unx, uns = unpacking(r)
-        # the unpacked elements must be equal.
-        @test x == unx
-        @test status == uns
-    end
-    # function with two roots.
-    f(x) = x^2 - 1
-    for r in roots(f, -2..2) 
-        x, status = r
-        # the roots must be unique in their given intervals.
-        @test status == :unique
+        for r in roots(g, interval(0.05, 1))
+            x, status = r
+            @test isa(x, Interval)
+            @test isa(status, Symbol)
+
+            # unpack using the straightforward method. 
+            unx, uns = unpacking(r)
+            @test isequal_interval(x, unx)
+            @test status == uns
+        end
+
+        # function with two roots
+        f(x) = x^2 - 1
+        for r in roots(f, interval(-2, 2))
+            x, status = r
+            @test status == :unique
+        end
     end
 
+    @testset "2D" begin
+        f(x, y) = SVector(x^2 + y^2 - 1, y - 2x)
+        f(X) = f(X...)
+        X = SVector(interval(-6, 6), interval(-6, 6))
+
+        for (x, status) in roots(f, X)
+            @test isa(x, SVector{2, <:Interval})
+            @test isa(status, Symbol)
+        end
+    end
+
+    @testset "3D" begin
+        h(x, y, z) = SVector(x^2 + y^2 + z^2 - 1, y - 2x, z - 2x)
+        h(X) = h(X...)
+        X = SVector(interval(-6, 6), interval(-6, 6), interval(-6, 6)) # cube in R^3
+
+        myroots = []
+        unroots = []
+
+        for (x, status) in roots(h, X)
+            @test isa(x, SVector{3, <:Interval})
+            @test isa(status, Symbol)
+            append!(myroots, x)
+        end
+
+        for (x, status) in unpacking.(roots(h, X))
+            append!(unroots, x)
+        end
+
+        @test all(isequal_interval.(myroots, unroots))
+    end
 end
-
-# R^2 -> R^2 function
-f(x, y) = SVector(x^2 + y^2 - 1, y - 2x)
-f(X) = f(X...)
-X = IntervalBox(-6..6, 2)
-
-@testset "unpacking 2D" begin
-    # call the iterate method in the for loop defition.
-    for (x, status) in roots(f, X)
-        # x must be a IntervalBox.
-        @test isa(x, IntervalBox{2, Float64})
-        # status must be a Symbol.
-        @test isa(status, Symbol)
-    end
-end
-
-# R^3 -> R^3 function.
-h(x, y, z) = SVector(x^2 + y^2 + z^2 - 1, y - 2x, z - 2x)
-h(X) = h(X...)
-X = IntervalBox(-6..6, 3) # cube in R^3.
-
-@testset "unpacking 3D" begin
-    myroots = []
-    unroots = []
-    # check if the iterate method returns the same objects as 
-    # our straightforward method.
-
-    for (x, status) in roots(h, X)
-        # check if the iterate method returns the expected types.
-        @test isa(x, IntervalBox{3, Float64})
-        @test isa(status, Symbol)
-        append!(myroots, x)
-    end
-
-    for (x, status) in unpacking.(roots(h, X))
-        append!(unroots, x)
-    end
-    # the list must be the same.
-    @test myroots == unroots
-end
-
-# ------------------------------ . ------------------------------- #
