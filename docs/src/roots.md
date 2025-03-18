@@ -81,7 +81,7 @@ Currently a method must first be provided in order to be able to choose the tole
 ```julia-repl
 julia> g(x) = sin(exp(x))
 g (generic function with 1 method)
-        
+
 julia> roots(g, 0..2)
 2-element Vector{Root{Interval{Float64}}}:
  Root([1.14472, 1.14474]_com, :unique)

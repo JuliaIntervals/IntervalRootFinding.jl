@@ -1,3 +1,8 @@
+```@meta
+DocTestSetup = quote
+    using IntervalRootFinding
+end
+```
 # Decorations and guarantees
 
 When you define a simple function, you will notice that the roots
