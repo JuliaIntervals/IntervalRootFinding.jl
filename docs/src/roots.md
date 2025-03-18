@@ -59,7 +59,7 @@ julia> @btime roots(log, -2..2)
 
 This may be useful in some special cases where `ForwardDiff.jl` is unable to compute the derivative of a function. Examples are complex functions and functions whose interval extension must be manually defined (e.g. special functions like `zeta`).
 
-In dimension greater than one, the derivative be given as a function returning the Jacobi matrix:
+In dimension greater than one, the derivative can be given as a function returning the Jacobi matrix:
 
 ```julia-repl
 julia> f( (x, y) ) = [sin(x), cos(y)]
