@@ -1,5 +1,5 @@
 """
-Helper function for quadratic_interval that computes roots of a
+Helper function for `quadratic_interval` that computes roots of a
 real quadratic using interval arithmetic to bound rounding errors.
 """
 function quadratic_helper!(a::Interval{T}, b::Interval{T}, c::Interval{T}, L::Array{Interval{T}}) where {T}
@@ -30,6 +30,8 @@ end
 
 
 """
+    quadratic_roots(a::Interval, b::Interval, c::Interval)
+
 Function to solve a quadratic equation where the coefficients are intervals.
 Returns an array of intervals of the roots.
 Arguments `a`, `b` and `c` are interval coefficients of `x²`, `x` and `1` respectively.

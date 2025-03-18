@@ -8,6 +8,8 @@ function realify(f)
 end
 
 """
+    realify_derivative(fp)
+
 Takes the derivative of a complex function and returns the real jacobian
 that implements it.
 """
