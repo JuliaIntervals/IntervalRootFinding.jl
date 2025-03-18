@@ -1,5 +1,7 @@
 """
-Preconditions the matrix A and b with the inverse of mid(A)
+    preconditioner(A, b)
+
+Preconditions the matrix `A` and `b` with the inverse of `mid(A)`
 """
 function preconditioner(A::AbstractMatrix, b::AbstractArray)
     Aᶜ = mid.(A)
@@ -15,6 +17,8 @@ function gauss_seidel_interval(A::AbstractMatrix, b::AbstractArray; precondition
     return x
 end
 """
+    gauss_seidel_interval!(x, A, b; precondition=true, maxiter=100)
+
 Iteratively solves the system of interval linear
 equations and returns the solution set. Uses the
 Gauss-Seidel method (Hansen-Sengupta version) to solve the system.
@@ -125,6 +129,8 @@ function gauss_elimination_interval(A::AbstractMatrix, B::AbstractMatrix ; kwarg
 end
 
 """
+    gauss_elimination_interval!(x, A, b; precondition=true)
+
 Solves the system of linear equations using Gaussian Elimination.
 Preconditioning is used when the `precondition` keyword argument is `true`.
 
@@ -179,7 +185,9 @@ function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precon
     return x
 end
 """
-Using `Base.\``
+    gauss_elimination_interval1!(x, a, b; precondition=true)
+
+Using `Base.\\`
 """
 function gauss_elimination_interval1!(x::AbstractArray, a::AbstractMatrix, b::AbstractArray; precondition=true)
 
