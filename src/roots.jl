@@ -42,7 +42,7 @@ Parameters
     of the remaining regions are smaller than `abstol`. Default: `1e-7`.
 - `reltol`: Relative tolerance. The search is stopped when all dimensions
     of the remaining regions are smaller than `reltol * mag(interval)`.
-    Default: `0.0``.
+    Default: `0.0`.
 - `max_iteration`: The maximum number of iteration, which also corresponds to
     the maximum number of bisections allowed. Default: `typemax(Int)`.
 - `where_bisect`: Value used to bisect the region. It is used to avoid
@@ -113,7 +113,7 @@ function process(root_problem, root::Root)
     contracted = contract(root_problem, root)
     status = root_status(contracted)
 
-    if status == :unique 
+    if status == :unique
         refined_root = refine(root_problem, contracted)
         return :store, refined_root
     end
