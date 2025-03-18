@@ -1,4 +1,6 @@
 """
+    quadratic_helper!(a::Interval, b::Interval, c::Interval, L::Array{Interval})
+
 Helper function for `quadratic_interval` that computes roots of a
 real quadratic using interval arithmetic to bound rounding errors.
 """
