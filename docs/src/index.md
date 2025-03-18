@@ -1,3 +1,8 @@
+```@meta
+DocTestSetup = quote
+    using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
+end
+```
 # `IntervalRootFinding.jl`
 
 This package provides guaranteed methods for finding **roots** of functions $f: \mathbb{R}^n \to \mathbb{R}^n$ with $n \ge 1$, i.e. vectors (or scalars, for $n=1$) $\mathbb{x}$ for which $f(\mathbb{x}) = \mathbb{0}$. In principle, it guarantees to find *all* roots inside a given box in $\mathbb{R}^n$, or report subboxes for which it is unable to provide guarantees.
