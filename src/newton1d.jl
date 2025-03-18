@@ -4,7 +4,7 @@
 `newton1d` performs the interval Newton method on the given function `f`
 with its derivative `f′` and initial interval `x`.
 Optional keyword arguments give the tolerances `reltol` and `abstol`.
-`reltol` is the tolerance on the relative error whereas `abstol` is the tolerance on |f(X)|,
+`reltol` is the tolerance on the relative error whereas `abstol` is the tolerance on `|f(X)|`,
 and a `debug` boolean argument that prints out diagnostic information.
 """
 function newton1d(f::Function, f′::Function, x::Interval{T};
@@ -205,7 +205,7 @@ end
 
 `newton1d` performs the interval Newton method on the given function `f` and initial interval `x`.
 Optional keyword arguments give the tolerances `reltol` and `abstol`.
-`reltol` is the tolerance on the relative error whereas `abstol` is the tolerance on |f(X)|,
+`reltol` is the tolerance on the relative error whereas `abstol` is the tolerance on `|f(X)|`,
 and a `debug` boolean argument that prints out diagnostic information.
 """
 newton1d(f::Function, x::Interval{T}; args...) where {T} =
