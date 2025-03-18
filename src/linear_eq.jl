@@ -23,7 +23,8 @@ Iteratively solves the system of interval linear
 equations and returns the solution set. Uses the
 Gauss-Seidel method (Hansen-Sengupta version) to solve the system.
 Keyword `precondition` to turn preconditioning off.
-Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 5 - Page 115
+
+Reference: [Hansen and Walster (2003), Chapter 5, Page 115](@cite hansen2003)
 """
 function gauss_seidel_interval!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
     precondition && ((A, b) = preconditioner(A, b))
@@ -134,8 +135,7 @@ end
 Solves the system of linear equations using Gaussian Elimination.
 Preconditioning is used when the `precondition` keyword argument is `true`.
 
-REF: Luc Jaulin et al.,
-*Applied Interval Analysis*, pg. 72
+Reference: [Jaulin et al. (2001), p.72](@cite jaulin2001)
 """
 function gauss_elimination_interval!(x::AbstractArray, A::AbstractMatrix, b::AbstractArray; precondition=true)
     if precondition

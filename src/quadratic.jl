@@ -42,7 +42,8 @@ there might be three disjoint interval roots. In the third
 case, one interval root extends to −∞ and another extends to +∞.
 This algorithm finds the set of points where `F.lo(x) ≥ 0` and the set
 of points where `F.hi(x) ≤ 0` and takes the intersection of these two sets.
-Eldon Hansen and G. William Walster : Global Optimization Using Interval Analysis - Chapter 8
+
+Reference: [Hansen and Walster (2003), Chapter 8](@cite hansen2003)
 """
 function quadratic_roots(a::Interval{T}, b::Interval{T}, c::Interval{T}) where {T}
 

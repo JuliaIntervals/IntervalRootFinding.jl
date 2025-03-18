@@ -1,5 +1,8 @@
-using Documenter
 using IntervalArithmetic, IntervalRootFinding
+using Documenter
+using DocumenterCitations
+
+bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style = :numeric)
 
 makedocs(
     modules = [IntervalRootFinding],
@@ -14,7 +17,8 @@ makedocs(
         "Internals" => "internals.md",
         "Bibliography" => "biblio.md",
         "API" => "api.md"
-    ]
+    ],
+    plugins = [bib],
 )
 
 deploydocs(
