@@ -37,7 +37,7 @@ The contractors are various methods to guarantee and refine the
 status of a root.
 The available contractors are `Bisection`, `Newton` or `Krawczyk`.
 
-```jl
+```julia-repl
 julia> using IntervalArithmetic.Symbols
 
 julia> contract(Newton, sin, cos, Root(pi ± 0.001, :unknown))
@@ -58,7 +58,7 @@ for example to log information at each iteration.
 For example, the following stops the search after 15 iterations and
 shows the state of the search at that point.
 
-```jl
+```julia-repl
 julia> f(x) = exp(x) - sin(x)
 f (generic function with 1 method)
 

@@ -18,7 +18,7 @@ When provided with this information, the `roots` function will return a vector o
 
 Example:
 
-```jl
+```jldoctest
 julia> using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
 
 julia> rts = roots(x -> x^2 - 2x, 0..10)
@@ -39,16 +39,16 @@ There are several known situations where the uniqueness (and existence) of a sol
 
 In particular, the second condition means that multiple roots cannot be proven to be unique. For example:
 
-```jl
+```jldoctest
 julia> g(x) = (x^2 - 2)^2 * (x^2 - 3)
 g (generic function with 1 method)
 
 julia> roots(g, -10..10)
 4-element Vector{Root{Interval{Float64}}}:
  Root([-1.73206, -1.73205]_com_NG, :unique)
- Root([-1.41422, -1.41421]_com, :unknown)  
- Root([1.41421, 1.41422]_com, :unknown)    
- Root([1.73205, 1.73206]_com_NG, :unique)  
+ Root([-1.41422, -1.41421]_com, :unknown)
+ Root([1.41421, 1.41422]_com, :unknown)
+ Root([1.73205, 1.73206]_com_NG, :unique)
 ```
 
 Here we see that the two double roots are reported as being possible roots without guarantee and the simple roots have been proved to be unique.
@@ -62,7 +62,7 @@ The initial search region is an array of interval.
 
 Here we give a 3D example:
 
-```jl
+```julia-repl
 julia> function g( (x1, x2, x3) )
           return [
               x1^2 + x2^2 + x3^2 - 1,
@@ -87,7 +87,7 @@ Thus, the system admits four unique roots in the box $[-5, 5]^3$.
 
 Moreover, the package is compatible with `StaticArrays.jl`.
 Usage of static arrays is recommended to increase performance.
-```jl
+```julia-repl
 julia> using StaticArrays
 
 julia> h((x, y)) = SVector(x^2 - 4, y^2 - 16)
@@ -129,7 +129,7 @@ Furthermore, when you know that the number given as literals are parsed exactly
 (which is typically not guaranteed for floating points inputs),
 you can avoid the `NG` flag that arise from mixing numbers and intervals,
 with the `@exact` macro:
-```julia
+```jldoctest exact-2
 julia> f(X) = @exact [X[1]^2 - 2, X[2]^2 - 3]
 f (generic function with 1 method)
 
@@ -143,7 +143,7 @@ julia> roots(f, x)
  Root(Interval{Float64}[[1.41421, 1.41422]_com, [1.73205, 1.73206]_com], :unique)
 ```
 This macro does not disturb the function when called with non-interval inputs:
-```julia
+```jldoctest exact-2
 julia> f([1.2, 2.2])
 2-element Vector{Float64}:
  -0.56
@@ -155,7 +155,7 @@ julia> f([1.2, 2.2])
 Stationary points of a function $f:\mathbb{R}^n \to \mathbb{R}$ may be found as zeros of the gradient of $f$.
 The gradient can be computed using `ForwardDiff.jl`:
 
-```jl
+```julia-repl
 julia> using ForwardDiff: gradient
 
 julia> f( (x, y) ) = sin(x) * sin(y)
@@ -174,7 +174,7 @@ julia> rts = roots(∇f, SVector(interval(-5, 6), interval(-5, 6)) ; abstol = 1e
 
 Now let's find the midpoints and plot them:
 
-```jl
+```julia-repl
 midpoints = [mid.(root_region(rt)) for rt in rts]
 
 xs = first.(midpoints)
