@@ -179,7 +179,7 @@ julia> rts = roots(∇f, SVector(interval(-5, 6), interval(-5, 6)) ; abstol = 1e
 
 Now let's find the midpoints and plot them:
 
-```julia-repl
+```julia
 midpoints = [mid.(root_region(rt)) for rt in rts]
 
 xs = first.(midpoints)
