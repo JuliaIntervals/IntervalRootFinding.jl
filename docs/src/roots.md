@@ -11,7 +11,7 @@ Both the Newton and Krawczyk methods can determine if a root is unique in an int
 
 The method used is given using the `contractor` keyword argument:
 
-```jl
+```julia-repl
 julia> roots(log, -2..2 ; contractor = Newton)
 1-element Vector{Root{Interval{Float64}}}:
  Root([0.999999, 1.00001]_com, :unique)
@@ -31,7 +31,7 @@ Note that as shown in the example, the `log` function does not complain about be
 
 Newton and Krawczyk methods require the function to be differentiable, but the derivative is usually computed automatically using forward-mode automatic differentiation, provided by the `ForwardDiff.jl` package. It is however possible to provide the derivative explicitly using the `derivative` keyword argument:
 
-```jl
+```julia-repl
 julia> roots(log, -2..2 ; contractor = Newton, derivative = x -> 1/x)
 1-element Vector{Root{Interval{Float64}}}:
  Root([0.999999, 1.00001]_com_NG, :unique)
@@ -43,7 +43,7 @@ julia> roots(log, -2..2 ; contractor = Krawczyk, derivative = x -> 1/x)
 
 When providing the derivative explicitly, the computation is expected to be slightly faster, but the precision of the result is unlikely to be affected.
 
-```jl
+```julia-repl
 julia> using BenchmarkTools
 
 julia> @btime roots(log, -2..2 ; derivative = x -> 1/x)
@@ -61,15 +61,11 @@ This may be useful in some special cases where `ForwardDiff.jl` is unable to com
 
 In dimension greater than one, the derivative be given as a function returning the Jacobi matrix:
 
-```jl
-julia> function f( (x, y) )
-           return [sin(x), cos(y)]
-       end
+```julia-repl
+julia> f( (x, y) ) = [sin(x), cos(y)]
 f (generic function with 1 method)
 
-julia> function df( (x, y) )
-           return [cos(x) 0 ; 0 -sin(y)]
-       end
+julia> df( (x, y) ) = [cos(x) 0 ; 0 -sin(y)]
 
 julia> roots(f, [-3..3, -3..3] ; derivative = df)
 2-element Vector{Root{Vector{Interval{Float64}}}}:
@@ -82,7 +78,7 @@ julia> roots(f, [-3..3, -3..3] ; derivative = df)
 An absolute tolerance for the search may be specified as the `abstol` keyword argument.
 Currently a method must first be provided in order to be able to choose the tolerance.
 
-```jl
+```julia-repl
 julia> g(x) = sin(exp(x))
 g (generic function with 1 method)
         
@@ -99,7 +95,7 @@ julia> roots(g, 0..2 ; abstol = 1e-1)
 
 A lower tolerance may greatly reduce the computation time, at the cost of an increased number of returned roots having `:unknown` status:
 
-```jl
+```julia-repl
 julia> h(x) = cos(x) * sin(1 / x)
 h (generic function with 1 method)
 

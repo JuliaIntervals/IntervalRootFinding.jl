@@ -14,8 +14,8 @@ makedocs(
         "Internals" => "internals.md",
         "Bibliography" => "biblio.md",
         "API" => "api.md"
-        ]
-    )
+    ]
+)
 
 deploydocs(
     repo = "github.com/JuliaIntervals/IntervalRootFinding.jl.git",
