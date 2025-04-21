@@ -2,8 +2,7 @@ name: Benchmark
 
 on:
   pull_request_target:
-    branches:
-      - master
+    types: [edited, opened, synchronize, reopened]
 
 permissions:
   pull-requests: write
