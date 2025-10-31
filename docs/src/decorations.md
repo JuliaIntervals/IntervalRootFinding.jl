@@ -11,8 +11,8 @@ usually come out with the flag `com` and `NG`.
 ```jldoctest
 julia> roots(x -> x^2 - 0.1, interval(-5, 5))
 2-element Vector{Root{Interval{Float64}}}:
- Root([-0.316228, -0.316227]_com_NG, :unique)
- Root([0.316227, 0.316228]_com_NG, :unique)
+ Root([-0.316228, -0.316228]_com_NG, :unique)
+ Root([0.316228, 0.316228]_com_NG, :unique)
 ```
 
 In this case, `com` is the *decoration* of the interval,
@@ -55,8 +55,8 @@ f (generic function with 1 method)
 
 julia> roots(f, interval(-5, 5))
 2-element Vector{Root{Interval{Float64}}}:
- Root([-0.316228, -0.316227]_com, :unique)
- Root([0.316227, 0.316228]_com, :unique)
+ Root([-0.316228, -0.316228]_com, :unique)
+ Root([0.316228, 0.316228]_com, :unique)
 ```
 
 The `NG` flag can still appear if other computations,
