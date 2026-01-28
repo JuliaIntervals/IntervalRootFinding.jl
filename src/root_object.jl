@@ -67,7 +67,7 @@ function show(io::IO, rt::Root)
         end
 
         if rt.errored
-            print(io, "\n    Warning: an error was encountered in during computation")
+            print(io, "\n    Warning: an error was encountered during computation")
         end
     end
 end
