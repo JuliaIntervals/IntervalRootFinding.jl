@@ -11,6 +11,7 @@ struct RootProblem{C, F, G, R, S, T}
     reltol::T
     max_iteration::Int
     where_bisect::T
+    bisect_on_error::Bool
 end
 
 """
@@ -44,11 +45,14 @@ Parameters
     of the remaining regions are smaller than `reltol * mag(interval)`.
     Default: `0.0`.
 - `max_iteration`: The maximum number of iteration, which also corresponds to
-    the maximum number of bisections allowed. Default: `typemax(Int)`.
+    the maximum number of bisections allowed. Default: `100_000`.
 - `where_bisect`: Value used to bisect the region. It is used to avoid
     bisecting exactly on zero when starting with symmetrical regions,
     often leading to having a solution directly on the boundary of a region,
     which prevent the contractor to prove it's unicity. Default: `127/256`.
+-`bisect_on_error`: Whether a region that errors when the function is applied to
+    to it should be bisected. If false, when an error happen, the root search is
+    interrupted. Default: true.
 """
 RootProblem(f, region ; kwargs...) = RootProblem(f, Root(region, :unkown) ; kwargs...)
 
@@ -59,8 +63,9 @@ function RootProblem(
         search_order = BreadthFirst,
         abstol = 1e-7,
         reltol = 0.0,
-        max_iteration = typemax(Int),
-        where_bisect = 0.49609375)  # 127//256
+        max_iteration = 100_000,
+        where_bisect = 0.49609375,  # 127//256
+        bisect_on_error = true)
     
     N = length(root_region(root))
     if isnothing(derivative)
@@ -80,7 +85,8 @@ function RootProblem(
         abstol,
         reltol,
         max_iteration,
-        where_bisect
+        where_bisect,
+        bisect_on_error
     )
 end
 
@@ -110,7 +116,16 @@ function under_tolerance(root_problem, root::Root)
 end
 
 function process(root_problem, root::Root)
-    contracted = contract(root_problem, root)
+    if root_problem.bisect_on_error
+        try
+            contracted = contract(root_problem, root)
+        catch
+            contracted = Root(root.region, :unknown, :none, true)
+        end
+    else
+        contracted = contract(root_problem, root)
+    end
+
     status = root_status(contracted)
 
     if status == :unique
@@ -122,8 +137,13 @@ function process(root_problem, root::Root)
 
     if status == :unknown
         # Avoid infinite division of intervals with singularity
-        istrivial(contracted.region) && under_tolerance(root_problem, root) && return :store, root
-        under_tolerance(root_problem, contracted) && return :store, contracted
+        if istrivial(contracted.region) && under_tolerance(root_problem, root)
+            return :store, Root(root.region, :unknown, :tolerance)
+        end
+
+        if under_tolerance(root_problem, contracted)
+            return :store, Root(contracted.region, :unknown, :tolerance, contracted.errored)
+        end
         
         return :branch, root
     else
@@ -173,7 +193,13 @@ function roots(f, region ; kwargs...)
         endstate.tree
     )
 
-    return vcat(result.final_regions, result.unfinished_regions)
+    rts = vcat(result.final_regions, result.unfinished_regions)
+    return map(rts) do rt
+        if rt.status == :unknown && rt.convergence == :none
+            return Root(rt.region, rt.status, :max_iter, rt.errored)
+        end
+        return rt
+    end
 end
 
 # Acting on complex `Interval`

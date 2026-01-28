@@ -105,5 +105,5 @@ function refine(root_problem::RootProblem{C}, R::Root) where C
         X = NX
     end
 
-    return Root(X, :unique)
+    return Root(X, :unique, :converged)
 end
