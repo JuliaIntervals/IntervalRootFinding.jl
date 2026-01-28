@@ -14,10 +14,24 @@ the `roots` function.
         representing an interval box) searched for roots.
   - `status`: the status of the region, valid values are `:empty`, `unknown`
         and `:unique`.
+  - `convergence`: the convergence status of the region. It is always `:converged`
+        for roots with status `:unique`,
+        and can be either `:max_iter` or `:tolerance` for roots with status `:unknown`,
+        depending on whether they stopped being processing due to reaching
+        the maximum number of iteration or the tolerance, respectively.
+  - `errored`: whether an error was encounter during the processing of this region.
+        Errors can be raised explicitly when encountered by setting
+        `bisect_on_error` to `flase` in the RootProblem.
 """
 struct Root{T}
     region::T
     status::Symbol
+    convergence::Symbol
+    errored::Bool
+end
+
+function Root(region, status::Symbol, convergence = :none, errored = false)
+    return Root(region, status, convergence, errored)
 end
 
 """
@@ -41,7 +55,22 @@ Return whether a `Root` is unique.
 """
 isunique(rt::Root{T}) where {T} = (rt.status == :unique)
 
-show(io::IO, rt::Root) = print(io, "Root($(rt.region), :$(rt.status))")
+function show(io::IO, rt::Root)
+    print(io, "Root($(rt.region), :$(rt.status))")
+    if rt.status == :unknown
+        if rt.convergence == :tolerance
+            print(io, "\n    Not converged: region size smaller than the tolerance")
+        elseif rt.convergence == :max_iter 
+            print(io, "\n    Not converged: reached maximal number of iterations")
+        else
+            print(io, "\n    Not converged: unknown reason $(rt.convergence)")
+        end
+
+        if rt.errored
+            print(io, "\n    Warning: an error was encountered in during computation")
+        end
+    end
+end
 
 ⊆(a::Interval, b::Root) = a ⊆ b.region
 ⊆(a::Root, b::Root) = a.region ⊆ b.region
