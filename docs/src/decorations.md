@@ -40,7 +40,7 @@ For example, `0.1` is famously not parsed as `0.1`,
 as `0.1` can not be represented exactly as a binary number
 (just like `1/3` can not be represented exactly as a decimal number).
 
-```julia-repl
+```jldoctest
 julia> big(0.1)
 0.1000000000000000055511151231257827021181583404541015625
 ```
