@@ -3,6 +3,7 @@ function image_contains_zero(f, R::Root)
     R.status == :empty && return Root(X, :empty)
 
     imX = f(X)
+    size(imX) != size(X) && throw(DimensionMismatch("input and output dimensions of f must be the same"))
 
     if !(all(in_interval.(0, imX))) || isempty_region(imX)
         return Root(X, :empty)
