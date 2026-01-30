@@ -90,6 +90,18 @@ function RootProblem(
     )
 end
 
+Base.show(io::IO, pb::RootProblem) = print(io, """
+    RootProblem
+      Contractor: $(pb.contractor)
+      Function: $(pb.f)
+      Search region: $(root_region(pb.region))
+      Search order: $(pb.search_order)
+      Absolute tolerance: $(pb.abstol)
+      Relative tolerance: $(pb.reltol)
+      Maximum iterations: $(pb.max_iteration)
+      Bisect on error: $(pb.bisect_on_error)"""
+)
+
 function Base.iterate(root_problem::RootProblem, state = nothing)
     if isnothing(state)
         search = root_search(root_problem)

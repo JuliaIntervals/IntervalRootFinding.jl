@@ -68,7 +68,15 @@ julia> f(x) = exp(x) - sin(x)
 f (generic function with 1 method)
 
 julia> problem = RootProblem(f, interval(-10, 10))
-RootProblem{Newton, typeof(f), IntervalRootFinding.var"#9#11"{typeof(f)}, Root{Interval{Float64}}, BranchAndPrune.BreadthFirst, Float64}(Newton, f, IntervalRootFinding.var"#9#11"{typeof(f)}(f), Root([-10.0, 10.0]_com, :unkown), BranchAndPrune.BreadthFirst, 1.0e-7, 0.0, 100000, 0.49609375, true)
+RootProblem
+  Contractor: Newton
+  Function: f
+  Search region: [-10.0, 10.0]_com
+  Search order: BranchAndPrune.BreadthFirst
+  Absolute tolerance: 1.0e-7
+  Relative tolerance: 0.0
+  Maximum iterations: 100000
+  Bisect on error: true
 
 julia> state = nothing   # stores current state of the search
 
