@@ -12,25 +12,6 @@ struct RootProblem{C, F, G, R, S, T}
     max_iteration::Int
     where_bisect::T
     bisect_on_error::Bool
-
-    # function RootProblem(
-    #         contractor::Type{C},
-    #         f::F,
-    #         derivative::G,
-    #         initial_root::R,
-    #         search_order::Type{S},
-    #         abstol::T,
-    #         reltol::T,
-    #         max_iteration::Int,
-    #         where_bisect::T,
-    #         bisect_on_error::Bool) where {C, F, G, R, S, T}
-
-    #     X = root_region(initial_root)
-    #     size(X) != size(f(X)) && throw(DimensionMismatch("input and output dimensions of f must be the same"))
-    #     return new{C, F, G, R, S, T}(
-    #         contractor, f, derivative, initial_root, search_order, abstol, reltol,
-    #         max_iteration, where_bisect, bisect_on_error)
-    # end
 end
 
 """
@@ -216,7 +197,7 @@ function roots(f, region ; kwargs...)
     rts = vcat(result.final_regions, result.unfinished_regions)
     return map(rts) do rt
         if rt.status == :unknown && rt.convergence == :none
-            return Root(rt.region, rt.status, :max_iter, rt.errored)
+            return Root(rt.region, rt.status, :max_iterartion, rt.errored)
         end
         return rt
     end

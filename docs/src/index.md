@@ -1,6 +1,6 @@
 ```@meta
 DocTestSetup = quote
-    using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
+    using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding, StaticArrays
 end
 ```
 # `IntervalRootFinding.jl`
@@ -29,20 +29,40 @@ julia> using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
 julia> rts = roots(x -> x^2 - 2x, 0..10)
 2-element Vector{Root{Interval{Float64}}}:
  Root([0.0, 3.73848e-8]_com_NG, :unknown)
+    Not converged: region size smaller than the tolerance
  Root([2.0, 2.0]_com_NG, :unique)
 ```
 
 The roots are returned as `Root` objects, containing an interval and the status of that interval, represented as a `Symbol`. There are two possible types of root status, as shown in the example:
   - `:unique`: the given interval contains *exactly one* root of the function,
   - `:unknown`: the given interval may or may not contain one or more roots; the algorithm used was unable to come to a conclusion.
+  In this case, additional information is stored in the root,
+  describing why the interval was not further bisected.
 
 The second status is still informative, since all regions of the original search interval *not* contained in *any* of the returned root intervals is guaranteed *not* to contain any root of the function. In the above example, we know that the function has no root in the interval $[2.1, 10]$, for example.
 
-There are several known situations where the uniqueness (and existence) of a solution cannot be determined by the interval algorithms used in the package:
+Most of the time, a root has status unknown because the convergence
+limits have been reached.
+This information is stored in the `convergence` field of the root,
+and can be either of
+  - `:max_iterartion`: the maximal number of iteration was reached
+  (`max_iteration` keyword);
+  - `:tolerance`: the interval is smaller than the specificed 
+  tolerance (`abstol` and `reltol` keywords,
+  for absolute and relative tolerance respectively).
+
+However, there are several known situations where the uniqueness
+(and existence) of a solution can never be determined
+by the interval algorithms used in the package:
+  - If the function used error at for specific intervals
+    (for example if comparison operators like `==` and `<` are used);
   - If the solution is on the boundary of the interval (as in the previous example);
   - If the derivative of the solution is zero at the solution.
 
-In particular, the second condition means that multiple roots cannot be proven to be unique. For example:
+The latest case happens for example when the function
+has multiple degenerate root,
+and then the unicity of the solution cannot be established.
+For example:
 
 ```jldoctest
 julia> g(x) = (x^2 - 2)^2 * (x^2 - 3)
@@ -52,7 +72,9 @@ julia> roots(g, -10..10)
 4-element Vector{Root{Interval{Float64}}}:
  Root([-1.73205, -1.73205]_com_NG, :unique)
  Root([-1.41421, -1.41421]_com, :unknown)
+    Not converged: region size smaller than the tolerance
  Root([1.41421, 1.41421]_com, :unknown)
+    Not converged: region size smaller than the tolerance
  Root([1.73205, 1.73205]_com_NG, :unique)
 ```
 
@@ -67,7 +89,7 @@ The initial search region is an array of interval.
 
 Here we give a 3D example:
 
-```julia-repl
+```jldoctest
 julia> function g( (x1, x2, x3) )
           return [
               x1^2 + x2^2 + x3^2 - 1,
@@ -82,28 +104,31 @@ julia> X = -5..5
 
 julia> rts = roots(g, [X, X, X])
 4-element Vector{Root{Vector{Interval{Float64}}}}:
- Root(Interval{Float64}[[-0.440763, -0.440762]_com_NG, [-0.866026, -0.866025]_com_NG, [0.236067, 0.236069]_com_NG], :unique)
- Root(Interval{Float64}[[-0.440763, -0.440762]_com_NG, [0.866025, 0.866026]_com_NG, [0.236067, 0.236069]_com_NG], :unique)
- Root(Interval{Float64}[[0.440762, 0.440763]_com_NG, [-0.866026, -0.866025]_com_NG, [0.236067, 0.236069]_com_NG], :unique)
- Root(Interval{Float64}[[0.440762, 0.440763]_com_NG, [0.866025, 0.866026]_com_NG, [0.236067, 0.236069]_com_NG], :unique)
+ Root(Interval{Float64}[[-0.440763, -0.440763]_com_NG, [-0.866025, -0.866025]_com_NG, [0.236068, 0.236068]_com_NG], :unique)
+ Root(Interval{Float64}[[-0.440763, -0.440763]_com_NG, [0.866025, 0.866025]_com_NG, [0.236068, 0.236068]_com_NG], :unique)
+ Root(Interval{Float64}[[0.440763, 0.440763]_com_NG, [-0.866025, -0.866025]_com_NG, [0.236068, 0.236068]_com_NG], :unique)
+ Root(Interval{Float64}[[0.440763, 0.440763]_com_NG, [0.866025, 0.866025]_com_NG, [0.236068, 0.236068]_com_NG], :unique)
 ```
 
 Thus, the system admits four unique roots in the box $[-5, 5]^3$.
 
 Moreover, the package is compatible with `StaticArrays.jl`.
 Usage of static arrays is recommended to increase performance.
-```julia-repl
+```jldoctest
 julia> using StaticArrays
 
 julia> h((x, y)) = SVector(x^2 - 4, y^2 - 16)
 h (generic function with 1 method)
 
+julia> X = -5..5
+[-5.0, 5.0]_com
+
 julia> roots(h, SVector(X, X))
 4-element Vector{Root{SVector{2, Interval{Float64}}}}:
- Root(Interval{Float64}[[-2.00001, -1.999999]_com_NG, [-4.00001, -3.999999]_com_NG], :unique)
- Root(Interval{Float64}[[-2.00001, -1.999999]_com_NG, [3.999999, 4.00001]_com_NG], :unique)
- Root(Interval{Float64}[[1.999999, 2.00001]_com_NG, [-4.00001, -3.999999]_com_NG], :unique)
- Root(Interval{Float64}[[1.999999, 2.00001]_com_NG, [3.999999, 4.00001]_com_NG], :unique)
+ Root(Interval{Float64}[[-2.0, -2.0]_com_NG, [-4.0, -4.0]_com_NG], :unique)
+ Root(Interval{Float64}[[-2.0, -2.0]_com_NG, [4.0, 4.0]_com_NG], :unique)
+ Root(Interval{Float64}[[2.0, 2.0]_com_NG, [-4.0, -4.0]_com_NG], :unique)
+ Root(Interval{Float64}[[2.0, 2.0]_com_NG, [4.0, 4.0]_com_NG], :unique)
 ```
 
 ### Vector types
@@ -167,14 +192,35 @@ julia> f( (x, y) ) = sin(x) * sin(y)
 f (generic function with 1 method)
 
 julia> ∇f(x) = gradient(f, x)  # gradient operator from the package
-(::#53) (generic function with 1 method)
+∇f (generic function with 1 method)
 
 julia> rts = roots(∇f, SVector(interval(-5, 6), interval(-5, 6)) ; abstol = 1e-5)
 25-element Vector{Root{SVector{2, Interval{Float64}}}}:
- Root(Interval{Float64}[[-4.7124, -4.71238]_com, [-4.7124, -4.71238]_com], :unique)
- Root(Interval{Float64}[[-3.1416, -3.14159]_com, [-3.1416, -3.14159]_com], :unique)
- ⋮
- [output skipped for brevity]
+ Root(Interval{Float64}[[-4.71239, -4.71239]_com, [-4.71239, -4.71239]_com], :unique)
+ Root(Interval{Float64}[[-3.14159, -3.14159]_com, [-3.14159, -3.14159]_com], :unique)
+ Root(Interval{Float64}[[-4.71239, -4.71239]_com, [-1.5708, -1.5708]_com], :unique)
+ Root(Interval{Float64}[[-3.14159, -3.14159]_com, [-3.88602e-10, 6.62844e-11]_com], :unique)
+ Root(Interval{Float64}[[-1.5708, -1.5708]_com, [-4.71239, -4.71239]_com], :unique)
+ Root(Interval{Float64}[[-3.74621e-10, 7.17246e-11]_com, [-3.14159, -3.14159]_com], :unique)
+ Root(Interval{Float64}[[-1.5708, -1.5708]_com, [-1.5708, -1.5708]_com], :unique)
+ Root(Interval{Float64}[[-6.04841e-12, 1.04386e-12]_com, [-6.04841e-12, 1.03449e-12]_com], :unique)
+ Root(Interval{Float64}[[-4.71239, -4.71239]_com, [1.5708, 1.5708]_com], :unique)
+ Root(Interval{Float64}[[-3.14159, -3.14159]_com, [3.14159, 3.14159]_com], :unique)
+ Root(Interval{Float64}[[-1.5708, -1.5708]_com, [1.5708, 1.5708]_com], :unique)
+ Root(Interval{Float64}[[-1.69679e-6, 3.8872e-7]_com, [3.14159, 3.14159]_com], :unique)
+ Root(Interval{Float64}[[-4.71239, -4.71239]_com, [4.71239, 4.71239]_com], :unique)
+ Root(Interval{Float64}[[-1.5708, -1.57079]_com, [4.71239, 4.71239]_com], :unique)
+ Root(Interval{Float64}[[1.5708, 1.5708]_com, [-4.71239, -4.71239]_com], :unique)
+ Root(Interval{Float64}[[3.14159, 3.14159]_com, [-3.14159, -3.14159]_com], :unique)
+ Root(Interval{Float64}[[1.5708, 1.5708]_com, [-1.5708, -1.5708]_com], :unique)
+ Root(Interval{Float64}[[3.14159, 3.14159]_com, [-3.5929e-14, 5.92849e-15]_com], :unique)
+ Root(Interval{Float64}[[4.71239, 4.71239]_com, [-4.71239, -4.71239]_com], :unique)
+ Root(Interval{Float64}[[4.71239, 4.71239]_com, [-1.5708, -1.57079]_com], :unique)
+ Root(Interval{Float64}[[1.5708, 1.5708]_com, [1.5708, 1.5708]_com], :unique)
+ Root(Interval{Float64}[[3.14159, 3.14159]_com, [3.14159, 3.14159]_com], :unique)
+ Root(Interval{Float64}[[1.57079, 1.5708]_com, [4.71239, 4.71239]_com], :unique)
+ Root(Interval{Float64}[[4.71239, 4.71239]_com, [1.57079, 1.5708]_com], :unique)
+ Root(Interval{Float64}[[4.71239, 4.71239]_com, [4.71239, 4.71239]_com], :unique)
 ```
 
 Now let's find the midpoints and plot them:

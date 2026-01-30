@@ -16,7 +16,7 @@ the `roots` function.
         and `:unique`.
   - `convergence`: the convergence status of the region. It is always `:converged`
         for roots with status `:unique`,
-        and can be either `:max_iter` or `:tolerance` for roots with status `:unknown`,
+        and can be either `:max_iterartion` or `:tolerance` for roots with status `:unknown`,
         depending on whether they stopped being processing due to reaching
         the maximum number of iteration or the tolerance, respectively.
   - `errored`: whether an error was encounter during the processing of this region.
@@ -60,8 +60,10 @@ function show(io::IO, rt::Root)
     if rt.status == :unknown
         if rt.convergence == :tolerance
             print(io, "\n    Not converged: region size smaller than the tolerance")
-        elseif rt.convergence == :max_iter 
+        elseif rt.convergence == :max_iterartion 
             print(io, "\n    Not converged: reached maximal number of iterations")
+        elseif rt.convergence == :none
+            print(io, "\n    Not converged: the root is still being processed")
         else
             print(io, "\n    Not converged: unknown reason $(rt.convergence)")
         end

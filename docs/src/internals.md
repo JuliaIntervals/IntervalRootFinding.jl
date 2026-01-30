@@ -1,3 +1,8 @@
+```@meta
+DocTestSetup = quote
+    using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
+end
+```
 # Internals
 
 This section describes some of the internal mechanism of the package and several ways to use them to customize a search.
@@ -37,14 +42,14 @@ The contractors are various methods to guarantee and refine the
 status of a root.
 The available contractors are `Bisection`, `Newton` or `Krawczyk`.
 
-```julia-repl
-julia> using IntervalArithmetic.Symbols
+```jldoctest
+julia> using IntervalRootFinding: contract
 
 julia> contract(Newton, sin, cos, Root(pi ± 0.001, :unknown))
-Root([3.14159, 3.1416]_com, :unique)
+Root([3.14159, 3.14159]_com, :unique)
 
 julia> contract(Newton, sin, cos, Root(2 ± 0.001, :unknown))
-Root([1.99899, 2.00101]_com, :empty)
+Root([1.999, 2.001]_com, :empty)
 ```
 
 ## RootProblem and search object
@@ -58,11 +63,12 @@ for example to log information at each iteration.
 For example, the following stops the search after 15 iterations and
 shows the state of the search at that point.
 
-```julia-repl
+```jldoctest
 julia> f(x) = exp(x) - sin(x)
 f (generic function with 1 method)
 
 julia> problem = RootProblem(f, interval(-10, 10))
+RootProblem{Newton, typeof(f), IntervalRootFinding.var"#9#11"{typeof(f)}, Root{Interval{Float64}}, BranchAndPrune.BreadthFirst, Float64}(Newton, f, IntervalRootFinding.var"#9#11"{typeof(f)}(f), Root([-10.0, 10.0]_com, :unkown), BranchAndPrune.BreadthFirst, 1.0e-7, 0.0, 100000, 0.49609375, true)
 
 julia> state = nothing   # stores current state of the search
 
@@ -76,12 +82,16 @@ Branching
 └─ Branching
    ├─ Branching
    │  ├─ Branching
-   │  │  ├─ (:working, Root([-10.0, -8.7886]_com, :unknown))
-   │  │  └─ (:working, Root([-8.78861, -7.55813]_com, :unknown))
-   │  └─ (:final, Root([-6.28132, -6.28131]_com, :unique))
+   │  │  ├─ (:working, Root([-10.0, -8.78861]_com, :unknown)
+   │  │  │      Not converged: the root is still being processed)
+   │  │  └─ (:working, Root([-8.78861, -7.55814]_com, :unknown)
+   │  │         Not converged: the root is still being processed)
+   │  └─ (:final, Root([-6.28131, -6.28131]_com, :unique))
    └─ Branching
-      ├─ (:working, Root([-5.07783, -3.84734]_com, :unknown))
-      └─ (:working, Root([-3.84736, -2.5975]_com, :unknown))
+      ├─ (:working, Root([-5.07782, -3.84735]_com, :unknown)
+      │      Not converged: the root is still being processed)
+      └─ (:working, Root([-3.84735, -2.5975]_com, :unknown)
+             Not converged: the root is still being processed)
 ```
 
 The elements of the iteration are `SearchState` from the `BranchAndPrune.jl`

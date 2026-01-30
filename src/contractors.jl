@@ -58,7 +58,7 @@ function contract(::Type{Krawczyk}, f, derivative, X::AbstractVector)
     return mm - Y*f(mm) + (interval(I) - Y*J) * (X - mm)
 end
 
-function contract(::Type{C}, f, derivative, R::Root) where {C <: AbstractContractor}
+function contract(::Type{C}, f::F, derivative::Fp, R::Root) where {C <: AbstractContractor, F, Fp}
     # We first check with the simple bisection method
     # If we can prove it is empty at this point, we don't go further
     R2 = image_contains_zero(f, R)
