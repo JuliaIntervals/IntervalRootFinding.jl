@@ -1,6 +1,6 @@
 ```@meta
 DocTestSetup = quote
-    using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding, BenchmarkTools
+    using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
 end
 ```
 # `roots` interface
