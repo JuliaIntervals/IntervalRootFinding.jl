@@ -296,7 +296,7 @@ end
 
     for abstol in abstols
         for reltol in reltols
-            rts = roots(f, interval(0, 1) ; abstol, reltol)
+            rts = roots(f, interval(0, 1) ; abstol, reltol, max_iteration = typemax(Int))
             regions = [rt.region for rt in rts if root_status(rt) == :unknown]
 
             @test all(
