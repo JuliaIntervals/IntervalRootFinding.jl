@@ -150,11 +150,11 @@ The last example shows a case where the tolerance was too large to be able to is
 
 ## Error during computation
 
-By default, the `roots` function will ignore errors
-and continue bisecting the given interval,
+By default, the `roots` function will ignore `IntervalArithmetic.InconclusiveBooleanOperation`
+errors and continue bisecting the given interval,
 hoping to eventually find regions that are small enough to avoid the error.
 
-This is particularly useful when using code that is using comparisons,
+This is useful when using code that is using comparisons,
 which are ill-defined for intervals
 (see [the IntervalArithmetic.jl documentation](https://juliaintervals.github.io/IntervalArithmetic.jl/stable/manual/usage/#Comparisons)
 for more information).
@@ -174,15 +174,13 @@ julia> roots(f, -10 .. 10)
  Root([7.0, 7.0]_com_NG, :unique)
 ```
 
-This behavior can be deactivated by setting `bisect_on_error` to false,
-interrupting the process as soon as an error is encountered.
-This is notably useful while debugging your code.
+This behavior can be controlled by changing the `ignored_errors` field.
+
+To deactivate it, change it to an empty list,
+so that the process is interrupted as soon as an error is encountered.
+This is useful while debugging your code.
 
 ```julia-repl
-julia> roots(f, -10 .. 10 ; bisect_on_error = false)
+julia> roots(f, -10 .. 10 ; ignored_errors = [])
 ERROR: ArgumentError: `<` is purposely not supported for overlapping intervals. See instead `strictprecedes`
 ```
-
-!!! warning
-
-    This behavior is considered experimental and subject to change.

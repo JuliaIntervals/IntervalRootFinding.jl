@@ -19,9 +19,8 @@ the `roots` function.
         and can be either `:max_iterartion` or `:tolerance` for roots with status `:unknown`,
         depending on whether they stopped being processing due to reaching
         the maximum number of iteration or the tolerance, respectively.
-  - `errored`: whether an error was encounter during the processing of this region.
-        Errors can be raised explicitly when encountered by setting
-        `bisect_on_error` to `flase` in the RootProblem.
+  - `errored`: whether an error was encounter but ignored during the processing of this region.
+        The ignored errors are controlled by the `ignored_errors` field of the `RootProblem`.
 """
 struct Root{T}
     region::T

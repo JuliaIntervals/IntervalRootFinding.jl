@@ -374,7 +374,7 @@ end
 end
 
 @testset "Bisect on error" begin
-    f(x) = x == 1 ? error() : x
+    f(x) = (x < 1 ? x : x^2)
     
     rts = roots(f, interval(-10, 10))
     @test length(rts) == 2
@@ -386,5 +386,9 @@ end
     @test rts[2].convergence == :tolerance
     @test rts[2].errored
 
-    @test_throws ArgumentError roots(f, interval(-10, 10) ; bisect_on_error = false)
+    @test_throws IntervalArithmetic.InconclusiveBooleanOperation roots(f, interval(-10, 10) ; ignored_errors = [])
+
+    g(x) = (x < 1 ? x : error())
+    rts = roots(g, interval(-10, 10) ; ignored_errors = [ErrorException, IntervalArithmetic.InconclusiveBooleanOperation])
+    @test any(isunique, rts)
 end

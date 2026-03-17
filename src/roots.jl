@@ -11,7 +11,7 @@ struct RootProblem{C, F, G, R, S, T}
     reltol::T
     max_iteration::Int
     where_bisect::T
-    bisect_on_error::Bool
+    ignored_errors::Vector{DataType}
 end
 
 """
@@ -50,9 +50,10 @@ Parameters
     bisecting exactly on zero when starting with symmetrical regions,
     often leading to having a solution directly on the boundary of a region,
     which prevent the contractor to prove it's unicity. Default: `127/256`.
--`bisect_on_error`: Whether a region that errors when the function is applied to
-    to it should be bisected. If false, when an error happen, the root search is
-    interrupted. Default: true.
+-`ignored_errors`: List of exceptions that are ignored during the processing
+    of a region. If the error is encoutered, it is discarded and the region is bisected
+    further.
+    Default: `[IntervalArithmetic.InconclusiveBooleanOperation]`.
 """
 RootProblem(f, region ; kwargs...) = RootProblem(f, Root(region, :unkown) ; kwargs...)
 
@@ -65,7 +66,7 @@ function RootProblem(
         reltol = 0.0,
         max_iteration = 100_000,
         where_bisect = 0.49609375,  # 127//256
-        bisect_on_error = true)
+        ignored_errors = [IntervalArithmetic.InconclusiveBooleanOperation])
     
     N = length(root_region(root))
     if isnothing(derivative)
@@ -86,7 +87,7 @@ function RootProblem(
         reltol,
         max_iteration,
         where_bisect,
-        bisect_on_error
+        convert(Vector{DataType}, ignored_errors)
     )
 end
 
@@ -99,7 +100,7 @@ Base.show(io::IO, pb::RootProblem) = print(io, """
       Absolute tolerance: $(pb.abstol)
       Relative tolerance: $(pb.reltol)
       Maximum iterations: $(pb.max_iteration)
-      Bisect on error: $(pb.bisect_on_error)"""
+      Ignored errors: $(pb.ignored_errors)"""
 )
 
 function Base.iterate(root_problem::RootProblem, state = nothing)
@@ -128,15 +129,16 @@ function under_tolerance(root_problem, root::Root)
 end
 
 function process(root_problem, root::Root)
-    if root_problem.bisect_on_error
-        try
-            contracted = contract(root_problem, root)
-        catch err
-            (err isa DimensionMismatch) && rethrow()
-            contracted = Root(root.region, :unknown, :none, true)
-        end
-    else
+    contracted = nothing
+    try
         contracted = contract(root_problem, root)
+    catch err
+        !any(isa(err, Err) for Err in root_problem.ignored_errors) && rethrow()
+        contracted = Root(root.region, :unknown, :none, true)
+    end
+
+    if contracted.errored
+        @info "Errored"
     end
 
     status = root_status(contracted)
