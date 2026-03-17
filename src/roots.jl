@@ -137,10 +137,6 @@ function process(root_problem, root::Root)
         contracted = Root(root.region, :unknown, :none, true)
     end
 
-    if contracted.errored
-        @info "Errored"
-    end
-
     status = root_status(contracted)
 
     if status == :unique

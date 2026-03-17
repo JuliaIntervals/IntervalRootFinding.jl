@@ -76,7 +76,7 @@ RootProblem
   Absolute tolerance: 1.0e-7
   Relative tolerance: 0.0
   Maximum iterations: 100000
-  Bisect on error: true
+  Ignored errors: DataType[IntervalArithmetic.InconclusiveBooleanOperation]
 
 julia> state = nothing   # stores current state of the search
 
