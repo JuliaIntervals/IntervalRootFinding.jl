@@ -19,18 +19,19 @@ the `roots` function.
         and can be either `:max_iterartion` or `:tolerance` for roots with status `:unknown`,
         depending on whether they stopped being processing due to reaching
         the maximum number of iteration or the tolerance, respectively.
-  - `errored`: whether an error was encounter but ignored during the processing of this region.
+  - `error`: an error that was encounter but ignored during the processing of this region.
+        Set to `nothing` if no error was encountered.
         The ignored errors are controlled by the `ignored_errors` field of the `RootProblem`.
 """
 struct Root{T}
     region::T
     status::Symbol
     convergence::Symbol
-    errored::Bool
+    error
 end
 
-function Root(region, status::Symbol, convergence = :none, errored = false)
-    return Root(region, status, convergence, errored)
+function Root(region, status::Symbol, convergence = :none, error = nothing)
+    return Root(region, status, convergence, error)
 end
 
 """
@@ -67,11 +68,15 @@ function show(io::IO, rt::Root)
             print(io, "\n    Not converged: unknown reason $(rt.convergence)")
         end
 
-        if rt.errored
-            print(io, "\n    Warning: an error was encountered during computation")
+        if !isnothing(rt.error)
+            print(io, "\n    Warning: error encountered during computation (use showerror(root.error) to see the whole stacktrace)\n      ")
+            showerror(io, rt.error[1])
         end
     end
 end
+
+Base.showerror(io::IO, rt::Root) = showerror(io, rt.error...)
+Base.showerror(rt::Root) = showerror(stdout, rt.error...)
 
 ⊆(a::Interval, b::Root) = a ⊆ b.region
 ⊆(a::Root, b::Root) = a.region ⊆ b.region

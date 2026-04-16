@@ -134,7 +134,7 @@ function process(root_problem, root::Root)
         contracted = contract(root_problem, root)
     catch err
         !any(isa(err, Err) for Err in root_problem.ignored_errors) && rethrow()
-        contracted = Root(root.region, :unknown, :none, true)
+        contracted = Root(root.region, :unknown, :none, (err, backtrace()))
     end
 
     status = root_status(contracted)
@@ -153,7 +153,7 @@ function process(root_problem, root::Root)
         end
 
         if under_tolerance(root_problem, contracted)
-            return :store, Root(contracted.region, :unknown, :tolerance, contracted.errored)
+            return :store, Root(contracted.region, :unknown, :tolerance, contracted.error)
         end
         
         return :branch, root
@@ -207,7 +207,7 @@ function roots(f, region ; kwargs...)
     rts = vcat(result.final_regions, result.unfinished_regions)
     return map(rts) do rt
         if rt.status == :unknown && rt.convergence == :none
-            return Root(rt.region, rt.status, :max_iterartion, rt.errored)
+            return Root(rt.region, rt.status, :max_iterartion, rt.error)
         end
         return rt
     end

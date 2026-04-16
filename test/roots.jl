@@ -380,11 +380,12 @@ end
     @test length(rts) == 2
     @test rts[1].status == :unique
     @test rts[1].convergence == :converged
-    @test !rts[1].errored
+    @test isnothing(rts[1].error)
 
     @test rts[2].status == :unknown
     @test rts[2].convergence == :tolerance
-    @test rts[2].errored
+    @test !isnothing(rts[2].error)
+    @test rts[2].error[1] isa IntervalArithmetic.InconclusiveBooleanOperation
 
     @test_throws IntervalArithmetic.InconclusiveBooleanOperation roots(f, interval(-10, 10) ; ignored_errors = [])
 
