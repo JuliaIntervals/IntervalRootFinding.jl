@@ -170,7 +170,8 @@ julia> roots(f, -10 .. 10)
  Root([0.0, 0.0]_com, :unique)
  Root([2.0, 2.0]_com, :unknown)
     Not converged: region size smaller than the tolerance
-    Warning: an error was encountered during computation
+    Warning: error encountered during computation (use showerror(root.error) to see the whole stacktrace)
+      InconclusiveBooleanOperation: The operation `[2.0, 2.0]_com_NG < [2.0, 2.0]_com` cannot be determined unambiguously. See the documentation for more information. See also `strictprecedes`.
  Root([7.0, 7.0]_com_NG, :unique)
 ```
 
