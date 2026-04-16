@@ -296,7 +296,7 @@ end
 
     for abstol in abstols
         for reltol in reltols
-            rts = roots(f, interval(0, 1) ; abstol, reltol)
+            rts = roots(f, interval(0, 1) ; abstol, reltol, max_iteration = typemax(Int))
             regions = [rt.region for rt in rts if root_status(rt) == :unknown]
 
             @test all(
@@ -371,4 +371,25 @@ end
 
         @test all(isequal_interval.(myroots, unroots))
     end
+end
+
+@testset "Bisect on error" begin
+    f(x) = (x < 1 ? x : x^2)
+    
+    rts = roots(f, interval(-10, 10))
+    @test length(rts) == 2
+    @test rts[1].status == :unique
+    @test rts[1].convergence == :converged
+    @test isnothing(rts[1].error)
+
+    @test rts[2].status == :unknown
+    @test rts[2].convergence == :tolerance
+    @test !isnothing(rts[2].error)
+    @test rts[2].error[1] isa IntervalArithmetic.InconclusiveBooleanOperation
+
+    @test_throws IntervalArithmetic.InconclusiveBooleanOperation roots(f, interval(-10, 10) ; ignored_errors = [])
+
+    g(x) = (x < 1 ? x : error())
+    rts = roots(g, interval(-10, 10) ; ignored_errors = [ErrorException, IntervalArithmetic.InconclusiveBooleanOperation])
+    @test any(isunique, rts)
 end

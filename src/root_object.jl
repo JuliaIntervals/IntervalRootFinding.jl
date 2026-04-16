@@ -14,10 +14,24 @@ the `roots` function.
         representing an interval box) searched for roots.
   - `status`: the status of the region, valid values are `:empty`, `unknown`
         and `:unique`.
+  - `convergence`: the convergence status of the region. It is always `:converged`
+        for roots with status `:unique`,
+        and can be either `:max_iterartion` or `:tolerance` for roots with status `:unknown`,
+        depending on whether they stopped being processing due to reaching
+        the maximum number of iteration or the tolerance, respectively.
+  - `error`: an error that was encounter but ignored during the processing of this region.
+        Set to `nothing` if no error was encountered.
+        The ignored errors are controlled by the `ignored_errors` field of the `RootProblem`.
 """
 struct Root{T}
     region::T
     status::Symbol
+    convergence::Symbol
+    error
+end
+
+function Root(region, status::Symbol, convergence = :none, error = nothing)
+    return Root(region, status, convergence, error)
 end
 
 """
@@ -41,7 +55,28 @@ Return whether a `Root` is unique.
 """
 isunique(rt::Root{T}) where {T} = (rt.status == :unique)
 
-show(io::IO, rt::Root) = print(io, "Root($(rt.region), :$(rt.status))")
+function show(io::IO, rt::Root)
+    print(io, "Root($(rt.region), :$(rt.status))")
+    if rt.status == :unknown
+        if rt.convergence == :tolerance
+            print(io, "\n    Not converged: region size smaller than the tolerance")
+        elseif rt.convergence == :max_iterartion 
+            print(io, "\n    Not converged: reached maximal number of iterations")
+        elseif rt.convergence == :none
+            print(io, "\n    Not converged: the root is still being processed")
+        else
+            print(io, "\n    Not converged: unknown reason $(rt.convergence)")
+        end
+
+        if !isnothing(rt.error)
+            print(io, "\n    Warning: error encountered during computation (use showerror(root.error) to see the whole stacktrace)\n      ")
+            showerror(io, rt.error[1])
+        end
+    end
+end
+
+Base.showerror(io::IO, rt::Root) = showerror(io, rt.error...)
+Base.showerror(rt::Root) = showerror(stdout, rt.error...)
 
 ⊆(a::Interval, b::Root) = a ⊆ b.region
 ⊆(a::Root, b::Root) = a.region ⊆ b.region
