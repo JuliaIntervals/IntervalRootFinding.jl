@@ -182,6 +182,7 @@ so that the process is interrupted as soon as an error is encountered.
 This is useful while debugging your code.
 
 ```julia-repl
-julia> roots(f, -10 .. 10 ; ignored_errors = [])
-ERROR: ArgumentError: `<` is purposely not supported for overlapping intervals. See instead `strictprecedes`
+julia> roots(f, -10..10, ; ignored_errors = [])
+ERROR: InconclusiveBooleanOperation: The operation `[2.0, 2.0]_com_NG < [-10.0, 10.0]_com` cannot be determined unambiguously. See the documentation for more information. See also `strictprecedes`.
+Stacktrace: [..]
 ```
