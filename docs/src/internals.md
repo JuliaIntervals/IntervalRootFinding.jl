@@ -25,13 +25,12 @@ The branch and bound algorithm used by the `roots` function builds this tree and
 
 ## Search strategy
 
-While the tree representation is sufficient to know the topology of the search, it does not determine the order in which leaves are processed during the search. This has an influence on how the tree is created and the amount of memory used, but will not change the resulting tree, unless some limitations on the number of iterations or leaves are enforced.
+While the tree representation is sufficient to know the topology of the search, it does not determine the order in which leaves are processed during the search.
+This has an influence on how the tree is created and the amount of memory used, but will not change the resulting tree,
+unless the maximal number of limitation is reached.
 
-!!! note
-
-    No such limitations are currently implemented, but they are planned. They will allow to deal, for example, with functions admitting an infinite amount of roots.
-
-Two strategies are currently available: a breadth-first strategy (leaves closer to the root of the tree are processed first); and a depth-first strategy (leaves further away from the root are processed first).
+Two strategies are currently available: a breadth-first strategy (leaves closer to the root of the tree are processed first);
+and a depth-first strategy (leaves further away from the root are processed first).
 
 ## Contractors
 
