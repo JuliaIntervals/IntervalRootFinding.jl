@@ -128,6 +128,7 @@ function Base.iterate(root_problem::RootProblem, state = nothing)
     end
     isnothing(iteration) && return nothing
     value, new_search_state = iteration
+    new_search_state.iteration > root_problem.max_iteration && return nothing
     return value, (search, new_search_state)
 end
    
@@ -206,17 +207,14 @@ see [`RootProblem`](@ref).
 function roots(f, region ; kwargs...)
     problem = RootProblem(f, region ; kwargs...)
     search = root_search(problem)
-    endstate = nothing
+    state = nothing
 
-    for (iter, state) in enumerate(search)
-        endstate = state
-        iter >= problem.max_iteration && break
-    end
+    for outer state in search end
 
     result = BranchAndPrune.BranchAndPruneResult(
-        endstate.search_order,
+        state.search_order,
         search.initial_region,
-        endstate.tree
+        state.tree
     )
 
     rts = vcat(result.final_regions, result.unfinished_regions)
