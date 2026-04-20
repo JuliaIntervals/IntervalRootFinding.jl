@@ -118,18 +118,41 @@ Base.show(io::IO, pb::RootProblem) = print(io, """
       Ignored errors: $(pb.ignored_errors)"""
 )
 
+struct RootSearchState{R <: Root, S <: SearchOrder, B <: BranchAndPruneSearch}
+    iteration::Int
+    roots::Vector{R}
+    state::BranchAndPrune.SearchState{S, R}
+    search::B
+end
+
+function Base.show(io::IO, state::RootSearchState)
+    print(io, """RootSearchState
+      iteration: $(state.iteration)
+      roots:
+    """) 
+    for rt in state.roots
+        println(io, "    $rt")
+    end
+end
+
 function Base.iterate(root_problem::RootProblem, state = nothing)
     if isnothing(state)
         search = root_search(root_problem)
-        iteration = iterate(search)
+        bp_iteration = iterate(search)
     else
         search, search_state = state
-        iteration = iterate(search, search_state)
+        bp_iteration = iterate(search, search_state)
     end
-    isnothing(iteration) && return nothing
-    value, new_search_state = iteration
-    new_search_state.iteration > root_problem.max_iteration && return nothing
-    return value, (search, new_search_state)
+    isnothing(bp_iteration) && return nothing
+    bp_search_state = bp_iteration[2]
+    bp_search_state.iteration > root_problem.max_iteration && return nothing
+    state = RootSearchState(
+        bp_search_state.iteration,
+        [node.region for node in BranchAndPrune.Leaves(bp_search_state.tree)],
+        bp_search_state,
+        search
+    )
+    return state, (search, bp_search_state)
 end
    
 function bisect_region(r::Root, α)
