@@ -14,7 +14,7 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 [compat]
 BranchAndPrune = "0.2.1"
 ForwardDiff = "0.10, 1"
-InteractiveUtils = "1.11.0"
+InteractiveUtils = "1.10.0"
 IntervalArithmetic = "1.0.3"
 Reexport = "1"
 StaticArrays = "1"
