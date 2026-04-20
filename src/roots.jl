@@ -27,7 +27,7 @@ The returned `RootProblem` is an iterator that give access to the internal
 state of the search during the iteration,
 allowing to add callbacks and logging to the search.
 
-Parameters
+Keyword parameters
 ==========
 - `contractor`: Contractor used to determine the status of a region.
     Must be either `Newton`, `Krawczyk`, or `Bisection`. `Bisection` do not require
@@ -46,6 +46,11 @@ Parameters
     Default: `0.0`.
 - `max_iteration`: The maximum number of iteration, which also corresponds to
     the maximum number of bisections allowed. Default: `100_000`.
+- `infer_root_type`: When true, use the return type of the function as
+    type for the region in the returned roots, avoiding extra conversions
+    during the computation.
+    Otherwise, use the type of the provided region.
+    Default: `true`. Always `false` if the initial region is given as a `Root`.
 - `where_bisect`: Value used to bisect the region. It is used to avoid
     bisecting exactly on zero when starting with symmetrical regions,
     often leading to having a solution directly on the boundary of a region,
@@ -55,7 +60,17 @@ Parameters
     further.
     Default: `[IntervalArithmetic.InconclusiveBooleanOperation]`.
 """
-RootProblem(f, region ; kwargs...) = RootProblem(f, Root(region, :unkown) ; kwargs...)
+function RootProblem(f, region ; infer_root_type = true, kwargs...)
+    if infer_root_type
+        T = last(InteractiveUtils.@code_typed(f(region)))
+        if isconcretetype(T)
+            region = convert(T, region)
+        else
+            @warn "Could not infer the return type of the function (it may be type instable). Got $T"
+        end
+    end
+    RootProblem(f, Root(region, :unkown) ; kwargs...)
+end
 
 function RootProblem(
         f, root::Root ;

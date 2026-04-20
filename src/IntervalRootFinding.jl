@@ -7,6 +7,7 @@ using IntervalArithmetic.Symbols
 using BranchAndPrune
 using ForwardDiff
 using ForwardDiff: derivative, jacobian
+using InteractiveUtils
 using StaticArrays
 
 using LinearAlgebra

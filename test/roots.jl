@@ -1,4 +1,3 @@
-
 using IntervalArithmetic, IntervalRootFinding, StaticArrays, ForwardDiff
 using Test
 
@@ -245,46 +244,54 @@ end
     end
 end
 
+function f_vec(X)
+    x, y = X
+    return [x^2 - 2, y^2 - 2]
+end
+
+function df_vec(X)
+    x, y = X
+    return [2x 0.0 ; 0.0 2y]
+end
+
+function f_svec(X)
+    x, y = X
+    return SVector(x^2 - 2, y^2 - 2)
+end
+
+function df_svec(X)
+    x, y = X
+    return SMatrix{2, 2}(2x, 0.0, 0.0, 2y)
+end
+
 @testset "Type stability" begin
     f(x) = x^2 - 2
     df(x) = 2x
 
-    function A(X)
-        x, y = X
-        return [x^2 - 2, y^2 - 2]
-    end
-
-    function dA(X)
-        x, y = X
-        return [2x 0.0 ; 0.0 2y]
-    end
-
-    function S(X)
-        x, y = X
-        return SVector(x^2 - 2, y^2 - 2)
-    end
-
-    function dS(X)
-        x, y = X
-        return SMatrix{2, 2}(2x, 0.0, 0.0, 2y)
-    end
-    x = interval(0, 5)
-    a = [x, x]
-    s = SVector(x, x)
+    X = interval(0, 5)
+    x = Root(X, :unknown)
+    x_vec = Root([X, X], :unknown)
+    x_svec = Root(SVector(X, X), :unknown)
 
     for contractor in newtonlike_methods
-        @inferred roots(f, x ; contractor)
-        @inferred roots(f, x ; contractor, derivative = df)
+        @testset "$contractor" begin
+            @inferred roots(f, x ; contractor)
+            @inferred roots(f, x ; contractor, derivative = df)
 
-        rA1 = @inferred roots(A, a ; contractor)
-        rA2 = @inferred roots(A, a ; contractor, derivative = dA)
-        @test eltype(rA1) <: Root{<:Vector}
-        @test eltype(rA2) <: Root{<:Vector}
+            rts_vec1 = @inferred roots(f_vec, x_vec ; contractor)
+            rts_vec2 = @inferred roots(f_vec, x_vec ; contractor, derivative = df_vec)
+            @test eltype(rts_vec1) <: Root{<:Vector}
+            @test eltype(rts_vec2) <: Root{<:Vector}
 
-        rS1 = @inferred roots(S, s ; contractor)
-        rS2 = @inferred roots(S, s ; contractor, derivative = dS)
-        @test eltype(rS1) <: Root{<:SVector}
-        @test eltype(rS2) <: Root{<:SVector}
+            rts_svec1 = @inferred roots(f_svec, x_svec ; contractor)
+            rts_svec2 = @inferred roots(f_svec, x_svec ; contractor, derivative = df_svec)
+            @test eltype(rts_svec1) <: Root{<:SVector}
+            @test eltype(rts_svec2) <: Root{<:SVector}
+
+            # Check that the root type is determined by the return type of the function
+            @test eltype(roots(f_vec, SVector(X, X) ; contractor)) <: Root{<:Vector}
+            @test eltype(roots(f_svec, [X, X] ; contractor)) <: Root{<:SVector}
+        end
     end
 end
 

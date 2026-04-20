@@ -20,7 +20,7 @@ S = SUITE["Smiley"] = BenchmarkGroup()
 for example in (SmileyExample22, SmileyExample52, SmileyExample54) #, SmileyExample55)
     s = S[example.title] = BenchmarkGroup()
     for contractor in (Newton, Krawczyk)
-        s[string(contractor)] = @benchmarkable roots($(example.f), $(example.region) ; contractor = $contractor, abstol = $tol)
+        s[string(contractor)] = @benchmarkable roots($(example.f), $(example.region) ; contractor = $contractor, abstol = $tol, infer_root_type = false)
     end
 end
 
@@ -39,7 +39,7 @@ L = 5.0
 X = SVector(interval(-L, (L+1)), interval(-L, (L+1)))
 
 for contractor in (Newton, Krawczyk)
-    S[string(contractor)] = @benchmarkable roots($(∇f), $X ; contractor = $contractor, abstol = 1e-5)
+    S[string(contractor)] = @benchmarkable roots($(∇f), $X ; contractor = $contractor, abstol = 1e-5, infer_root_type = false)
 end
 
 
@@ -66,7 +66,7 @@ for (k, dr) in enumerate(dr_functions)
 
     if k != 8  # dr8 is excluded as it has too many roots
         for contractor in (Newton, Krawczyk)
-            s[string(contractor)] = @benchmarkable roots($dr, $X ; contractor = $contractor, abstol = $tol)
+            s[string(contractor)] = @benchmarkable roots($dr, $X ; contractor = $contractor, abstol = $tol, infer_root_type = false)
         end
     end
 end
