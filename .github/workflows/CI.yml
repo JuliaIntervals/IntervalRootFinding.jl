@@ -12,15 +12,14 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.10'
-          - 'nightly'
+          - 'lts'
+          - 'pre'
         os:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
         arch:
-          - x64
-          - x86
+          - 'default'
         exclude:
           - os: macOS-latest
             arch: x86
