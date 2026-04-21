@@ -14,6 +14,7 @@ using LinearAlgebra
 
 import Base: ⊆, show, big, \
 
+export BreadthFirst, DepthFirst, ChangingOrder
 export derivative, jacobian
 
 include("region.jl")
@@ -24,7 +25,8 @@ include("root_object.jl")
 export Root, isunique, root_status, root_region
 
 include("roots.jl")
-export roots, RootProblem
+export roots, converged_roots, unconverged_roots
+export RootProblem, RootSearchState 
 
 include("contractors.jl")
 export Bisection, Newton, Krawczyk, contract

@@ -118,11 +118,22 @@ Base.show(io::IO, pb::RootProblem) = print(io, """
       Ignored errors: $(pb.ignored_errors)"""
 )
 
+# TODO Document
+# TODO Simplify, only the state is actually needed... Just use it with more methods ?
 struct RootSearchState{R <: Root, S <: SearchOrder, B <: BranchAndPruneSearch}
     iteration::Int
     roots::Vector{R}
     state::BranchAndPrune.SearchState{S, R}
     search::B
+end
+
+roots(state::RootSearchState) = [leaf.region for leaf in BranchAndPrune.Leaves(state.tree)]
+converged_roots(state::RootSearchState) = [leaf.region for leaf in BranchAndPrune.Leaves(state.tree) if leaf.status == :final]
+unconverged_roots(state::RootSearchState) = [leaf.region for leaf in state.search_order.working_leaves]
+
+function Base.getproperty(state::RootSearchState, name::Symbol)
+    hasfield(RootSearchState, name) && return getfield(state, name)
+    hasfield(BranchAndPrune.SearchState, name) && return getfield(state.state, name)
 end
 
 function Base.show(io::IO, state::RootSearchState)
