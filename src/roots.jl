@@ -210,14 +210,13 @@ see [`RootProblem`](@ref).
 """
 function roots(f, region ; kwargs...)
     problem = RootProblem(f, region ; kwargs...)
-    search = root_search(problem)
     state = nothing
 
-    for outer state in search end
+    for outer state in problem end
 
     result = BranchAndPrune.BranchAndPruneResult(
         state.search_order,
-        search.initial_region,
+        problem.region,
         state.tree
     )
 
