@@ -118,33 +118,9 @@ Base.show(io::IO, pb::RootProblem) = print(io, """
       Ignored errors: $(pb.ignored_errors)"""
 )
 
-# TODO Document
-# TODO Simplify, only the state is actually needed... Just use it with more methods ?
-struct RootSearchState{R <: Root, S <: SearchOrder, B <: BranchAndPruneSearch}
-    iteration::Int
-    roots::Vector{R}
-    state::BranchAndPrune.SearchState{S, R}
-    search::B
-end
-
-roots(state::RootSearchState) = [leaf.region for leaf in BranchAndPrune.Leaves(state.tree)]
-converged_roots(state::RootSearchState) = [leaf.region for leaf in BranchAndPrune.Leaves(state.tree) if leaf.status == :final]
-unconverged_roots(state::RootSearchState) = [leaf.region for leaf in state.search_order.working_leaves]
-
-function Base.getproperty(state::RootSearchState, name::Symbol)
-    hasfield(RootSearchState, name) && return getfield(state, name)
-    hasfield(BranchAndPrune.SearchState, name) && return getfield(state.state, name)
-end
-
-function Base.show(io::IO, state::RootSearchState)
-    print(io, """RootSearchState
-      iteration: $(state.iteration)
-      roots:
-    """) 
-    for rt in state.roots
-        println(io, "    $rt")
-    end
-end
+roots(state::SearchState) = regions(state)
+converged_roots(state::SearchState) = finished_regions(state)
+unconverged_roots(state::SearchState) = unfinished_regions(state)
 
 function Base.iterate(root_problem::RootProblem, state = nothing)
     if isnothing(state)
@@ -157,13 +133,7 @@ function Base.iterate(root_problem::RootProblem, state = nothing)
     isnothing(bp_iteration) && return nothing
     bp_search_state = bp_iteration[2]
     bp_search_state.iteration > root_problem.max_iteration && return nothing
-    state = RootSearchState(
-        bp_search_state.iteration,
-        [node.region for node in BranchAndPrune.Leaves(bp_search_state.tree)],
-        bp_search_state,
-        search
-    )
-    return state, (search, bp_search_state)
+    return bp_search_state, (search, bp_search_state)
 end
    
 function bisect_region(r::Root, α)

@@ -4,7 +4,7 @@ using Reexport
 @reexport using IntervalArithmetic
 using IntervalArithmetic.Symbols
 
-using BranchAndPrune
+@reexport using BranchAndPrune
 using ForwardDiff
 using ForwardDiff: derivative, jacobian
 using InteractiveUtils
@@ -14,7 +14,6 @@ using LinearAlgebra
 
 import Base: ⊆, show, big, \
 
-export BreadthFirst, DepthFirst, ChangingOrder
 export derivative, jacobian
 
 include("region.jl")
@@ -26,7 +25,7 @@ export Root, isunique, root_status, root_region
 
 include("roots.jl")
 export roots, converged_roots, unconverged_roots
-export RootProblem, RootSearchState 
+export RootProblem
 
 include("contractors.jl")
 export Bisection, Newton, Krawczyk, contract
