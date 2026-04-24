@@ -55,7 +55,7 @@ but will not change the resulting tree,
 unless the maximal number of iterations is reached.
 
 Two strategies are currently available: a breadth-first strategy (process all regions before processing a sub-region);
-and a depth-first strategy (immediatly process the sub-regions of the last processed region).
+and a depth-first strategy (immediately process the sub-regions of the last processed region).
 
 Usually, the breadth-first strategy (default) is preferred,
 as the depth-first strategy may get "stuck" on a single point with a singularity,
@@ -82,7 +82,7 @@ RootProblem
   Contractor: Newton
   Function: f
   Search region: [-10.0, 10.0]_com
-  Search order: BranchAndPrune.BreadthFirst
+  Search order: BreadthFirst
   Absolute tolerance: 1.0e-7
   Relative tolerance: 0.0
   Maximum iterations: 100000
@@ -90,28 +90,31 @@ RootProblem
 
 julia> state = nothing   # stores current state of the search, so that it will be available outside of the loop
 
-julia> for outer state in problem
-           state.iteration == 15 && break  # stop at iteration 15
+julia> for s in problem
+           global state = s
+           state.iteration == 15 && break
        end
 
-julia> state.tree
-Branching
-└─ Branching
-   ├─ Branching
-   │  ├─ Branching
-   │  │  ├─ (:working, Root([-10.0, -8.78861]_com, :unknown)
-   │  │  │      Not converged: the root is still being processed)
-   │  │  └─ (:working, Root([-8.78861, -7.55814]_com, :unknown)
-   │  │         Not converged: the root is still being processed)
-   │  └─ (:final, Root([-6.28131, -6.28131]_com, :unique))
-   └─ Branching
-      ├─ (:working, Root([-5.07782, -3.84735]_com, :unknown)
-      │      Not converged: the root is still being processed)
-      └─ (:working, Root([-3.84735, -2.5975]_com, :unknown)
-             Not converged: the root is still being processed)
+julia> state
+SearchState{BreadthFirst{Root{Interval{Float64}}}, Root{Interval{Float64}}}
+  iteration: 15
+  5 regions being processed
+    Root([-0.078125, 1.15234]_com, :unknown)
+    Root([-3.84735, -2.5975]_com, :unknown)
+    Root([-5.07782, -3.84735]_com, :unknown)
+    Root([-8.78861, -7.55814]_com, :unknown)
+    Root([-10.0, -8.78861]_com, :unknown)
+  1 finalized regions
+    Root([-6.28131, -6.28131]_com, :unique)
+
 ```
 
 The elements of the iteration are `SearchState` from the `BranchAndPrune.jl` package.
-In the example, we show the tree that get constructed during the search,
-which, at iteration 15, has found one root and have 4 regions of unknown status
-to process.
+
+The roots being processed can be accessed with `unfinished_roots(state)`
+and the finalized one with `finished_roots(state)`,
+while `roots(state)` return a list containing both.
+
+See `examples/closest_to_zero.jl` for a more advanced example,
+which shows how you can find the root that is closest to zero
+and immediately terminate the search.
