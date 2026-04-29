@@ -4,7 +4,7 @@ using Reexport
 @reexport using IntervalArithmetic
 using IntervalArithmetic.Symbols
 
-using BranchAndPrune
+@reexport using BranchAndPrune
 using ForwardDiff
 using ForwardDiff: derivative, jacobian
 using InteractiveUtils
@@ -24,7 +24,8 @@ include("root_object.jl")
 export Root, isunique, root_status, root_region
 
 include("roots.jl")
-export roots, RootProblem
+export roots, converged_roots, unconverged_roots
+export RootProblem
 
 include("contractors.jl")
 export Bisection, Newton, Krawczyk, contract

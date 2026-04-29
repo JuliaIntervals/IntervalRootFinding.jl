@@ -118,17 +118,22 @@ Base.show(io::IO, pb::RootProblem) = print(io, """
       Ignored errors: $(pb.ignored_errors)"""
 )
 
+roots(state::SearchState) = regions(state)
+converged_roots(state::SearchState) = finished_regions(state)
+unconverged_roots(state::SearchState) = unfinished_regions(state)
+
 function Base.iterate(root_problem::RootProblem, state = nothing)
     if isnothing(state)
         search = root_search(root_problem)
-        iteration = iterate(search)
+        bp_iteration = iterate(search)
     else
         search, search_state = state
-        iteration = iterate(search, search_state)
+        bp_iteration = iterate(search, search_state)
     end
-    isnothing(iteration) && return nothing
-    value, new_search_state = iteration
-    return value, (search, new_search_state)
+    isnothing(bp_iteration) && return nothing
+    bp_search_state = bp_iteration[2]
+    bp_search_state.iteration > root_problem.max_iteration && return nothing
+    return bp_search_state, (search, bp_search_state)
 end
    
 function bisect_region(r::Root, α)
@@ -205,18 +210,14 @@ see [`RootProblem`](@ref).
 """
 function roots(f, region ; kwargs...)
     problem = RootProblem(f, region ; kwargs...)
-    search = root_search(problem)
-    endstate = nothing
+    state = nothing
 
-    for (iter, state) in enumerate(search)
-        endstate = state
-        iter >= problem.max_iteration && break
-    end
+    for outer state in problem end
 
     result = BranchAndPrune.BranchAndPruneResult(
-        endstate.search_order,
-        search.initial_region,
-        endstate.tree
+        state.search_order,
+        problem.region,
+        state.tree
     )
 
     rts = vcat(result.final_regions, result.unfinished_regions)
