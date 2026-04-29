@@ -159,16 +159,42 @@ end
 end
 
 @testset "Out of domain" begin
+    s(x) = sqrt(x^2 - 4) - 2  # root: -6 and 6
+    a(xy) = [asin(xy[1]), acos(xy[2]) - π/2]  # root: (0, 0)
+
     for contractor in newtonlike_methods
-        @test length(roots(log, interval(-100, 2) ; contractor)) == 1
-        @test length(roots(log, interval(-100, -1) ; contractor)) == 0
+        @suppress @test length(roots(log, interval(-100, 2) ; contractor)) == 1
+        @suppress @test length(roots(log, interval(-100, -1) ; contractor)) == 0
+
+        @suppress @test length(roots(s, interval(-20, 20) ; contractor)) == 2
+        @suppress @test length(roots(s, interval(0, 20) ; contractor)) == 1
+        @suppress @test length(roots(s, interval(-1, 1) ; contractor))  == 0
+
+        @suppress @test length(roots(a, fill(interval(-20, 20), 2) ; contractor)) == 1
+        @suppress @test length(roots(a, fill(interval(0.5, 20), 2) ; contractor)) == 0
     end
 end
 
 @testset "Infinite domain" begin
+    f(xy) = [sin(1/xy[1]), xy[1]*xy[2]]  # largest roots: [1/π, 0] and [infinity, 0]
+
     for contractor in newtonlike_methods
-        rts = roots(x -> x^2 - 2, interval(-Inf, Inf) ; contractor)
-        @test length(filter(isunique, rts)) == 2
+        rts = @suppress roots(x -> x^2 - 2, interval(-Inf, Inf) ; contractor)
+        @test length(rts) == 2
+        @test all(isbounded, [rt.region for rt in rts])
+        @test all(rt.region.decoration == com for rt in rts)
+        @test all(isunique, rts)
+
+        rts = @suppress roots(f, [interval(0.9/π, Inf), interval(-Inf, Inf)] ; contractor)
+        @test length(rts) == 2
+        sort!(rts, by = mig)
+        @test isunique(rts[1])
+        @test all(isbounded, rts[1].region)
+        @test minimum(X.decoration for X in rts[1].region) == com
+
+        @test !isunique(rts[2])
+        @test !all(isbounded, rts[2].region)
+        @test minimum(X.decoration for X in rts[2].region) == dac
     end
 end
 
