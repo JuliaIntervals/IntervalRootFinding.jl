@@ -159,9 +159,19 @@ end
 end
 
 @testset "Out of domain" begin
+    s(x) = sqrt(x^2 - 4) - 2  # root: -6 and 6
+    a(xy) = [asin(xy[1]), acos(xy[2]) - π/2]  # root: (0, 0)
+
     for contractor in newtonlike_methods
         @test length(roots(log, interval(-100, 2) ; contractor)) == 1
         @test length(roots(log, interval(-100, -1) ; contractor)) == 0
+
+        @test length(roots(s, interval(-20, 20) ; contractor)) == 2
+        @test length(roots(s, interval(0, 20) ; contractor)) == 1
+        @test length(roots(s, interval(-1, 1) ; contractor))  == 0
+
+        @test length(roots(a, fill(interval(-20, 20), 2) ; contractor)) == 1
+        @test length(roots(a, fill(interval(0.5, 20), 2) ; contractor)) == 0
     end
 end
 
