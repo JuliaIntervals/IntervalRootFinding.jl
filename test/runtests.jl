@@ -1,6 +1,7 @@
 using IntervalRootFinding
 using IntervalArithmetic.Symbols
 using BranchAndPrune
+using Suppressor
 using Test
 
 newtonlike_methods = [Newton, Krawczyk]
