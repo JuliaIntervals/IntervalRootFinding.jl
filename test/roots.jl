@@ -133,6 +133,19 @@ end
     end
 end
 
+@testset "10D roots" begin
+    include("../examples/10_dimensional.jl")
+
+    for contractor in newtonlike_methods
+        rts = roots(f10d, X10d_large ; contractor, max_iteration = 50_000)
+        @test any(X -> all(in_interval.(sol10d, X.region)), rts)
+
+        rts = roots(f10d, X10d_close ; contractor, max_iteration = 1_000_000)
+        @test length(rts) == 1
+        @test isunique(rts[1])
+    end
+end
+
 @testset "Dimension mismatch" begin
     f21(xy) = [xy[1]^2 - 2]
     f23(xy) = [xy[1]^2 - 2, xy[2]^2 - 3, xy[1] + xy[2]]
