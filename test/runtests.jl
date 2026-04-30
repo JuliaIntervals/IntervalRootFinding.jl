@@ -1,6 +1,7 @@
+using BranchAndPrune
 using IntervalRootFinding
 using IntervalArithmetic.Symbols
-using BranchAndPrune
+using ForwardDiff
 using Suppressor
 using Test
 

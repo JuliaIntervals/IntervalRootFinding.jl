@@ -104,7 +104,7 @@ end
 
     # Infinite interval
     X = [interval(-Inf, Inf), interval(-Inf, Inf)]
-    rts = roots(f, X ; contractor = Newton)
+    @suppress rts = roots(f, X ; contractor = Newton)
     @test length(rts) == 2
 end
 
@@ -182,7 +182,7 @@ end
         rts = @suppress roots(x -> x^2 - 2, interval(-Inf, Inf) ; contractor)
         @test length(rts) == 2
         @test all(isbounded, [rt.region for rt in rts])
-        @test all(rt.region.decoration == com for rt in rts)
+        @test all(rt.region.decoration == dac for rt in rts)
         @test all(isunique, rts)
 
         rts = @suppress roots(f, [interval(0.9/π, Inf), interval(-Inf, Inf)] ; contractor)
@@ -190,7 +190,7 @@ end
         sort!(rts, by = mig)
         @test isunique(rts[1])
         @test all(isbounded, rts[1].region)
-        @test minimum(X.decoration for X in rts[1].region) == com
+        @test minimum(X.decoration for X in rts[1].region) == dac
 
         @test !isunique(rts[2])
         @test !all(isbounded, rts[2].region)

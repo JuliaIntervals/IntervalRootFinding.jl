@@ -29,20 +29,7 @@ mag_region(X::AbstractVector) = maximum(mag, X)
 mig_region(X::Interval) = mig(X)
 mig_region(X::AbstractVector) = minimum(mig, X)
 
-function bisect_region(X::Interval, α)
-    X1, X2 = bisect(X, α)
-
-    isbounded(X) && return X1, X2
-
-    if isbounded(X1)
-        X1 = IntervalArithmetic.setdecoration(X1, com)
-    end
-
-    if isbounded(X2)
-        X2 = IntervalArithmetic.setdecoration(X2, com)
-    end
-    return X1, X2
-end
+bisect_region(X::Interval, α) = bisect(X, α)
 
 function bisect_region(X::AbstractVector, α)
     X1 = copy(X)
