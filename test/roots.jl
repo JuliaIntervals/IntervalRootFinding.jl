@@ -199,9 +199,17 @@ end
 end
 
 @testset "NaN return value" begin
-    f(xx) = ( (x, y) = xx; [log(y/x) + 3x, y - 2x] )
+    f1(x) = x^2/x - 1
+    f(xy) = [log(xy[2]/xy[1]) + 3xy[1], xy[2] - 2xy[1]]
     X = [interval(-100, 100), interval(-100, 100)]
+
     for contractor in newtonlike_methods
+        rts = roots(f1, interval(-2, 2) ; contractor)
+        @test length(rts) == 2
+        @test !isunique(rts[1])
+        @test in_interval(0, root_region(rts[1]))
+        @test isunique(rts[2])
+
         rts = roots(f, X ; contractor)
         @test length(filter(isunique, rts)) == 1
         @test length(filter(x -> all(in_interval.(0, x)), root_region.(rts))) == 1
