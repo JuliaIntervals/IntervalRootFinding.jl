@@ -76,6 +76,14 @@ end
         @test length(rts) == 1
         @test root_status(only(rts)) == :unknown
         @test in_interval(0, root_region(only(rts)))
+
+        # Double reciprocal from #131
+        rr(x) = 1/(1/(1 + x)*(1 - x))
+        rts = roots(rr, interval(-10, 10) ; contractor)
+        @test length(rts) == 2
+        @test all(root_status(rt) == :unknown for rt in rts)
+        @test in_interval(-1, root_region(rts[1]))
+        @test in_interval(1, root_region(rts[2]))
     end
 end
 
@@ -482,7 +490,7 @@ function_list = [
     (W3, nothing, -10, 10, [1, 2, 3]),
     (W7, nothing, -10, 10, collect(1:7)),
     (x -> exp(x) - 2, exp, -20, 20, [log(big(2))]),
-    (x -> asin(sin(x)) - big"0.1", Returns(1.0), 0, 1, [big"0.1"])
+    (x -> asin(sin(x)) - big"0.1", Returns(1.0), 0, 1, [big"0.1"]),
 ]
 
 @testset "Various precisions" begin
