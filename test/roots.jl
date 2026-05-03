@@ -158,6 +158,31 @@ end
     end
 end
 
+@testset "Multiple roots" begin
+    f(x) = (x-1) * (x^2 - 2)^3 * (x^3 - 2)^4
+    g(x) = exp(x) - x - 1  # Double root at 0 from Burden & Faires, 9th ed, p.84
+
+    for contractor in newtonlike_methods
+        rts = roots(f, interval(-5, 5) ; contractor)
+
+        @test length(rts) == 4
+        @test rts[1].status == :unknown
+        @test in_interval(-sqrt(2), rts[1].region)
+
+        @test rts[2].status == :unique
+        @test in_interval(1, rts[2].region)
+
+        @test rts[3].status == :unknown
+        @test in_interval(cbrt(2), rts[3].region)
+
+        @test rts[4].status == :unknown
+        @test in_interval(sqrt(2), rts[4].region)
+
+        rts = roots(g, interval(-5, 5) ; contractor)
+        @test all(rt.status == :unknown for rt in rts)
+        @test in_interval(0, hull([rt.region for rt in rts]...))
+    end
+end
 @testset "Out of domain" begin
     s(x) = sqrt(x^2 - 4) - 2  # root: -6 and 6
     a(xy) = [asin(xy[1]), acos(xy[2]) - π/2]  # root: (0, 0)
@@ -446,4 +471,48 @@ end
     g(x) = (x < 1 ? x : error())
     rts = roots(g, interval(-10, 10) ; ignored_errors = [ErrorException, IntervalArithmetic.InconclusiveBooleanOperation])
     @test any(isunique, rts)
+end
+
+# Wilkinson-type polynomial defined by its roots:
+# Wn(x) = (x-1)⋅(x-2)⋅ ⋯ ⋅ (x-n)
+W3(x) = prod(x .- (1:3))
+W7(x) = prod(x .- (1:7))
+
+# Format:  (function, derivative, lower_bound, upper_bound, [true_roots])
+function_list = [
+    (sin, cos, -5,  5, [-big(π), 0, big(π)]) ,
+    (cos, x -> -sin(x), -7.5, 7.5, [-3big(π)/2, -big(π)/2, big(π)/2, 3big(π)/2]),
+    (W3, nothing, -10, 10, [1, 2, 3]),
+    (W7, nothing, -10, 10, collect(1:7)),
+    (x -> exp(x) - 2, exp, -20, 20, [log(big(2))]),
+    (x -> asin(sin(x)) - big"0.1", Returns(1.0), 0, 1, [big"0.1"])
+]
+
+@testset "Various precisions" begin
+    @testset "$T" for T in [Float64, BigFloat]
+        @testset "Function $(func[1])" for func in function_list
+            @testset "$contractor" for contractor in newtonlike_methods
+                f, f_prime, a_lower, a_upper, true_roots = func
+                a = interval(T, a_lower, a_upper)
+
+                @testset "autodiff = $autodiff" for autodiff in (false, true)
+                    isnothing(f_prime) && continue
+
+                    if autodiff
+                        rts = roots(f, a ; contractor)
+                    else
+                        rts = roots(f, a ; contractor, derivative = f_prime)
+                    end
+
+                    @test length(rts) == length(true_roots)
+
+                    for (root, true_root) in zip(rts, true_roots)
+                        @test isa(root, Root)
+                        @test isunique(root)
+                        @test in_interval(true_root, root.region)
+                    end
+                end
+            end
+        end
+    end
 end
