@@ -513,3 +513,14 @@ function_list = [
         end
     end
 end
+
+
+@testset "Interval parameters" begin
+    a = interval(1.9, 2.1)
+    for contractor in newtonlike_methods
+        rts = roots(x -> x^2 - a^2, interval(0, 10) ; contractor)
+
+        @test length(rts) == 1
+        @test issubset_interval(a, rts[1].region)
+    end
+end
