@@ -2,6 +2,7 @@ using BranchAndPrune
 using IntervalRootFinding
 using IntervalArithmetic.Symbols
 using ForwardDiff
+using StaticArrays
 using Suppressor
 using Test
 

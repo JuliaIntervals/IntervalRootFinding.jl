@@ -1,6 +1,3 @@
-using IntervalArithmetic, IntervalRootFinding, StaticArrays, ForwardDiff
-using Test
-
 function all_unique(rts)
     all(root_status.(rts) .== :unique)
 end
@@ -26,6 +23,10 @@ function test_newtonlike(f, derivative, X, contractor, nsol, tol=1e-10)
     @test length(rts) == nsol
     @test all_unique(rts)
     @test sum(roots_dist.(rts, roots(f, X ; contractor, derivative))) < tol
+end
+
+function in_solution_set(point, solution_intervals)
+    return any(map(Y -> in_region(point, Y), solution_intervals))
 end
 
 @testset "1D roots" begin
@@ -78,10 +79,6 @@ end
     end
 end
 
-
-function in_solution_set(point, solution_intervals)
-    return any(map(Y -> in_region(point, Y), solution_intervals))
-end
 
 @testset "2D roots" begin
     f(x, y) = [x^2 + y^2 - 1, y - 2x]
