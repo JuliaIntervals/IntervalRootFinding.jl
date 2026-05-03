@@ -1,7 +1,3 @@
-using Test
-
-import ForwardDiff
-
 @testset "Stationary points" begin
     f(xx) = ( (x, y) = xx; sin(x) * sin(y) )
     gradf = xx -> ForwardDiff.gradient(f, xx)
