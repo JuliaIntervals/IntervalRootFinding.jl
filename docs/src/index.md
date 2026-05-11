@@ -29,7 +29,6 @@ julia> using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
 julia> rts = roots(x -> x^2 - 2x, 0..10)
 2-element Vector{Root{Interval{Float64}}}:
  Root([0.0, 3.73848e-8]_com_NG, :unknown)
-    Not converged: region size smaller than the tolerance
  Root([2.0, 2.0]_com_NG, :unique)
 ```
 
@@ -54,7 +53,7 @@ and can be either of
 However, there are several known situations where the uniqueness
 (and existence) of a solution can never be determined
 by the interval algorithms used in the package:
-  - If the function used error at for specific intervals
+  - If the function errors for specific intervals
     (for example if comparison operators like `==` and `<` are used);
   - If the solution is on the boundary of the interval (as in the previous example);
   - If the derivative of the solution is zero at the solution.
@@ -72,9 +71,7 @@ julia> roots(g, -10..10)
 4-element Vector{Root{Interval{Float64}}}:
  Root([-1.73205, -1.73205]_com_NG, :unique)
  Root([-1.41421, -1.41421]_com, :unknown)
-    Not converged: region size smaller than the tolerance
  Root([1.41421, 1.41421]_com, :unknown)
-    Not converged: region size smaller than the tolerance
  Root([1.73205, 1.73205]_com_NG, :unique)
 ```
 
