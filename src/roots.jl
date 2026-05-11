@@ -74,7 +74,7 @@ end
 
 function RootProblem(
         f, root::Root ;
-        contractor = Newton,
+        contractor = Krawczyk,
         derivative = nothing,
         search_order = BreadthFirst,
         abstol = 1e-7,
@@ -229,7 +229,7 @@ function roots(f, region ; kwargs...)
 end
 
 # Acting on complex `Interval`
-function roots(f, region::Complex{<:Interval} ; derivative = nothing, contractor = Newton, kwargs...)
+function roots(f, region::Complex{<:Interval} ; derivative = nothing, contractor = Krawczyk, kwargs...)
     g = realify(f)
     X = [real(region), imag(region)]
 

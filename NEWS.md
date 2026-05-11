@@ -1,5 +1,18 @@
 # Updates to `IntervalRootFinding.jl`
 
+## v0.7
+
+This release is expected to be the last release before v1.0.
+
+The only breaking change is that the Krawczyck contractor is now the default.
+
+### New features since v0.6.0
+- Requires IntervalArithmetic v1.0.
+- The root search continues on inconclusive boolean operations #233
+- The iterator interface has been greatly improve #241
+- `maxiter` and `reltol` stop criterion #211
+- A lot of tests
+
 ## v0.6
 
 Compatibility with IntervalArithmetic v0.22, which fundamentally changes the package.
