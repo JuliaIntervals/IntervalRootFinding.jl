@@ -48,3 +48,10 @@ include("svectors.jl")
 
 include("test_smiley.jl")
 include("linear_eq.jl")
+
+@testset "Example files" begin
+    for file in readdir("../examples/", join = true)
+        include(file)
+        @test true
+    end
+end
