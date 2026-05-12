@@ -28,12 +28,7 @@ julia> using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
 
 julia> rts = roots(x -> x^2 - 2x, 0..10)
 2-element Vector{Root{Interval{Float64}}}:
-<<<<<<< prepare_v1.0
  Root([0.0, 3.7395e-8]_com_NG, :unknown)
-    Not converged: region size smaller than the tolerance
-=======
- Root([0.0, 3.73848e-8]_com_NG, :unknown)
->>>>>>> master
  Root([2.0, 2.0]_com_NG, :unique)
 ```
 
@@ -75,15 +70,8 @@ g (generic function with 1 method)
 julia> roots(g, -10..10)
 4-element Vector{Root{Interval{Float64}}}:
  Root([-1.73205, -1.73205]_com_NG, :unique)
-<<<<<<< prepare_v1.0
  Root([-1.41421, -1.41421]_com_NG, :unknown)
-    Not converged: region size smaller than the tolerance
  Root([1.41421, 1.41421]_com_NG, :unknown)
-    Not converged: region size smaller than the tolerance
-=======
- Root([-1.41421, -1.41421]_com, :unknown)
- Root([1.41421, 1.41421]_com, :unknown)
->>>>>>> master
  Root([1.73205, 1.73205]_com_NG, :unique)
 ```
 
