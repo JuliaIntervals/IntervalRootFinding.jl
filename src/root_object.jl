@@ -57,6 +57,10 @@ isunique(rt::Root{T}) where {T} = (rt.status == :unique)
 
 function show(io::IO, rt::Root)
     print(io, "Root($(rt.region), :$(rt.status))")
+end
+
+function show(io::IO, ::MIME"text/plain", rt::Root)
+    show(io, rt)
     if rt.status == :unknown
         if rt.convergence == :tolerance
             print(io, "\n    Not converged: region size smaller than the tolerance")

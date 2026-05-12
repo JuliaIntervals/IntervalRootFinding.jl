@@ -1,38 +1,8 @@
-using IntervalArithmetic, IntervalRootFinding, StaticArrays, ForwardDiff
-using Test
-
-function all_unique(rts)
-    all(root_status.(rts) .== :unique)
-end
-
-function roots_dist(rt1::Root{<:Interval}, rt2::Root{<:Interval})
-    d = dist(root_region(rt1), root_region(rt2))
-    return sum(d)
-end
-
-function roots_dist(rt1::Root{<:AbstractVector}, rt2::Root{<:AbstractVector})
-    return sum(dist.(root_region(rt1), root_region(rt2)))
-end
-
-function roots_dist(rt1::Root{Complex{<:Interval}}, rt2::Root{Complex{<:Interval}})
-    dreal = dist(real(root_region(rt1)), real(root_region(rt2)))
-    dimag = dist(imag(root_region(rt1)), imag(root_region(rt2)))
-
-    return sum(dreal) + sum(dimag)
-end
-
-function test_newtonlike(f, derivative, X, contractor, nsol, tol=1e-10)
-    rts = roots(f, X ; contractor)
-    @test length(rts) == nsol
-    @test all_unique(rts)
-    @test sum(roots_dist.(rts, roots(f, X ; contractor, derivative))) < tol
-end
-
-@testset "1D roots" begin
+@testset "Simple tests" begin
     # Default
     rts = roots(sin, interval(-5, 5))
     @test length(rts) == 3
-    @test all_unique(rts)
+    @test all(isunique, rts)
 
     # Bisection
     rts = roots(sin, interval(-5, 6) ; contractor = Bisection, abstol = 1e-3)
@@ -48,10 +18,6 @@ end
         end
 
         test_newtonlike(sin, cos, interval(-5, 5), contractor, 3)
-
-        # Infinite interval
-        rts = roots(x -> x^2 - 2, interval(-Inf, Inf) ; contractor)
-        @test length(rts) == 2
 
         # abs
         g(p) = abs(1 / ( (1+p)^30 ) * 10_000 - 100)
@@ -75,107 +41,95 @@ end
         @test length(rts) == 1
         @test root_status(only(rts)) == :unknown
         @test in_interval(0, root_region(only(rts)))
+
+        # Double reciprocal from #131
+        rr(x) = 1/(1/(1 + x)*(1 - x))
+        rts = roots(rr, interval(-10, 10) ; contractor)
+        @test length(rts) == 2
+        @test all(root_status(rt) == :unknown for rt in rts)
+        @test in_interval(-1, root_region(rts[1]))
+        @test in_interval(1, root_region(rts[2]))
     end
 end
 
-
-function in_solution_set(point, solution_intervals)
-    return any(map(Y -> in_region(point, Y), solution_intervals))
-end
-
-@testset "2D roots" begin
-    f(x, y) = [x^2 + y^2 - 1, y - 2x]
-    f(X) = f(X...)
-    X = [interval(-6, 6), interval(-6, 6)]
-
-    # Bisection
-    rts = roots(f, X ; contractor = Bisection, abstol = 1e-3)
-    exact_sol = [sqrt(1/5), 2sqrt(1/5)]
-    @test in_solution_set(exact_sol, root_region.(rts))
-    @test in_solution_set(-exact_sol, root_region.(rts))
+@testset "Multiple roots" begin
+    f(x) = (x-1) * (x^2 - 2)^3 * (x^3 - 2)^4
+    g(x) = exp(x) - x - 1  # Double root at 0 from Burden & Faires, 9th ed, p.84
 
     for contractor in newtonlike_methods
-        deriv = xx -> ForwardDiff.jacobian(f, xx)
-        test_newtonlike(f, deriv, X, contractor, 2)
-        rts = roots(f, X ; contractor)
-        @test in_solution_set(exact_sol, root_region.(rts))
-        @test in_solution_set(-exact_sol, root_region.(rts))
-    end
+        rts = roots(f, interval(-5, 5) ; contractor)
 
-    # Infinite interval
-    X = [interval(-Inf, Inf), interval(-Inf, Inf)]
-    rts = roots(f, X ; contractor = Newton)
-    @test length(rts) == 2
-end
-
-
-# From R docs:
-# https://www.rdocumentation.org/packages/pracma/versions/1.9.9/topics/broyden
-
-@testset "3D roots" begin
-    function g(x)
-        (x1, x2, x3) = x
-        SVector(    x1^2 + x2^2 + x3^2 - 1,
-                    x1^2 + x3^2 - 0.25,
-                    x1^2 + x2^2 - 4x3
-                )
-    end
-    dg = xx -> ForwardDiff.jacobian(g, xx)
-
-    X = interval(-5, 5)
-    XX = [X, X, X]
-
-    for contractor in newtonlike_methods
-        rts = roots(g, XX ; contractor)
         @test length(rts) == 4
-        @test all_unique(rts)
-        @test all(rts .== roots(g, XX ; contractor, derivative = dg))
+        @test rts[1].status == :unknown
+        @test in_interval(-sqrt(2), rts[1].region)
+
+        @test rts[2].status == :unique
+        @test in_interval(1, rts[2].region)
+
+        @test rts[3].status == :unknown
+        @test in_interval(cbrt(2), rts[3].region)
+
+        @test rts[4].status == :unknown
+        @test in_interval(sqrt(2), rts[4].region)
+
+        rts = roots(g, interval(-5, 5) ; contractor)
+        @test all(rt.status == :unknown for rt in rts)
+        @test in_interval(0, hull([rt.region for rt in rts]...))
     end
 end
-
-@testset "10D roots" begin
-    include("../examples/10_dimensional.jl")
-
-    for contractor in newtonlike_methods
-        rts = roots(f10d, X10d_large ; contractor, max_iteration = 50_000)
-        @test any(X -> all(in_interval.(sol10d, X.region)), rts)
-
-        rts = roots(f10d, X10d_close ; contractor, max_iteration = 1_000_000)
-        @test length(rts) == 1
-        @test isunique(rts[1])
-    end
-end
-
-@testset "Dimension mismatch" begin
-    f21(xy) = [xy[1]^2 - 2]
-    f23(xy) = [xy[1]^2 - 2, xy[2]^2 - 3, xy[1] + xy[2]]
-
-    X = [interval(0, 5), interval(0, 5)]
-
-    for contractor in newtonlike_methods
-        @test_throws DimensionMismatch roots(f21, X ; contractor)
-        @test_throws DimensionMismatch roots(f23, X ; contractor)
-    end
-end
-
 @testset "Out of domain" begin
+    s(x) = sqrt(x^2 - 4) - 2  # root: -6 and 6
+    a(xy) = [asin(xy[1]), acos(xy[2]) - π/2]  # root: (0, 0)
+
     for contractor in newtonlike_methods
-        @test length(roots(log, interval(-100, 2) ; contractor)) == 1
-        @test length(roots(log, interval(-100, -1) ; contractor)) == 0
+        @suppress @test length(roots(log, interval(-100, 2) ; contractor)) == 1
+        @suppress @test length(roots(log, interval(-100, -1) ; contractor)) == 0
+
+        @suppress @test length(roots(s, interval(-20, 20) ; contractor)) == 2
+        @suppress @test length(roots(s, interval(0, 20) ; contractor)) == 1
+        @suppress @test length(roots(s, interval(-1, 1) ; contractor))  == 0
+
+        @suppress @test length(roots(a, fill(interval(-20, 20), 2) ; contractor)) == 1
+        @suppress @test length(roots(a, fill(interval(0.5, 20), 2) ; contractor)) == 0
     end
 end
 
 @testset "Infinite domain" begin
+    # Infinite interval
+    f(xy) = [sin(1/xy[1]), xy[1]*xy[2]]  # largest roots: [1/π, 0] and [infinity, 0]
+
     for contractor in newtonlike_methods
-        rts = roots(x -> x^2 - 2, interval(-Inf, Inf) ; contractor)
-        @test length(filter(isunique, rts)) == 2
+        rts = @suppress roots(x -> x^2 - 2, interval(-Inf, Inf) ; contractor)
+        @test length(rts) == 2
+        @test all(isbounded, [rt.region for rt in rts])
+        @test all(rt.region.decoration == dac for rt in rts)
+        @test all(isunique, rts)
+
+        rts = @suppress roots(f, [interval(0.9/π, Inf), interval(-Inf, Inf)] ; contractor)
+        @test length(rts) == 2
+        sort!(rts, by = mig)
+        @test isunique(rts[1])
+        @test all(isbounded, rts[1].region)
+        @test minimum(X.decoration for X in rts[1].region) == dac
+
+        @test !isunique(rts[2])
+        @test !all(isbounded, rts[2].region)
+        @test minimum(X.decoration for X in rts[2].region) == dac
     end
 end
 
 @testset "NaN return value" begin
-    f(xx) = ( (x, y) = xx; [log(y/x) + 3x, y - 2x] )
+    f1(x) = x^2/x - 1
+    f(xy) = [log(xy[2]/xy[1]) + 3xy[1], xy[2] - 2xy[1]]
     X = [interval(-100, 100), interval(-100, 100)]
+
     for contractor in newtonlike_methods
+        rts = roots(f1, interval(-2, 2) ; contractor)
+        @test length(rts) == 2
+        @test !isunique(rts[1])
+        @test in_interval(0, root_region(rts[1]))
+        @test isunique(rts[2])
+
         rts = roots(f, X ; contractor)
         @test length(filter(isunique, rts)) == 1
         @test length(filter(x -> all(in_interval.(0, x)), root_region.(rts))) == 1
@@ -412,4 +366,59 @@ end
     g(x) = (x < 1 ? x : error())
     rts = roots(g, interval(-10, 10) ; ignored_errors = [ErrorException, IntervalArithmetic.InconclusiveBooleanOperation])
     @test any(isunique, rts)
+end
+
+# Wilkinson-type polynomial defined by its roots:
+# Wn(x) = (x-1)⋅(x-2)⋅ ⋯ ⋅ (x-n)
+W3(x) = prod(x .- (1:3))
+W7(x) = prod(x .- (1:7))
+
+# Format:  (function, derivative, lower_bound, upper_bound, [true_roots])
+function_list = [
+    (sin, cos, -5,  5, [-big(π), 0, big(π)]) ,
+    (cos, x -> -sin(x), -7.5, 7.5, [-3big(π)/2, -big(π)/2, big(π)/2, 3big(π)/2]),
+    (W3, nothing, -10, 10, [1, 2, 3]),
+    (W7, nothing, -10, 10, collect(1:7)),
+    (x -> exp(x) - 2, exp, -20, 20, [log(big(2))]),
+    (x -> asin(sin(x)) - big"0.1", Returns(1.0), 0, 1, [big"0.1"]),
+]
+
+@testset "Various precisions" begin
+    @testset "$T" for T in [Float64, BigFloat]
+        @testset "Function $(func[1])" for func in function_list
+            @testset "$contractor" for contractor in newtonlike_methods
+                f, f_prime, a_lower, a_upper, true_roots = func
+                a = interval(T, a_lower, a_upper)
+
+                @testset "autodiff = $autodiff" for autodiff in (false, true)
+                    isnothing(f_prime) && continue
+
+                    if autodiff
+                        rts = roots(f, a ; contractor)
+                    else
+                        rts = roots(f, a ; contractor, derivative = f_prime)
+                    end
+
+                    @test length(rts) == length(true_roots)
+
+                    for (root, true_root) in zip(rts, true_roots)
+                        @test isa(root, Root)
+                        @test isunique(root)
+                        @test in_interval(true_root, root.region)
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+@testset "Interval parameters" begin
+    a = interval(1.9, 2.1)
+    for contractor in newtonlike_methods
+        rts = roots(x -> x^2 - a^2, interval(0, 10) ; contractor)
+
+        @test length(rts) == 1
+        @test issubset_interval(a, rts[1].region)
+    end
 end
