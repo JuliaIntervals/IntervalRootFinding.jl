@@ -79,7 +79,7 @@ f (generic function with 1 method)
 
 julia> problem = RootProblem(f, interval(-10, 10))
 RootProblem
-  Contractor: Newton
+  Contractor: Krawczyk
   Function: f
   Search region: [-10.0, 10.0]_com
   Search order: BreadthFirst

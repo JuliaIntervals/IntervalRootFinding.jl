@@ -75,8 +75,8 @@ df (generic function with 1 method)
 
 julia> roots(f, [-3..3, -3..3] ; derivative = df)
 2-element Vector{Root{Vector{Interval{Float64}}}}:
- Root(Interval{Float64}[[-1.28378e-21, 1.58819e-22]_com_NG, [-1.5708, -1.5708]_com_NG], :unique)
- Root(Interval{Float64}[[-1.28378e-21, 1.58819e-22]_com_NG, [1.5708, 1.5708]_com_NG], :unique)
+ Root(Interval{Float64}[[-3.93241e-20, 3.93241e-20]_com_NG, [-1.5708, -1.5708]_com_NG], :unique)
+ Root(Interval{Float64}[[-3.93241e-20, 3.93241e-20]_com_NG, [1.5708, 1.5708]_com_NG], :unique)
 ```
 
 ## Tolerance
@@ -94,8 +94,8 @@ julia> roots(g, 0..2)
 
 julia> roots(g, 0..2 ; abstol = 1e-1)
 2-element Vector{Root{Interval{Float64}}}:
- Root([1.14173, 1.15244]_com, :unique)
- Root([1.78757, 1.84272]_com, :unique)
+ Root([1.1205, 1.16994]_com, :unique)
+ Root([1.8237, 1.85206]_com, :unique)
 ```
 
 A lower tolerance may greatly reduce the computation time, at the cost of an increased number of returned roots having `:unknown` status:
