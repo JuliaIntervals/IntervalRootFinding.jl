@@ -12,7 +12,7 @@ end
 
 function gauss_seidel_interval(A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
     x = similar(b)
-    x .= -1e16..1e16
+    x .= -1e16 .. 1e16
     gauss_seidel_interval!(x, A, b, precondition=precondition, maxiter=maxiter)
     return x
 end
@@ -49,7 +49,7 @@ end
 
 function gauss_seidel_contractor(A::AbstractMatrix, b::AbstractArray; precondition=true, maxiter=100)
     x = similar(b)
-    x .= -1e16..1e16
+    x .= -1e16 .. 1e16
     x = gauss_seidel_contractor!(x, A, b, precondition=precondition, maxiter=maxiter)
     return x
 end
