@@ -28,8 +28,8 @@ julia> using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
 
 julia> rts = roots(x -> x^2 - 2x, 0..10)
 2-element Vector{Root{Interval{Float64}}}:
- Root([0.0, 3.7395e-8]_com_NG, :unknown)
- Root([2.0, 2.0]_com_NG, :unique)
+ Root([0.0, 3.73951e-8]_com_NG, :unknown)
+ Root([1.99999, 2.00001]_com_NG, :unique)
 ```
 
 The roots are returned as `Root` objects, containing an interval and the status of that interval, represented as a `Symbol`. There are two possible types of root status, as shown in the example:
@@ -46,7 +46,7 @@ This information is stored in the `convergence` field of the root,
 and can be either of
   - `:max_iterartion`: the maximal number of iteration was reached
   (`max_iteration` keyword);
-  - `:tolerance`: the interval is smaller than the specificed 
+  - `:tolerance`: the interval is smaller than the specified
   tolerance (`abstol` and `reltol` keywords,
   for absolute and relative tolerance respectively).
 
@@ -69,10 +69,10 @@ g (generic function with 1 method)
 
 julia> roots(g, -10..10)
 4-element Vector{Root{Interval{Float64}}}:
- Root([-1.73205, -1.73205]_com_NG, :unique)
- Root([-1.41421, -1.41421]_com_NG, :unknown)
- Root([1.41421, 1.41421]_com_NG, :unknown)
- Root([1.73205, 1.73205]_com_NG, :unique)
+ Root([-1.73206, -1.73205]_com_NG, :unique)
+ Root([-1.41422, -1.41421]_com_NG, :unknown)
+ Root([1.41421, 1.41422]_com_NG, :unknown)
+ Root([1.73205, 1.73206]_com_NG, :unique)
 ```
 
 Here we see that the two double roots are reported as being possible roots without guarantee and the simple roots have been proved to be unique.
@@ -101,10 +101,10 @@ julia> X = -5..5
 
 julia> rts = roots(g, [X, X, X])
 4-element Vector{Root{Vector{Interval{Float64}}}}:
- Root(Interval{Float64}[[-0.440763, -0.440763]_com_NG, [-0.866025, -0.866025]_com_NG, [0.236068, 0.236068]_com_NG], :unique)
- Root(Interval{Float64}[[-0.440763, -0.440763]_com_NG, [0.866025, 0.866025]_com_NG, [0.236068, 0.236068]_com_NG], :unique)
- Root(Interval{Float64}[[0.440763, 0.440763]_com_NG, [-0.866025, -0.866025]_com_NG, [0.236068, 0.236068]_com_NG], :unique)
- Root(Interval{Float64}[[0.440763, 0.440763]_com_NG, [0.866025, 0.866025]_com_NG, [0.236068, 0.236068]_com_NG], :unique)
+ Root(Interval{Float64}[[-0.440763, -0.440762]_com_NG, [-0.866026, -0.866025]_com_NG, [0.236067, 0.236068]_com_NG], :unique)
+ Root(Interval{Float64}[[-0.440763, -0.440762]_com_NG, [0.866025, 0.866026]_com_NG, [0.236067, 0.236068]_com_NG], :unique)
+ Root(Interval{Float64}[[0.440762, 0.440763]_com_NG, [-0.866026, -0.866025]_com_NG, [0.236067, 0.236068]_com_NG], :unique)
+ Root(Interval{Float64}[[0.440762, 0.440763]_com_NG, [0.866025, 0.866026]_com_NG, [0.236067, 0.236068]_com_NG], :unique)
 ```
 
 Thus, the system admits four unique roots in the box $[-5, 5]^3$.
@@ -122,10 +122,10 @@ julia> X = -5..5
 
 julia> roots(h, SVector(X, X))
 4-element Vector{Root{SVector{2, Interval{Float64}}}}:
- Root(Interval{Float64}[[-2.0, -2.0]_com_NG, [-4.0, -4.0]_com_NG], :unique)
- Root(Interval{Float64}[[-2.0, -2.0]_com_NG, [4.0, 4.0]_com_NG], :unique)
- Root(Interval{Float64}[[2.0, 2.0]_com_NG, [-4.0, -4.0]_com_NG], :unique)
- Root(Interval{Float64}[[2.0, 2.0]_com_NG, [4.0, 4.0]_com_NG], :unique)
+ Root(Interval{Float64}[[-2.00001, -1.99999]_com_NG, [-4.00001, -3.99999]_com_NG], :unique)
+ Root(Interval{Float64}[[-2.00001, -1.99999]_com_NG, [3.99999, 4.00001]_com_NG], :unique)
+ Root(Interval{Float64}[[1.99999, 2.00001]_com_NG, [-4.00001, -3.99999]_com_NG], :unique)
+ Root(Interval{Float64}[[1.99999, 2.00001]_com_NG, [3.99999, 4.00001]_com_NG], :unique)
 ```
 
 ### Vector types
@@ -167,7 +167,7 @@ julia> x = [interval(0, 5), interval(0, 5)]
 
 julia> roots(f, x)
 1-element Vector{Root{Vector{Interval{Float64}}}}:
- Root(Interval{Float64}[[1.41421, 1.41421]_com, [1.73205, 1.73205]_com], :unique)
+ Root(Interval{Float64}[[1.41421, 1.41422]_com, [1.73205, 1.73206]_com], :unique)
 ```
 This macro does not disturb the function when called with non-interval inputs:
 ```jldoctest exact-2
