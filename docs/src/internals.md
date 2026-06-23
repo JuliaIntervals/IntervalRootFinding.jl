@@ -30,10 +30,10 @@ The available contractors are `Bisection`, `Newton` or `Krawczyk`.
 julia> using IntervalRootFinding: contract
 
 julia> contract(Newton, sin, cos, Root(pi ± 0.001, :unknown))
-Root([3.14159, 3.14159]_com, :unique)
+Root([3.14159, 3.1416]_com, :unique)
 
 julia> contract(Newton, sin, cos, Root(2 ± 0.001, :unknown))
-Root([1.999, 2.001]_com, :empty)
+Root([1.999, 2.00101]_com, :empty)
 ```
 
 While it is the fastest and doesn't require derivatives,
@@ -99,13 +99,13 @@ julia> state
 SearchState{BreadthFirst{Root{Interval{Float64}}}, Root{Interval{Float64}}}
   iteration: 15
   5 regions being processed
-    Root([-0.078125, 1.15234]_com, :unknown)
+    Root([-0.078125, 1.15235]_com, :unknown)
     Root([-3.84735, -2.5975]_com, :unknown)
-    Root([-5.07782, -3.84735]_com, :unknown)
-    Root([-8.78861, -7.55814]_com, :unknown)
-    Root([-10.0, -8.78861]_com, :unknown)
+    Root([-5.07782, -3.84734]_com, :unknown)
+    Root([-8.78861, -7.55813]_com, :unknown)
+    Root([-10.0, -8.7886]_com, :unknown)
   1 finalized regions
-    Root([-6.28131, -6.28131]_com, :unique)
+    Root([-6.28132, -6.28131]_com, :unique)
 
 ```
 

@@ -19,18 +19,18 @@ The method used is given using the `contractor` keyword argument:
 ```jldoctest
 julia> roots(log, -2..2 ; contractor = Newton)
 1-element Vector{Root{Interval{Float64}}}:
- Root([1.0, 1.0]_com, :unique)
+ Root([0.999999, 1.00001]_com, :unique)
 
 julia> roots(log, -2..2 ; contractor = Krawczyk)
 1-element Vector{Root{Interval{Float64}}}:
- Root([1.0, 1.0]_com, :unique)
+ Root([0.999999, 1.00001]_com, :unique)
 
 julia> roots(log, -2..2 ; contractor = Bisection)
 1-element Vector{Root{Interval{Float64}}}:
- Root([1.0, 1.0]_com, :unknown)
+ Root([0.999999, 1.00001]_com, :unknown)
 ```
 
-Note that as shown in the example, the `log` function does not complain about being given an interval going outside of its domain. While this may be surprising, this is the expected behavior and no root will ever be found outside the domain of a function.
+Note that as shown in the example, the `log` function does not complain about being given an interval going outside its domain. While this may be surprising, this is the expected behavior and no root will ever be found outside the domain of a function.
 
 ## Explicit derivatives
 
@@ -39,11 +39,11 @@ Newton and Krawczyk methods require the function to be differentiable, but the d
 ```jldoctest
 julia> roots(log, -2..2 ; contractor = Newton, derivative = x -> 1/x)
 1-element Vector{Root{Interval{Float64}}}:
- Root([1.0, 1.0]_com_NG, :unique)
+ Root([0.999999, 1.00001]_com_NG, :unique)
 
 julia> roots(log, -2..2 ; contractor = Krawczyk, derivative = x -> 1/x)
 1-element Vector{Root{Interval{Float64}}}:
- Root([1.0, 1.0]_com_NG, :unique)
+ Root([0.999999, 1.00001]_com_NG, :unique)
 ```
 
 When providing the derivative explicitly, the computation is expected to be slightly faster, but the precision of the result is unlikely to be affected.
@@ -75,8 +75,8 @@ df (generic function with 1 method)
 
 julia> roots(f, [-3..3, -3..3] ; derivative = df)
 2-element Vector{Root{Vector{Interval{Float64}}}}:
- Root(Interval{Float64}[[-3.93241e-20, 3.93241e-20]_com_NG, [-1.5708, -1.5708]_com_NG], :unique)
- Root(Interval{Float64}[[-3.93241e-20, 3.93241e-20]_com_NG, [1.5708, 1.5708]_com_NG], :unique)
+ Root(Interval{Float64}[[-3.93242e-20, 3.93242e-20]_com_NG, [-1.5708, -1.57079]_com_NG], :unique)
+ Root(Interval{Float64}[[-3.93242e-20, 3.93242e-20]_com_NG, [1.57079, 1.5708]_com_NG], :unique)
 ```
 
 ## Tolerance
@@ -89,13 +89,13 @@ g (generic function with 1 method)
 
 julia> roots(g, 0..2)
 2-element Vector{Root{Interval{Float64}}}:
- Root([1.14473, 1.14473]_com, :unique)
- Root([1.83788, 1.83788]_com, :unique)
+ Root([1.14472, 1.14473]_com, :unique)
+ Root([1.83787, 1.83788]_com, :unique)
 
 julia> roots(g, 0..2 ; abstol = 1e-1)
 2-element Vector{Root{Interval{Float64}}}:
- Root([1.1205, 1.16994]_com, :unique)
- Root([1.8237, 1.85206]_com, :unique)
+ Root([1.12049, 1.16994]_com, :unique)
+ Root([1.82369, 1.85206]_com, :unique)
 ```
 
 A lower tolerance may greatly reduce the computation time, at the cost of an increased number of returned roots having `:unknown` status:
@@ -167,7 +167,7 @@ f (generic function with 1 method)
 julia> roots(f, -10 .. 10)
 3-element Vector{Root{Interval{Float64}}}:
  Root([0.0, 0.0]_com, :unique)
- Root([2.0, 2.0]_com, :unknown)
+ Root([1.99999, 2.00001]_com, :unknown)
  Root([7.0, 7.0]_com_NG, :unique)
 ```
 
