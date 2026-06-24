@@ -17,7 +17,7 @@ To do so, it uses methods from interval analysis, using interval arithmetic from
 
 To begin, we need a standard Julia function and an interval in which to search roots of that function. Intervals use the `Interval` type provided by the `IntervalArithmetic.jl` package
 Intervals are generally constructed using the `..` syntax (from the `IntervalArithmetic.Symbols` submodule),
-`a..b` representing the closed interval $[a, b]$.
+`a .. b` representing the closed interval $[a, b]$.
 
 When provided with this information, the `roots` function will return a vector of all roots of the function in the given interval.
 
@@ -26,7 +26,7 @@ Example:
 ```jldoctest
 julia> using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
 
-julia> rts = roots(x -> x^2 - 2x, 0..10)
+julia> rts = roots(x -> x^2 - 2x, 0 .. 10)
 2-element Vector{Root{Interval{Float64}}}:
  Root([0.0, 3.73951e-8]_com_NG, :unknown)
  └ Not converged: region size smaller than the tolerance
@@ -68,7 +68,7 @@ For example:
 julia> g(x) = (x^2 - 2)^2 * (x^2 - 3)
 g (generic function with 1 method)
 
-julia> roots(g, -10..10)
+julia> roots(g, -10 .. 10)
 4-element Vector{Root{Interval{Float64}}}:
  Root([-1.73206, -1.73205]_com_NG, :unique)
  Root([-1.41422, -1.41421]_com_NG, :unknown)
@@ -99,7 +99,7 @@ julia> function g( (x1, x2, x3) )
        end
 g (generic function with 1 method)
 
-julia> X = -5..5
+julia> X = -5 .. 5
 [-5.0, 5.0]_com
 
 julia> rts = roots(g, [X, X, X])
@@ -120,7 +120,7 @@ julia> using StaticArrays
 julia> h((x, y)) = SVector(x^2 - 4, y^2 - 16)
 h (generic function with 1 method)
 
-julia> X = -5..5
+julia> X = -5 .. 5
 [-5.0, 5.0]_com
 
 julia> roots(h, SVector(X, X))

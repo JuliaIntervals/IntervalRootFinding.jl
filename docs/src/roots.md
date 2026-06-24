@@ -17,15 +17,15 @@ Both the Newton and Krawczyk methods can determine if a root is unique in an int
 The method used is given using the `contractor` keyword argument:
 
 ```jldoctest
-julia> roots(log, -2..2 ; contractor = Newton)
+julia> roots(log, -2 .. 2 ; contractor = Newton)
 1-element Vector{Root{Interval{Float64}}}:
  Root([0.999999, 1.00001]_com, :unique)
 
-julia> roots(log, -2..2 ; contractor = Krawczyk)
+julia> roots(log, -2 .. 2 ; contractor = Krawczyk)
 1-element Vector{Root{Interval{Float64}}}:
  Root([0.999999, 1.00001]_com, :unique)
 
-julia> roots(log, -2..2 ; contractor = Bisection)
+julia> roots(log, -2 .. 2 ; contractor = Bisection)
 1-element Vector{Root{Interval{Float64}}}:
  Root([0.999999, 1.00001]_com, :unknown)
  └ Not converged: region size smaller than the tolerance
@@ -38,11 +38,11 @@ Note that as shown in the example, the `log` function does not complain about be
 Newton and Krawczyk methods require the function to be differentiable, but the derivative is usually computed automatically using forward-mode automatic differentiation, provided by the `ForwardDiff.jl` package. It is however possible to provide the derivative explicitly using the `derivative` keyword argument:
 
 ```jldoctest
-julia> roots(log, -2..2 ; contractor = Newton, derivative = x -> 1/x)
+julia> roots(log, -2 .. 2 ; contractor = Newton, derivative = x -> 1/x)
 1-element Vector{Root{Interval{Float64}}}:
  Root([0.999999, 1.00001]_com_NG, :unique)
 
-julia> roots(log, -2..2 ; contractor = Krawczyk, derivative = x -> 1/x)
+julia> roots(log, -2 .. 2 ; contractor = Krawczyk, derivative = x -> 1/x)
 1-element Vector{Root{Interval{Float64}}}:
  Root([0.999999, 1.00001]_com_NG, :unique)
 ```
@@ -52,12 +52,12 @@ When providing the derivative explicitly, the computation is expected to be slig
 ```julia-repl
 julia> using BenchmarkTools
 
-julia> @btime roots(log, -2..2 ; derivative = x -> 1/x)
+julia> @btime roots(log, -2 .. 2 ; derivative = x -> 1/x)
   7.050 μs (129 allocations: 9.33 KiB)
 1-element Vector{Root{Interval{Float64}}}:
  Root([1.0, 1.0]_com_NG, :unique)
 
-julia> @btime roots(log, -2..2)
+julia> @btime roots(log, -2 .. 2)
   7.743 μs (129 allocations: 9.33 KiB)
 1-element Vector{Root{Interval{Float64}}}:
  Root([1.0, 1.0]_com, :unique)
@@ -74,7 +74,7 @@ f (generic function with 1 method)
 julia> df( (x, y) ) = [cos(x) 0 ; 0 -sin(y)]
 df (generic function with 1 method)
 
-julia> roots(f, [-3..3, -3..3] ; derivative = df)
+julia> roots(f, [-3 .. 3, -3 .. 3] ; derivative = df)
 2-element Vector{Root{Vector{Interval{Float64}}}}:
  Root(Interval{Float64}[[-3.93242e-20, 3.93242e-20]_com_NG, [-1.5708, -1.57079]_com_NG], :unique)
  Root(Interval{Float64}[[-3.93242e-20, 3.93242e-20]_com_NG, [1.57079, 1.5708]_com_NG], :unique)
@@ -88,12 +88,12 @@ An absolute tolerance for the search may be specified as the `abstol` keyword ar
 julia> g(x) = sin(exp(x))
 g (generic function with 1 method)
 
-julia> roots(g, 0..2)
+julia> roots(g, 0 .. 2)
 2-element Vector{Root{Interval{Float64}}}:
  Root([1.14472, 1.14473]_com, :unique)
  Root([1.83787, 1.83788]_com, :unique)
 
-julia> roots(g, 0..2 ; abstol = 1e-1)
+julia> roots(g, 0 .. 2 ; abstol = 1e-1)
 2-element Vector{Root{Interval{Float64}}}:
  Root([1.12049, 1.16994]_com, :unique)
  Root([1.82369, 1.85206]_com, :unique)
@@ -105,7 +105,7 @@ A lower tolerance may greatly reduce the computation time, at the cost of an inc
 julia> h(x) = cos(x) * sin(1 / x)
 h (generic function with 1 method)
 
-julia> @btime roots(h, 0.05..1)
+julia> @btime roots(h, 0.05 .. 1)
   484.488 μs (12218 allocations: 590.76 KiB)
 6-element Vector{Root{Interval{Float64}}}:
  Root([0.0530516, 0.0530517]_com_NG, :unique)
@@ -115,7 +115,7 @@ julia> @btime roots(h, 0.05..1)
  Root([0.159155, 0.159155]_com_NG, :unique)
  Root([0.31831, 0.31831]_com_NG, :unique)
 
-julia> @btime roots(h, 0.05..1 ; abstol = 1e-2)
+julia> @btime roots(h, 0.05 .. 1 ; abstol = 1e-2)
   249.720 μs (6141 allocations: 297.80 KiB)
 6-element Vector{Root{Interval{Float64}}}:
  Root([0.0514446, 0.0531086]_com_NG, :unique)
@@ -129,7 +129,7 @@ julia> @btime roots(h, 0.05..1 ; abstol = 1e-2)
     Not converged: region size smaller than the tolerance
  Root([0.317161, 0.319318]_com_NG, :unique)
 
-julia> @btime roots(h, 0.05..1 ; abstol = 1e-1)
+julia> @btime roots(h, 0.05 .. 1 ; abstol = 1e-1)
   66.330 μs (1402 allocations: 69.10 KiB)
 3-element Vector{Root{Interval{Float64}}}:
  Root([0.05, 0.107541]_com, :unknown)
@@ -182,7 +182,7 @@ so that the process is interrupted as soon as an error is encountered.
 This is useful while debugging your code.
 
 ```julia-repl
-julia> roots(f, -10..10, ; ignored_errors = [])
+julia> roots(f, -10 .. 10, ; ignored_errors = [])
 ERROR: InconclusiveBooleanOperation: The operation `[2.0, 2.0]_com_NG < [-10.0, 10.0]_com` cannot be determined unambiguously. See the documentation for more information. See also `strictprecedes`.
 Stacktrace: [..]
 ```

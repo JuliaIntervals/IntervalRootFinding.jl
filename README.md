@@ -36,7 +36,7 @@ julia> using IntervalArithmetic.Symbols  # to use `..`
 julia> f(x) = sin(x) - 0.1*x^2 + 1
 f (generic function with 1 method)
 
-julia> roots(f, -10..10)
+julia> roots(f, -10 .. 10)
 4-element Vector{Root{Interval{Float64}}}:
  Root([-4.42654, -4.42653]_com_NG, :unique)
  Root([-3.10682, -3.10681]_com_NG, :unique)
