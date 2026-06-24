@@ -28,6 +28,7 @@ julia> roots(log, -2..2 ; contractor = Krawczyk)
 julia> roots(log, -2..2 ; contractor = Bisection)
 1-element Vector{Root{Interval{Float64}}}:
  Root([0.999999, 1.00001]_com, :unknown)
+ └ Not converged: region size smaller than the tolerance
 ```
 
 Note that as shown in the example, the `log` function does not complain about being given an interval going outside its domain. While this may be surprising, this is the expected behavior and no root will ever be found outside the domain of a function.
@@ -168,6 +169,9 @@ julia> roots(f, -10 .. 10)
 3-element Vector{Root{Interval{Float64}}}:
  Root([0.0, 0.0]_com, :unique)
  Root([1.99999, 2.00001]_com, :unknown)
+ ├ Not converged: region size smaller than the tolerance
+ ├ Warning: error encountered during computation (use showerror(root.error) to see the whole stacktrace)
+ └ InconclusiveBooleanOperation: The operation `[2.0, 2.0]_com_NG < [1.99999, 2.00001]_com` cannot be determined unambiguously. See the documentation for more information. See also `strictprecedes`.
  Root([7.0, 7.0]_com_NG, :unique)
 ```
 
