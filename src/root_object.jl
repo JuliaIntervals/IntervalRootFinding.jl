@@ -57,23 +57,22 @@ isunique(rt::Root{T}) where {T} = (rt.status == :unique)
 
 function show(io::IO, rt::Root)
     print(io, "Root($(rt.region), :$(rt.status))")
-end
 
-function show(io::IO, ::MIME"text/plain", rt::Root)
-    show(io, rt)
-    if rt.status == :unknown
+    if !get(io, :compact, false) && rt.status == :unknown
+        connector = isnothing(rt.error) ? "└" : "├"
+        
         if rt.convergence == :tolerance
-            print(io, "\n    Not converged: region size smaller than the tolerance")
+            print(io, "\n $connector Not converged: region size smaller than the tolerance")
         elseif rt.convergence == :max_iterartion 
-            print(io, "\n    Not converged: reached maximal number of iterations")
+            print(io, "\n $connector Not converged: reached maximal number of iterations")
         elseif rt.convergence == :none
-            print(io, "\n    Not converged: the root is still being processed")
+            print(io, "\n $connector Not converged: the root is still being processed")
         else
-            print(io, "\n    Not converged: unknown reason $(rt.convergence)")
+            print(io, "\n $connector Not converged: unknown reason $(rt.convergence)")
         end
 
         if !isnothing(rt.error)
-            print(io, "\n    Warning: error encountered during computation (use showerror(root.error) to see the whole stacktrace)\n      ")
+            print(io, "\n ├ Warning: error encountered during computation (use showerror(root.error) to see the whole stacktrace)\n └ ")
             showerror(io, rt.error[1])
         end
     end

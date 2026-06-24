@@ -100,10 +100,15 @@ SearchState{BreadthFirst{Root{Interval{Float64}}}, Root{Interval{Float64}}}
   iteration: 15
   5 regions being processed
     Root([-0.078125, 1.15235]_com, :unknown)
+ └ Not converged: the root is still being processed
     Root([-3.84735, -2.5975]_com, :unknown)
+ └ Not converged: the root is still being processed
     Root([-5.07782, -3.84734]_com, :unknown)
+ └ Not converged: the root is still being processed
     Root([-8.78861, -7.55813]_com, :unknown)
+ └ Not converged: the root is still being processed
     Root([-10.0, -8.7886]_com, :unknown)
+ └ Not converged: the root is still being processed
   1 finalized regions
     Root([-6.28132, -6.28131]_com, :unique)
 
