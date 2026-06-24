@@ -178,7 +178,7 @@ end
 function gauss_elimination_interval1(A::AbstractMatrix, b::AbstractArray; precondition=true)
 
     n = size(A, 1)
-    x = fill(-1e16..1e16, n)
+    x = fill(-1e16 .. 1e16, n)
 
     x = gauss_elimination_interval1!(x, A, b, precondition=precondition)
 
